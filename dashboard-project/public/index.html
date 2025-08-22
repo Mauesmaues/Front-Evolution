@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Project</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header>
+    <div id = "headerNome">Evolution</div>
+    <div id = "headerLogin">Login</div>
+  </header>
+
+  <main>
+    <div id = "sidebar">
+      <ul id = "navSidebar">
+        <li id = "dashboard">Dashboard</li>
+        <li>Configurações</li>
+        <li id = "administracao">Administracão</li>
+      </ul>
+    </div>
+
+    <div id = "painelPrincipal">
+      <!--Painel DashBoard-->
+        <div id = "painelMonitoramento" data-theme="ativo">
+
+          <section id="filtro">
+            <select id="empresaFiltro" class="inputFiltro">
+              <option value="todas">Todas as empresas</option>
+              <!-- Adicione mais opções conforme necessário -->
+            </select>
+            <input type="date" id="dataInicio" class="inputFiltro" placeholder="Data de início">
+            <input type="date" id="dataFim" class="inputFiltro" placeholder="Data de término">
+            <div id="filtroPreSelecionado">
+              <button class="btnFiltro">Hoje</button>
+              <button class="btnFiltro">Ontem</button>
+              <button class="btnFiltro">Este mês</button>
+              <button class="btnFiltro">Período total</button>
+            </div>
+            <button id="aplicarFiltro" class="btnFiltro aplicarFiltro">Aplicar Filtros</button>
+          </section>
+
+          <section class="releatorioGeral">
+            <div class="modalMetric"><span class="metrica" id="cliques"></span>Cliques</div>
+            <div class="modalMetric"><span class="metrica" id="impressoes"></span>Impressões</div>
+            <div class="modalMetric"><span class="metrica" id="alcance"></span>Alcance</div>
+            <div class="modalMetric"><span class="metrica" id="gasto"></span>Gasto</div>
+            <div class="modalMetric"><span class="metrica" id="ctr"></span>CTR</div>
+            <div class="modalMetric"><span class="metrica" id="cpc"></span>CPC</div>
+            <div class="modalMetric"><span class="metrica" id="cpr"></span>CPR</div>
+          </section>
+
+          <section id="dropDownEmpresa">
+
+          </section>
+        </div>
+
+            <!--Painel Administração-->
+      <div id="painelAdministracao" data-theme="default">
+        <div id="subAbasAdmin">
+          <button class="btnSubAba" id="abaUsuario">Usuário</button>
+          <button class="btnSubAba" id="abaEmpresas">Empresas</button>
+          <button id="btnAdicionarEmpresa" class="btnFiltro aplicarFiltro">Adicionar Empresa</button>
+        </div>
+        <div id="conteudoSubAba">
+          <!-- Conteúdo da sub-aba Usuário (futuro) -->
+          <div id="subAbaUsuario" style="display:none;">
+            <p>Gestão de usuários (em breve).</p>
+          </div>
+          <!-- Conteúdo da sub-aba Empresas -->
+          <div id="subAbaEmpresas">
+          </div>
+        </div>
+        <div id="FormCadastroEmpresa">
+            <h3>Cadastro de Empresa</h3>
+            <input type="text" id="nomeEmpresa" class="inputFiltro" placeholder="Nome da empresa">
+            <input type="text" id="idContaAnuncio" class="inputFiltro" placeholder="ID da conta de anúncio">
+            <button id="salvarEmpresa" class="btnFiltro aplicarFiltro">Salvar</button>
+          </div>
+      </div>
+
+    </div>
+  </main>
+
+  
+  <script src="js/main.js"></script>
+</body>
+</html>

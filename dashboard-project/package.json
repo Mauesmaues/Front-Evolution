@@ -1,0 +1,17 @@
+{
+  "name": "dashboard-project",
+  "version": "1.0.0",
+  "description": "Dashboard com backend Express e frontend estático.",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.56.0",
+    "dotenv": "^16.0.0",
+    "express": "^4.21.2",
+    "fetch-node": "^0.0.1"
+  }
+}

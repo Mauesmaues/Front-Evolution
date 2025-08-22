@@ -1,0 +1,221 @@
+/* Estilos principais do dashboard */
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+    background-color: #000;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    height: 5vh;
+    align-items: center;
+    width: 100%;
+}
+
+main {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#sidebar {
+  background: #000;
+  color: #f4f4f4;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  top: 5vh;
+  bottom: 0;
+  left: 0;
+  width: 14%;
+}
+
+#navSidebar {
+  list-style: none;
+  padding: 0;
+}
+
+#navSidebar li {
+  padding: 10px 15px;
+  border-bottom: 1px solid #444;
+  background-color: #00000094;
+  cursor: pointer;
+}
+
+#navSidebar li:hover {
+  background: #555;
+}
+
+#painelPrincipal {
+  background-color: #00000077;
+  color: #f4f4f4;
+  height: 95vh;
+  width: 84%;
+  align-items: start;
+}
+
+#painelMonitoramento {
+  background-color: #200ae9;
+  border-radius: 5px;
+  height: 95vh;
+  width: 100%;
+  display:flex;
+  flex-wrap: wrap;
+
+}
+
+/* Filtro de datas e botões */
+#filtro {
+  display: flex;
+  align-items: center;
+  gap: 5vh;
+  background: #00000094;
+  padding: 15px;
+  height: 5vh;
+  width: 100%;
+}
+
+.inputFiltro {
+  padding: 8px 12px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #222;
+  color: #f4f4f4;
+}
+
+#filtroPreSelecionado {
+  display: flex;
+  gap: 8px;
+}
+
+.btnFiltro {
+  background: #200ae9;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s;
+}
+.btnFiltro:hover {
+  background: #0a0a8c;
+}
+
+.aplicarFiltro {
+  background: #61e708;
+  color: #222;
+  margin-left: 15px;
+  font-size: 1rem;
+}
+.aplicarFiltro:hover {
+  background: #3ca106;
+}
+
+#empresaFiltro {
+  min-width: 180px;
+  border: 1px solid #444;
+  background: #222;
+  color: #f4f4f4;
+  font-size: 1rem;
+}
+/* Estilos do painel de metricas */
+
+.releatorioGeral{
+  display: flex;
+  width: 100%;
+  height: 10vh;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background-color: #000000;
+  align-items: center;
+  overflow: auto;
+}
+
+.modalMetric {
+  background: #d30f0f;
+  height: 8vh;
+  width: 7%;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap ;
+  align-items: center;
+  justify-content: center;
+}
+
+.metrica{
+  width: 100%;
+  text-align: center;
+  color: #61e708;
+}
+
+#dropDownEmpresa{
+  background-color: #3ca106;
+  height: 75vh;
+  width: 100%;
+}
+
+/* Estilos painel de administração */
+#painelAdministracao {
+  color: #f4f4f4;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background-color: #200ae9;
+  height: 95vh;
+  width: 100%;
+  display:flex;
+  flex-wrap: wrap;
+
+}
+
+#subAbasAdmin {
+  display: flex;
+  width: 100%;
+  height: 5vh;
+  justify-content: space-around;
+}
+
+.btnSubAba {
+  background: #a59fd8;
+  color: #fff;
+  border: none;
+  padding: 8px 24px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background 0.2s;
+  width: 30%;
+}
+.btnSubAba:hover, .btnSubAba.active {
+  background: #000000;
+  border: solid 2px #0a0a8c;
+}
+
+#conteudoSubAba {
+  background: #a70c0c;
+  border-radius: 0 0 8px 8px;
+  padding: 18px;
+}
+
+#formAdicionarEmpresa {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #333;
+  padding: 16px;
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+}
+
+/*Formulário cadastro de empresa*/
+
+#FormCadastroEmpresa{
+  position: fixed;
+  background-color: #3ca106;
+  height: 80vh;
+  width: 20%;
+  top: 10vh;
+  right: 36%;
+  display: none;
+}
