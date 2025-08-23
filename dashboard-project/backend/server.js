@@ -39,20 +39,6 @@ try {
   // Se não houver rotas, ignora
 }
 
-// Rota de login
-app.post('/login', async (req, res) => {
-  const { email, senha } = req.body;
-  // Aqui você deve validar o usuário no banco (exemplo simplificado)
-  // Substitua por consulta real ao banco
-  if (email === 'admin@admin.com' && senha === '123456') {
-    req.session.user = { email };
-    return res.json({ sucesso: true });
-  }
-  // Exemplo: buscar usuário real no banco
-  // const usuario = await buscarUsuarioNoBanco(email, senha);
-  // if (usuario) { req.session.user = usuario; return res.json({ sucesso: true }); }
-  res.json({ sucesso: false, mensagem: 'Credenciais inválidas' });
-});
 
 // Rota de logout
 app.post('/logout', (req, res) => {
