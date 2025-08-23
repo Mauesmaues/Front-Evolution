@@ -164,7 +164,7 @@ main {
   background-color: #200ae9;
   height: 95vh;
   width: 100%;
-  display:flex;
+  display: none;
   flex-wrap: wrap;
 
 }
@@ -196,6 +196,7 @@ main {
   background: #a70c0c;
   border-radius: 0 0 8px 8px;
   padding: 18px;
+  width: 100%;
 }
 
 #formAdicionarEmpresa {
@@ -210,7 +211,31 @@ main {
 
 /*Formulário cadastro de empresa*/
 
-#FormCadastroEmpresa{
+#subAbaUsuario{
+  display: flex;
+  background-color: #000000;
+  height: 80vh;
+  width: 100%;
+}
+
+#subAbaEmpresas{
+  display: none;
+  background-color: #000000;
+  height: 80vh;
+  width: 100%;
+
+
+}#FormCadastroEmpresa{
+  position: fixed;
+  background-color: #3ca106;
+  height: 80vh;
+  width: 20%;
+  top: 10vh;
+  right: 36%;
+  display: none;
+}
+
+#FormCadastroUsuario{
   position: fixed;
   background-color: #3ca106;
   height: 80vh;

@@ -57,27 +57,46 @@
         </div>
 
             <!--Painel Administração-->
-      <div id="painelAdministracao" data-theme="default">
+      <div id="painelAdministracao" data-theme="default" display="none">
+
         <div id="subAbasAdmin">
           <button class="btnSubAba" id="abaUsuario">Usuário</button>
           <button class="btnSubAba" id="abaEmpresas">Empresas</button>
-          <button id="btnAdicionarEmpresa" class="btnFiltro aplicarFiltro">Adicionar Empresa</button>
+          <button id="btnAdicionarSubAbaAdmin" class="btnFiltro aplicarFiltro" data-theme="usuario">Adicionar Usuario</button>
         </div>
+
         <div id="conteudoSubAba">
           <!-- Conteúdo da sub-aba Usuário (futuro) -->
-          <div id="subAbaUsuario" style="display:none;">
+          <div id="subAbaUsuario">
             <p>Gestão de usuários (em breve).</p>
           </div>
           <!-- Conteúdo da sub-aba Empresas -->
           <div id="subAbaEmpresas">
           </div>
         </div>
+
         <div id="FormCadastroEmpresa">
             <h3>Cadastro de Empresa</h3>
             <input type="text" id="nomeEmpresa" class="inputFiltro" placeholder="Nome da empresa">
             <input type="text" id="idContaAnuncio" class="inputFiltro" placeholder="ID da conta de anúncio">
             <button id="salvarEmpresa" class="btnFiltro aplicarFiltro">Salvar</button>
-          </div>
+        </div>
+
+        <div id="FormCadastroUsuario">
+            <h3>Cadastro de Usuario</h3>
+            <input type="text" id="nomeUsuario" class="inputFiltro" placeholder="Nome do usuário">
+            <input type="email" id="emailUsuario" class="inputFiltro" placeholder="Email de acesso">
+            <input type="password" id="senhaUsuario" class="inputFiltro" placeholder="senha de acesso">
+            <select id="permissaoSelect" class="inputFiltro">
+            <option value="">Selecione uma permissão</option>
+            </select>
+
+            <select id="empresaSelect" class="inputFiltro">
+            <option value="">Selecione uma empresa</option>
+  </select>
+
+            <button id="salvarUsuario" class="btnFiltro aplicarFiltro">Salvar</button>
+        </div>
       </div>
 
     </div>
@@ -85,5 +104,6 @@
 
   
   <script src="js/main.js"></script>
+  <script src="js/logicaPaineis.js"></script>
 </body>
 </html>
