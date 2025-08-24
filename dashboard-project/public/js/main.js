@@ -13,7 +13,7 @@ async function usuarioSession() {
 
 let userSession = document.getElementById('headerLogin');
 usuarioSession = await usuarioSession();
-userSession.textContent = usuarioSession.nome;
+userSession.textContent = usuarioSession.nome + ' \\/';
 // Lógica JS para consumir API e atualizar UI
 
 // Substitua pelo ID real da conta

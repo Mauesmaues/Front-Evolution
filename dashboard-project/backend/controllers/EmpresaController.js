@@ -24,8 +24,8 @@ const Empresa = require('../models/Empresa');
     async function buscarEmpresas(req, res) {
         try {
              const { data, error } = await supabase
-            .from("empresas")   // sua tabela de empresas
-            .select("*");      // pode selecionar colunas específicas: "id, nome"
+            .from("empresas")   
+            .select("*");      
 
         if (error) throw error;
 
