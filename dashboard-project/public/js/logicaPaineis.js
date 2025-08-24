@@ -54,6 +54,7 @@ document.getElementById('abaEmpresas').addEventListener('click', function(ev){
         btnAdicionarSubAbaAdmin.dataset.theme = "empresa";
         subAbaUsuario.style.setProperty('display', 'none');
         subAbaEmpresas.style.setProperty('display', 'flex');
+        carregarEmpresasCadastradas();
     }
 })
 
@@ -139,5 +140,99 @@ document.getElementById('salvarEmpresa').addEventListener('click', async functio
     console.error('Erro ao salvar empresa:', error);
   }
 });
+
+async function carregarEmpresasCadastradas() {
+  try {
+    // 1. Buscar empresas do usuário logado
+    const resEmpresas = await fetch("/api/buscarEmpresas");
+    const resultado = await resEmpresas.json();
+
+    // Agora pegamos o array de empresas
+    const empresas = Array.isArray(resultado.data) ? resultado.data : [];
+    const dadosComMetricas = [];
+
+    // 2. Iterar empresas e buscar métricas
+    for (const emp of empresas) {
+      try {
+        const resMetrica = await fetch(
+          `http://162.240.157.62:3000/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`
+        );
+        const metricas = await resMetrica.json();
+        console.log("Resposta da API /metrics:", metricas);
+
+        if (metricas && metricas.data && metricas.data.length > 0) {
+          dadosComMetricas.push({
+            empresa: emp.nome,
+            cliques: metricas.data[0].cliques || 0,
+            impressoes: metricas.data[0].impressoes || 0,
+            alcance: metricas.data[0].alcance || 0,
+            gasto: metricas.data[0].gasto || 0,
+            ctr: metricas.data[0].ctr || 0,
+            cpc: metricas.data[0].cpc || 0,
+            cpr: metricas.data[0].cpr || 0
+          });
+        }
+      } catch (err) {
+        console.error(`Erro ao buscar métricas da empresa ${emp.nome}:`, err);
+      }
+    }
+
+    // 3. Renderizar tabela
+    renderTabelaEmpresas(dadosComMetricas);
+
+  } catch (err) {
+    console.error("Erro ao carregar empresas e métricas:", err);
+    document.getElementById("subAbaEmpresas").innerHTML =
+      "<p style='color:red'>Erro ao carregar dados.</p>";
+  }
+}
+
+// Função de renderizar tabela (igual à sua)
+function renderTabelaEmpresas(dados) {
+  const container = document.getElementById("subAbaEmpresas");
+
+  if (dados.length === 0) {
+    container.innerHTML = "<p>Nenhuma métrica disponível.</p>";
+    return;
+  }
+
+  let tabela = `
+    <table class="tabela-empresas">
+      <thead>
+        <tr>
+          <th>Empresa</th>
+          <th>Cliques</th>
+          <th>Impressões</th>
+          <th>Alcance</th>
+          <th>Gasto</th>
+          <th>CTR</th>
+          <th>CPC</th>
+          <th>CPR</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  dados.forEach(emp => {
+    tabela += `
+      <tr>
+        <td>${emp.empresa}</td>
+        <td>${emp.cliques}</td>
+        <td>${emp.impressoes}</td>
+        <td>${emp.alcance}</td>
+        <td class="valor">R$ ${parseFloat(emp.gasto).toFixed(2)}</td>
+        <td>${emp.ctr}%</td>
+        <td>R$ ${parseFloat(emp.cpc).toFixed(2)}</td>
+        <td>R$ ${parseFloat(emp.cpr).toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  tabela += `</tbody></table>`;
+  container.innerHTML = tabela;
+}
+
+// Executa quando a página carrega
+carregarEmpresasEMetricas();
 
 });

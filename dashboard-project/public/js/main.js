@@ -26,12 +26,18 @@ const accountId = '537800105358529';
         if (data.success && data.data && data.data.length > 0) {
           const insight = data.data[0];
           document.getElementById('cliques').innerText = insight.cliques;
+          document.getElementById('cliques').style.color = 'white';
           document.getElementById('impressoes').innerText = insight.impressoes;
+          document.getElementById('impressoes').style.color = 'white';
           document.getElementById('alcance').innerText = insight.alcance;
+          document.getElementById('alcance').style.color = 'white';
           document.getElementById('gasto').innerText = insight.gasto;
           document.getElementById('ctr').innerText = insight.ctr;
+          this.document.getElementById('ctr').style.color = 'white';
           document.getElementById('cpc').innerText = insight.cpc;
+          document.getElementById('cpc').style.color = 'white';
           document.getElementById('cpr').innerText = insight.cpr;
+          document.getElementById('cpr').style.color = 'white';
         } else {
           document.getElementById('cliques').textContent = '-';
           document.getElementById('impressoes').textContent = '-';
@@ -55,6 +61,9 @@ const accountId = '537800105358529';
   } catch (err) {
     console.error('Erro inesperado no carregamento de insights:', err);
   }
+
+
+  
 });
 
 
