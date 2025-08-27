@@ -2,19 +2,20 @@ window.addEventListener('DOMContentLoaded', function() {
 //Seleção de painel
 const painelMonitoramento = document.getElementById('painelMonitoramento');
 const painelAdministracao = document.getElementById('painelAdministracao');
+const painelVideo = document.getElementById('painelVideo');
 
 //Painel administrção
 document.getElementById('administracao').addEventListener('click', function(ev) {
   ev.preventDefault();
   console.log("função ativa");
-  if(painelMonitoramento.dataset.theme === "ativo") {
-
+  if(painelAdministracao.dataset.theme === "default") {
+    painelAdministracao.dataset.theme = "ativo";
+    painelAdministracao.style.setProperty('display', 'flex');
     painelMonitoramento.dataset.theme = "default";
     painelMonitoramento.style.setProperty('display', 'none');
+    painelVideo.dataset.theme = "default";
+    painelVideo.style.setProperty('display', 'none');
   }
-
-  painelAdministracao.dataset.theme = "ativo";
-  painelAdministracao.style.setProperty('display', 'flex');
 
 });
 
@@ -25,10 +26,26 @@ document.getElementById('dashboard').addEventListener('click', function(ev) {
   if(painelMonitoramento.dataset.theme === "default") {
     painelMonitoramento.dataset.theme = "ativo";
     painelMonitoramento.style.setProperty('display', 'flex');
+    painelAdministracao.dataset.theme = "default";
     painelAdministracao.style.setProperty('display', 'none');
+    painelVideo.dataset.theme = "default";
+    painelVideo.style.setProperty('display', 'none');
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
     document.getElementById('FormCadastroUsuario').style.display = 'none';
   }
+});
+
+this.document.getElementById('metricasVideo').addEventListener('click', function(ev){
+    ev.preventDefault;
+    if(painelVideo.dataset.theme === "default"){
+        painelVideo.dataset.theme = "ativo";
+        painelVideo.style.setProperty('display', 'block');
+        painelAdministracao.dataset.theme = "default";
+        painelAdministracao.style.setProperty('display', 'none');
+        painelMonitoramento.dataset.theme = "default";
+        painelMonitoramento.style.setProperty('display', 'none');
+
+    }
 });
 
 document.getElementById('abaUsuario').addEventListener('click', function(ev){
