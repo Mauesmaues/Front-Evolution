@@ -6,6 +6,7 @@
   <title>Dashboard Project</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/tabele.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
   <header>
@@ -20,7 +21,7 @@
         <li>Metrícas de Vídeo</li>
         <li>Configurações</li>
         <li id = "administracao">Administracão</li>
-        <li>CRM</li>
+        <li id="crm">CRM</li>
         <li>Sair</li>
         
       </ul>
@@ -82,28 +83,115 @@
 
         <div id="FormCadastroEmpresa">
             <h3>Cadastro de Empresa</h3>
-            <input type="text" id="nomeEmpresa" class="inputFiltro" placeholder="Nome da empresa">
-            <input type="text" id="idContaAnuncio" class="inputFiltro" placeholder="ID da conta de anúncio">
+            <div class="form-group">
+              <label for="nomeEmpresa" class="form-label">Nome da empresa</label>
+              <input type="text" id="nomeEmpresa" class="inputFiltro" placeholder="Nome da empresa">
+            </div>
+            <div class="form-group">
+              <label for="idContaAnuncio" class="form-label">ID da conta de anúncio</label>
+              <input type="text" id="idContaAnuncio" class="inputFiltro" placeholder="ID da conta de anúncio">
+            </div>
             <button id="salvarEmpresa" class="btnFiltro aplicarFiltro">Salvar</button>
         </div>
 
         <div id="FormCadastroUsuario">
-            <h3>Cadastro de Usuario</h3>
-            <input type="text" id="nomeUsuario" class="inputFiltro" placeholder="Nome do usuário">
-            <input type="email" id="emailUsuario" class="inputFiltro" placeholder="Email de acesso">
-            <input type="password" id="senhaUsuario" class="inputFiltro" placeholder="senha de acesso">
-            <select id="permissaoSelect" class="inputFiltro">
-            <option value="">Selecione uma permissão</option>
-            </select>
-
-            <select id="empresaSelect" class="inputFiltro">
-            <option value="">Selecione uma empresa</option>
-  </select>
-
+            <h3>Cadastro Usuário</h3>
+            <div class="form-group">
+              <label for="nomeUsuario" class="form-label">Nome do usuário</label>
+              <input type="text" id="nomeUsuario" class="inputFiltro" placeholder="Nome do usuário">
+            </div>
+            <div class="form-group">
+              <label for="emailUsuario" class="form-label">Email de acesso</label>
+              <input type="email" id="emailUsuario" class="inputFiltro" placeholder="Email de acesso">
+            </div>
+            <div class="form-group">
+              <label for="senhaUsuario" class="form-label">Senha de acesso</label>
+              <input type="password" id="senhaUsuario" class="inputFiltro" placeholder="Senha de acesso">
+            </div>
+            <div class="form-group">
+              <label for="permissaoSelect" class="form-label">Permissão</label>
+              <select id="permissaoSelect" class="inputFiltro">
+                <option value="">Selecione uma permissão</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="empresaSelect" class="form-label">Empresa</label>
+              <select id="empresaSelect" class="inputFiltro">
+                <option value="">Selecione uma empresa</option>
+              </select>
+            </div>
             <button id="salvarUsuario" class="btnFiltro aplicarFiltro">Salvar</button>
         </div>
       </div>
+      <!--Painel CRM-->
+              <div class="card mb-4" id="crmSection" data-theme="default">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>CRM - Funil de Vendas</h5>
+                    <div class="actions">
+                        <button id="addLeadBtn" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i>Adicionar Lead
+                        </button>
+                    </div>
+                </div>
 
+                <div class="card-body">
+                    <!-- CRM Kanban Board -->
+                    <div class="row">
+                        <!-- Coluna 1: Entrou! -->
+                        <div class="col-md-3 mb-4">
+                            <div class="crm-column" data-stage="entrou">
+                                <div class="crm-column-header bg-info text-white text-center p-3 rounded-top">
+                                    <h6 class="mb-0"><i class="fas fa-arrow-down me-2"></i>Entrou!</h6>
+                                    <small class="text-white-50">Novos leads</small>
+                                </div>
+                                <div class="crm-column-body bg-light p-3 rounded-bottom" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                    <!-- Cards de leads serão carregados automaticamente do banco de dados -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coluna 2: Agendou! -->
+                        <div class="col-md-3 mb-4">
+                            <div class="crm-column" data-stage="agendou">
+                                <div class="crm-column-header bg-warning text-white text-center p-3 rounded-top">
+                                    <h6 class="mb-0"><i class="fas fa-calendar-check me-2"></i>Agendou!</h6>
+                                    <small class="text-white-50">Reunião marcada</small>
+                                </div>
+                                <div class="crm-column-body bg-light p-3 rounded-bottom" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                    <!-- Cards de leads serão adicionados aqui -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coluna 3: Analisando -->
+                        <div class="col-md-3 mb-4">
+                            <div class="crm-column" data-stage="analisando">
+                                <div class="crm-column-header bg-primary text-white text-center p-3 rounded-top">
+                                    <h6 class="mb-0"><i class="fas fa-search me-2"></i>Analisando</h6>
+                                    <small class="text-white-50">Em análise</small>
+                                </div>
+                                <div class="crm-column-body bg-light p-3 rounded-bottom" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                    <!-- Cards de leads serão adicionados aqui -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coluna 4: Fechou! -->
+                        <div class="col-md-3 mb-4">
+                            <div class="crm-column" data-stage="fechou">
+                                <div class="crm-column-header bg-success text-white text-center p-3 rounded-top">
+                                    <h6 class="mb-0"><i class="fas fa-handshake me-2"></i>Fechou!</h6>
+                                    <small class="text-white-50">Vendas concluídas</small>
+                                </div>
+                                <div class="crm-column-body bg-light p-3 rounded-bottom" style="min-height: 400px;" ondrop="drop(event)" ondragover="allowDrop(event)">
+                                    <!-- Cards de leads serão adicionados aqui -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+          </div>
     </div>
   </main>
 
@@ -119,21 +207,19 @@ async function carregarEmpresasEMetricas() {
     const resEmpresas = await fetch("/api/buscarEmpresas");
     const resultado = await resEmpresas.json();
 
-    // Agora pegamos o array de empresas
     const empresas = Array.isArray(resultado.data) ? resultado.data : [];
-    const dadosComMetricas = [];
 
-    // 2. Iterar empresas e buscar métricas
-    for (const emp of empresas) {
+    // 2. Criar promessas para buscar métricas de cada empresa
+    const promessas = empresas.map(async (emp) => {
       try {
         const resMetrica = await fetch(
-          `http://162.240.157.62:3000/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`
+          `http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`
         );
         const metricas = await resMetrica.json();
         console.log("Resposta da API /metrics:", metricas);
 
-        if (metricas && metricas.data && metricas.data.length > 0) {
-          dadosComMetricas.push({
+        if (metricas?.data?.length > 0) {
+          return {
             empresa: emp.nome,
             cliques: metricas.data[0].cliques || 0,
             impressoes: metricas.data[0].impressoes || 0,
@@ -141,15 +227,20 @@ async function carregarEmpresasEMetricas() {
             gasto: metricas.data[0].gasto || 0,
             ctr: metricas.data[0].ctr || 0,
             cpc: metricas.data[0].cpc || 0,
-            cpr: metricas.data[0].cpr || 0
-          });
+            cpr: metricas.data[0].cpr || 0,
+          };
         }
+        return null;
       } catch (err) {
         console.error(`Erro ao buscar métricas da empresa ${emp.nome}:`, err);
+        return null;
       }
-    }
+    });
 
-    // 3. Renderizar tabela
+    // 3. Aguardar todas as promessas de uma vez
+    const dadosComMetricas = (await Promise.all(promessas)).filter(Boolean);
+
+    // 4. Renderizar tabela
     renderTabelaEmpresas(dadosComMetricas);
 
   } catch (err) {

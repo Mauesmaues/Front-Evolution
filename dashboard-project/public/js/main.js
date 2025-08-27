@@ -20,7 +20,7 @@ userSession.textContent = usuarioSession.nome + ' \\/';
 const accountId = '537800105358529';
 
   try {
-    fetch(`http://162.240.157.62:3000/api/v1/metrics/account/${accountId}/insights`)
+    fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${accountId}/insights`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data && data.data.length > 0) {
