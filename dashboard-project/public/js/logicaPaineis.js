@@ -16,8 +16,8 @@ document.getElementById('administracao').addEventListener('click', function(ev) 
     painelCRM.dataset.theme = "default";
     painelMonitoramento.dataset.theme = "default";
     painelMonitoramento.style.setProperty('display', 'none');
-
     carregarEmpresasCadastradas();
+    refreshDados("cadastradas");
   }
 });
 
@@ -158,7 +158,7 @@ document.getElementById('salvarEmpresa').addEventListener('click', async functio
       console.error('[MetaAdsService] Erro retornado pela API:', data.error);
       // Apenas loga o erro, não lança para não parar o fluxo
     }
-
+    refreshDados("cadastradas");
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
   } catch (error) {
     console.error('Erro ao salvar empresa:', error);
@@ -259,6 +259,21 @@ function renderTabelaEmpresas(dados) {
 
   tabela += `</tbody></table>`;
   container.innerHTML = tabela;
+}
+
+function refreshDados(tipo = "cadastradas") {
+  const container = document.getElementById("subAbaEmpresas") 
+                    || document.getElementById("dropDownEmpresa");
+
+  if (container) {
+    container.innerHTML = "<p>🔄 Atualizando dados...</p>";
+  }
+
+  if (tipo === "cadastradas") {
+    carregarEmpresasCadastradas();
+  } else if (tipo === "metricas") {
+    carregarEmpresasEMetricas();
+  }
 }
 
 // Executa quando a página carrega
