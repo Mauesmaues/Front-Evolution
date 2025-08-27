@@ -1,3 +1,64 @@
+#FormCadastroEmpresa,
+#FormCadastroUsuario {
+  position: fixed;
+  background: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 1.5rem 2.5rem;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.6);
+  height: 80vh;
+  width: 24vw;
+  top: 10vh;
+  right: 36%;
+  display: none;
+  z-index: 100;
+  color: #F8FAFC;
+  animation: slideInRight 0.8s ease-out;
+}
+
+#FormCadastroEmpresa{
+  height: 50vh;
+}
+
+#FormCadastroEmpresa h3,
+#FormCadastroUsuario h3 {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #00ffe7;
+  margin-bottom: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.inputFiltro:focus {
+  border-color: rgba(0, 255, 231, 0.5);
+  box-shadow: 0 0 0 2px rgba(0,255,231,0.15);
+  outline: none;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+.form-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #94A3B8;
+  margin-bottom: 0.5rem;
+}
+
+.btnFiltro:hover {
+  background: linear-gradient(135deg, #0066ff, #00ffe7);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0,255,231,0.18);
+  transform: translateY(-3px) scale(1.04);
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
 /* Estilos principais do dashboard (visual-only: cores, tipografia, espaçamentos, sombras) */
 :root{
   --bg-app: #0F1724; /* fundo cinza escuro */
@@ -48,9 +109,16 @@ header {
   border-radius: 2vh;
 }
 
+#headerNome{
+  margin-left: 3.5vh;
+  font-size: x-large;
+  font-weight: bolder;
+}
+
 main {
   display: flex;
   flex-wrap: wrap;
+  background-color: var(--bg-card);;
 }
 
 #sidebar {
@@ -96,7 +164,7 @@ main {
   background-color: transparent;
   color: var(--text);
   height: 95vh;
-  width: 84%;
+  width: 86%;
   align-items: start;
 }
 
@@ -283,22 +351,11 @@ main {
   width: 100%;
 }
 
-#FormCadastroEmpresa{
-  position: fixed;
-  background-color: var(--bg-card);
-  height: 80vh;
-  width: 20%;
-  top: 10vh;
-  right: 36%;
-  display: none;
-}
 
-#FormCadastroUsuario{
-  position: fixed;
+/*CRM*/
+#crmSection {
   background-color: var(--bg-card);
-  height: 80vh;
-  width: 20%;
-  top: 10vh;
-  right: 36%;
-  display: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  color: #F8FAFC;
+  height: 95vh;
 }

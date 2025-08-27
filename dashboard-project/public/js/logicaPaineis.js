@@ -2,7 +2,7 @@ window.addEventListener('DOMContentLoaded', function() {
 //Seleção de painel
 const painelMonitoramento = document.getElementById('painelMonitoramento');
 const painelAdministracao = document.getElementById('painelAdministracao');
-const painelVideo = document.getElementById('painelVideo');
+const painelCRM = document.getElementById('crmSection');
 
 //Painel administrção
 document.getElementById('administracao').addEventListener('click', function(ev) {
@@ -11,12 +11,14 @@ document.getElementById('administracao').addEventListener('click', function(ev) 
   if(painelAdministracao.dataset.theme === "default") {
     painelAdministracao.dataset.theme = "ativo";
     painelAdministracao.style.setProperty('display', 'flex');
+
+    painelCRM.style.setProperty('display', 'none');
+    painelCRM.dataset.theme = "default";
     painelMonitoramento.dataset.theme = "default";
     painelMonitoramento.style.setProperty('display', 'none');
-    painelVideo.dataset.theme = "default";
-    painelVideo.style.setProperty('display', 'none');
+    carregarEmpresasCadastradas();
+    refreshDados("cadastradas");
   }
-
 });
 
 //Painel DashBoard
@@ -28,8 +30,28 @@ document.getElementById('dashboard').addEventListener('click', function(ev) {
     painelMonitoramento.style.setProperty('display', 'flex');
     painelAdministracao.dataset.theme = "default";
     painelAdministracao.style.setProperty('display', 'none');
-    painelVideo.dataset.theme = "default";
-    painelVideo.style.setProperty('display', 'none');
+    painelAdministracao.dataset.theme = "default";
+    painelCRM.style.setProperty('display', 'none');
+    painelCRM.dataset.theme = "default";
+
+    document.getElementById('FormCadastroEmpresa').style.display = 'none';
+    document.getElementById('FormCadastroUsuario').style.display = 'none';
+  }
+});
+
+//Painel CRM
+document.getElementById('crm').addEventListener('click', function(ev) {
+  ev.preventDefault();
+  console.log("função ativa");
+  if(painelCRM.dataset.theme === "default") {
+    painelCRM.dataset.theme = "ativo";
+    painelCRM.style.setProperty('display', 'flex');
+    painelMonitoramento.style.setProperty('display', 'none');
+    painelMonitoramento.dataset.theme = "default";
+    painelAdministracao.style.setProperty('display', 'none');
+    painelAdministracao.dataset.theme = "default";
+
+
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
     document.getElementById('FormCadastroUsuario').style.display = 'none';
   }
@@ -71,7 +93,6 @@ document.getElementById('abaEmpresas').addEventListener('click', function(ev){
         btnAdicionarSubAbaAdmin.dataset.theme = "empresa";
         subAbaUsuario.style.setProperty('display', 'none');
         subAbaEmpresas.style.setProperty('display', 'flex');
-        carregarEmpresasCadastradas();
     }
 })
 
@@ -151,7 +172,7 @@ document.getElementById('salvarEmpresa').addEventListener('click', async functio
       console.error('[MetaAdsService] Erro retornado pela API:', data.error);
       // Apenas loga o erro, não lança para não parar o fluxo
     }
-
+    refreshDados("cadastradas");
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
   } catch (error) {
     console.error('Erro ao salvar empresa:', error);
@@ -164,21 +185,21 @@ async function carregarEmpresasCadastradas() {
     const resEmpresas = await fetch("/api/buscarEmpresas");
     const resultado = await resEmpresas.json();
 
-    // Agora pegamos o array de empresas
     const empresas = Array.isArray(resultado.data) ? resultado.data : [];
-    const dadosComMetricas = [];
 
-    // 2. Iterar empresas e buscar métricas
-    for (const emp of empresas) {
+    // 2. Criar promessas para cada empresa
+    const promessas = empresas.map(async (emp) => {
       try {
-        const resMetrica = await fetch(
-          `http://162.240.157.62:3000/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`
-        );
-        const metricas = await resMetrica.json();
-        console.log("Resposta da API /metrics:", metricas);
+        const [resMetrica, resSaldo] = await Promise.all([
+          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
+          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
+        ]);
 
-        if (metricas && metricas.data && metricas.data.length > 0) {
-          dadosComMetricas.push({
+        const metricas = await resMetrica.json();
+        const saldo = await resSaldo.json();
+
+        if (metricas?.data?.length > 0) {
+          return {
             empresa: emp.nome,
             cliques: metricas.data[0].cliques || 0,
             impressoes: metricas.data[0].impressoes || 0,
@@ -186,15 +207,20 @@ async function carregarEmpresasCadastradas() {
             gasto: metricas.data[0].gasto || 0,
             ctr: metricas.data[0].ctr || 0,
             cpc: metricas.data[0].cpc || 0,
-            cpr: metricas.data[0].cpr || 0
-          });
+            cpr: metricas.data[0].cpr || 0,
+            saldo: saldo?.data?.saldo || 0,
+          };
         }
       } catch (err) {
         console.error(`Erro ao buscar métricas da empresa ${emp.nome}:`, err);
+        return null;
       }
-    }
+    });
 
-    // 3. Renderizar tabela
+    // 3. Aguardar todas as promessas de uma vez
+    const dadosComMetricas = (await Promise.all(promessas)).filter(Boolean);
+
+    // 4. Renderizar tabela
     renderTabelaEmpresas(dadosComMetricas);
 
   } catch (err) {
@@ -222,7 +248,7 @@ function renderTabelaEmpresas(dados) {
           <th>Impressões</th>
           <th>Alcance</th>
           <th>Gasto</th>
-          <th>CTR</th>
+          <th>Saldo</th>
           <th>CPC</th>
           <th>CPR</th>
         </tr>
@@ -238,7 +264,7 @@ function renderTabelaEmpresas(dados) {
         <td>${emp.impressoes}</td>
         <td>${emp.alcance}</td>
         <td class="valor">R$ ${parseFloat(emp.gasto).toFixed(2)}</td>
-        <td>${emp.ctr}%</td>
+        <td>R$ ${parseFloat(emp.saldo).toFixed(2)}</td>
         <td>R$ ${parseFloat(emp.cpc).toFixed(2)}</td>
         <td>R$ ${parseFloat(emp.cpr).toFixed(2)}</td>
       </tr>
@@ -247,6 +273,21 @@ function renderTabelaEmpresas(dados) {
 
   tabela += `</tbody></table>`;
   container.innerHTML = tabela;
+}
+
+function refreshDados(tipo = "cadastradas") {
+  const container = document.getElementById("subAbaEmpresas") 
+                    || document.getElementById("dropDownEmpresa");
+
+  if (container) {
+    container.innerHTML = "<p>🔄 Atualizando dados...</p>";
+  }
+
+  if (tipo === "cadastradas") {
+    carregarEmpresasCadastradas();
+  } else if (tipo === "metricas") {
+    carregarEmpresasEMetricas();
+  }
 }
 
 // Executa quando a página carrega
