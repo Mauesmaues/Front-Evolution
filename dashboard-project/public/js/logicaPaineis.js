@@ -28,6 +28,7 @@ document.getElementById('dashboard').addEventListener('click', function(ev) {
   if(painelMonitoramento.dataset.theme === "default") {
     painelMonitoramento.dataset.theme = "ativo";
     painelMonitoramento.style.setProperty('display', 'flex');
+    painelAdministracao.dataset.theme = "default";
     painelAdministracao.style.setProperty('display', 'none');
     painelAdministracao.dataset.theme = "default";
     painelCRM.style.setProperty('display', 'none');
@@ -54,6 +55,19 @@ document.getElementById('crm').addEventListener('click', function(ev) {
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
     document.getElementById('FormCadastroUsuario').style.display = 'none';
   }
+});
+
+this.document.getElementById('metricasVideo').addEventListener('click', function(ev){
+    ev.preventDefault;
+    if(painelVideo.dataset.theme === "default"){
+        painelVideo.dataset.theme = "ativo";
+        painelVideo.style.setProperty('display', 'block');
+        painelAdministracao.dataset.theme = "default";
+        painelAdministracao.style.setProperty('display', 'none');
+        painelMonitoramento.dataset.theme = "default";
+        painelMonitoramento.style.setProperty('display', 'none');
+
+    }
 });
 
 document.getElementById('abaUsuario').addEventListener('click', function(ev){
