@@ -1,5 +1,5 @@
-window.addEventListener('DOMContentLoaded', async function() {
 
+window.addEventListener('DOMContentLoaded', async function() {
 async function usuarioSession() {
   const response = await fetch('/api/session-user');
   const result = await response.json();
@@ -61,9 +61,19 @@ const accountId = '537800105358529';
   } catch (err) {
     console.error('Erro inesperado no carregamento de insights:', err);
   }
-
-
-  
 });
+
+  async function testeCrm() {
+    const response = await fetch('/api/testeCrm');
+    const result = await response.json();
+    if (result.data && Array.isArray(result.data) && result.data.length > 0) {
+      const primeiroId = result.data[0].id;
+      console.log('Primeiro ID:', primeiroId);
+    } else {
+      console.log('Nenhum dado retornado ou formato inesperado:', result);
+    }
+  }
+
+  testeCrm();
 
 

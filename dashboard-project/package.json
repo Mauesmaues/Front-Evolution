@@ -13,6 +13,7 @@
     "dotenv": "^16.0.0",
     "express": "^4.21.2",
     "express-session": "^1.18.2",
-    "fetch-node": "^0.0.1"
+    "fetch-node": "^0.0.1",
+    "node-fetch": "^3.3.2"
   }
 }
