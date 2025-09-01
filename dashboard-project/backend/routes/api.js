@@ -13,6 +13,7 @@ router.get('/buscarEmpresas', EmpresaController.buscarEmpresas)
 router.post('/login', usuarioController.login);
 router.post('/criarUsuario', usuarioController.criarUsuario)
 router.get('/session-user', usuarioController.usuarioSecao);
+router.post('/sair', usuarioController.sair);
 
 
 

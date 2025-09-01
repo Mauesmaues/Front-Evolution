@@ -94,6 +94,15 @@ const UsuarioController = {
       return res.status(404).json({ erro: 'Usuário não encontrado.' });
     }
     res.json({ mensagem: 'Usuário removido com sucesso.', usuario });
+  },
+
+  sair: (req, res) => {
+    req.session.destroy(err => {
+      if (err) {
+        return res.status(500).json({ mensagem: 'Erro ao encerrar sessão.' });
+      }
+      res.status(200).json({ mensagem: 'Sessão encerrada com sucesso.' });
+    });
   }
 };
 

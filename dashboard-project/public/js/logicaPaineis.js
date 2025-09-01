@@ -244,13 +244,7 @@ function renderTabelaEmpresas(dados) {
       <thead>
         <tr>
           <th>Empresa</th>
-          <th>Cliques</th>
-          <th>Impressões</th>
-          <th>Alcance</th>
-          <th>Gasto</th>
           <th>Saldo</th>
-          <th>CPC</th>
-          <th>CPR</th>
         </tr>
       </thead>
       <tbody>
@@ -260,13 +254,7 @@ function renderTabelaEmpresas(dados) {
     tabela += `
       <tr>
         <td>${emp.empresa}</td>
-        <td>${emp.cliques}</td>
-        <td>${emp.impressoes}</td>
-        <td>${emp.alcance}</td>
-        <td class="valor">R$ ${parseFloat(emp.gasto).toFixed(2)}</td>
-        <td>R$ ${parseFloat(emp.saldo).toFixed(2)}</td>
-        <td>R$ ${parseFloat(emp.cpc).toFixed(2)}</td>
-        <td>R$ ${parseFloat(emp.cpr).toFixed(2)}</td>
+        <td class="valor">R$ ${parseFloat(emp.saldo).toFixed(2)}</td>
       </tr>
     `;
   });
