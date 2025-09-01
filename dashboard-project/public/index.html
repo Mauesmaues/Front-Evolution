@@ -275,7 +275,13 @@ function renderTabelaEmpresas(dados) {
       </thead>
       <tbody>
   `;
-
+  let somadorCliques = 0;
+  let somadorImpressoes = 0;
+  let somadorAlcance = 0;
+  let somadorGasto = 0;
+  let somadorCtr = 0;
+  let somadorCpc = 0;
+  let somadorCpr = 0;
   dados.forEach(emp => {
     tabela += `
       <tr>
@@ -289,7 +295,21 @@ function renderTabelaEmpresas(dados) {
         <td>R$ ${parseFloat(emp.cpr).toFixed(2)}</td>
       </tr>
     `;
+    somadorCliques += parseInt(emp.cliques) || 0;
+    somadorImpressoes += parseInt(emp.impressoes) || 0;
+    somadorAlcance += parseInt(emp.alcance) || 0;
+    somadorGasto += parseFloat(emp.gasto) || 0;
+
   });
+
+  document.getElementById('cliques').innerText = somadorCliques.toLocaleString();
+  document.getElementById('impressoes').innerText = somadorImpressoes.toLocaleString();
+  document.getElementById('alcance').innerText = somadorAlcance.toLocaleString();
+  document.getElementById('gasto').innerText = somadorGasto.toLocaleString();
+  somadorCtr = (somadorCliques / somadorImpressoes) * 100 || 0;
+  document.getElementById('ctr').innerText = somadorCtr.toFixed(2) + '%';
+  somadorCpc = (somadorGasto / somadorCliques) || 0;
+  document.getElementById('cpc').innerText = somadorCpc.toFixed(2);
 
   tabela += `</tbody></table>`;
   container.innerHTML = tabela;

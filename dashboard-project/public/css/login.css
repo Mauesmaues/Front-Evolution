@@ -5,23 +5,32 @@
     box-sizing: border-box;
 }
 
+/* Prevent any scroll globally */
+html, body {
+    overflow: hidden;
+    max-height: 100vh;
+}
+
 html {
-    scroll-behavior: smooth;
+    height: 100%;
+    overflow: hidden;
 }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
     background: #0a0a0f;
-    overflow-x: hidden;
+    overflow: hidden;
     line-height: 1.6;
+    margin: 0;
+    padding: 0;
 }
 
 /* ========== BANNER LATERAL ESQUERDO ========== */
 #BannerPreLogin {
     width: 55%;
-    min-height: 100vh;
+    height: 100vh;
     position: relative;
     background: linear-gradient(135deg, 
         #1a1a2e 0%, 
@@ -352,13 +361,14 @@ body {
 /* ========== CONTAINER DIREITO - FORMULÁRIO ========== */
 .container {
     width: 45%;
-    min-height: 100vh;
+    height: 100vh;
     background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem;
     position: relative;
+    overflow: hidden;
 }
 
 .container::before {
@@ -403,6 +413,7 @@ body {
 #CardLogin {
     width: 100%;
     max-width: 440px;
+    max-height: 90vh;
     background: 
         radial-gradient(circle at 20% 80%, rgba(0, 255, 231, 0.08) 0%, transparent 40%),
         radial-gradient(circle at 80% 20%, rgba(0, 102, 255, 0.08) 0%, transparent 40%),
@@ -941,27 +952,32 @@ body {
 @media (max-width: 768px) {
     body {
         flex-direction: column;
-        overflow-x: hidden;
+        overflow: hidden;
+        height: 100vh;
     }
     
     #BannerPreLogin {
         width: 100%;
-        min-height: 50vh;
+        height: 50vh;
         order: 1;
+        overflow: hidden;
     }
     
     .container {
         width: 100%;
-        min-height: 50vh;
+        height: 50vh;
         order: 2;
         padding: 1rem;
+        overflow: hidden;
     }
     
     .footer {
         width: 100%;
-        position: relative;
+        position: absolute;
+        bottom: 0;
         order: 3;
         padding: 1rem;
+        z-index: 1000;
     }
     
     .banner-content {
@@ -1080,12 +1096,14 @@ body {
 
 @media (max-width: 480px) {
     #BannerPreLogin {
-        min-height: 45vh;
+        height: 45vh;
+        overflow: hidden;
     }
     
     .container {
-        min-height: 55vh;
+        height: 55vh;
         padding: 0.5rem;
+        overflow: hidden;
     }
     
     .banner-content {
