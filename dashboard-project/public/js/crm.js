@@ -1,10 +1,41 @@
 // Variável global para armazenar dados dos leads
 window.leadsData = [];
 
-// Função principal para carregar leads da API
+// Função para obter dados do usuário da sessão
+async function obterUsuarioSessao() {
+    try {
+        const response = await fetch('/api/session-user');
+        const result = await response.json();
+        if (result.usuario) {
+            return result.usuario;
+        } else {
+            return { nome: 'Usuário Anônimo' };
+        }
+    } catch (error) {
+        console.error('Erro ao obter usuário da sessão:', error);
+        return { nome: 'Usuário Anônimo' };
+    }
+}
+
+// Variáveis globais para o CRM
+window.leadsGlobais = [];
+window.leadsData = [];
+
+// Função principal para carregar leads do CRM
 async function carregarLeadsCRM() {
     try {
+        // Limpar colunas e reinicializar variáveis globais
+        limparColunasEContadores();
+        window.leadsGlobais = [];
+        window.leadsData = [];
+        
+        console.log('Tentando carregar leads da API externa...');
         const response = await fetch('http://localhost:3001/api/v1/paginas/785063038017478/respostas');
+        
+        if (!response.ok) {
+            throw new Error(`Erro da API: ${response.status}`);
+        }
+        
         const data = await response.json();
         
         if (data.success && data.data) {
@@ -14,53 +45,132 @@ async function carregarLeadsCRM() {
             // Limpar colunas antes de carregar
             limparColunasEContadores();
             
-            // Processar todos os formulários e suas respostas
-            data.data.forEach(formulario => {
-                if (formulario.respostas && formulario.respostas.length > 0) {
-                    formulario.respostas.forEach(resposta => {
-                        // Criar objeto do lead com dados completos
-                        const leadData = {
-                            id: resposta.id,
-                            created_time: resposta.created_time,
-                            respostas: [
-                                { campo: 'nome', valor: resposta.nome || 'Nome não informado' },
-                                { campo: 'email', valor: resposta.email || 'Email não informado' },
-                                { campo: 'telefone', valor: resposta.telefone || 'Telefone não informado' }
-                            ],
-                            formulario: formulario.formulario
-                        };
-                        
-                        // Adicionar outras respostas customizadas
-                        if (resposta.respostas) {
-                            Object.keys(resposta.respostas).forEach(pergunta => {
-                                if (!['full_name', 'email', 'phone_number'].includes(pergunta)) {
-                                    const resposta_valor = resposta.respostas[pergunta];
-                                    if (resposta_valor && resposta_valor.length > 0) {
-                                        leadData.respostas.push({
-                                            campo: pergunta.replace(/_/g, ' ').replace(/\?/g, '').replace(/\b\w/g, l => l.toUpperCase()),
-                                            valor: resposta_valor[0]
-                                        });
-                                    }
-                                }
-                            });
-                        }
-                        
-                        // Armazenar dados globalmente
-                        window.leadsData.push(leadData);
-                        
-                        // Criar card visual
-                        criarCardLead(resposta, formulario.formulario);
-                    });
-                }
+            // Processar leads da API
+            data.data.forEach(lead => {
+                processarLead(lead);
             });
             
-            // Atualizar contadores das colunas
+            // Atualizar contadores após carregar todos os leads
             atualizarContadoresColunas();
+            
+            console.log(`${data.data.length} leads carregados com sucesso!`);
         }
     } catch (error) {
-        console.error('Erro ao carregar leads:', error);
-        mostrarErroCarregamento();
+        console.warn('API externa indisponível, carregando dados de exemplo:', error);
+        carregarLeadsExemplo();
     }
+}
+
+// Função para carregar leads de exemplo quando a API não estiver disponível
+function carregarLeadsExemplo() {
+    // Limpar dados anteriores
+    window.leadsData = [];
+    window.leadsGlobais = [];
+    
+    // Limpar colunas antes de carregar
+    limparColunasEContadores();
+    
+    // Dados de exemplo
+    const leadsExemplo = [
+        {
+            id: 'lead_001',
+            created_time: new Date().toISOString(),
+            form_id: '123456789',
+            field_data: [
+                { name: 'full_name', values: ['João Silva'] },
+                { name: 'email', values: ['joao@email.com'] },
+                { name: 'phone_number', values: ['11999999999'] },
+                { name: 'interesse', values: ['Produto A'] }
+            ]
+        },
+        {
+            id: 'lead_002',
+            created_time: new Date(Date.now() - 86400000).toISOString(), // 1 dia atrás
+            form_id: '123456789',
+            field_data: [
+                { name: 'full_name', values: ['Maria Santos'] },
+                { name: 'email', values: ['maria@email.com'] },
+                { name: 'phone_number', values: ['11888888888'] },
+                { name: 'empresa', values: ['Tech Corp'] }
+            ]
+        },
+        {
+            id: 'lead_003',
+            created_time: new Date(Date.now() - 172800000).toISOString(), // 2 dias atrás
+            form_id: '123456789',
+            field_data: [
+                { name: 'full_name', values: ['Pedro Costa'] },
+                { name: 'email', values: ['pedro@email.com'] },
+                { name: 'phone_number', values: ['11777777777'] },
+                { name: 'servico', values: ['Consultoria'] }
+            ]
+        }
+    ];
+    
+    // Processar leads de exemplo
+    leadsExemplo.forEach(lead => {
+        processarLead(lead);
+    });
+    
+    // Atualizar contadores após carregar todos os leads
+    atualizarContadoresColunas();
+    
+    console.log(`${leadsExemplo.length} leads de exemplo carregados!`);
+}
+
+// Função para processar um lead individual
+function processarLead(lead) {
+    // Extrair dados dos campos do lead
+    const fieldData = {};
+    lead.field_data.forEach(field => {
+        fieldData[field.name] = field.values[0] || '';
+    });
+    
+    // Criar objeto do lead normalizado
+    const leadData = {
+        id: lead.id,
+        created_time: lead.created_time,
+        respostas: [
+            { campo: 'nome', valor: fieldData.full_name || 'Nome não informado' },
+            { campo: 'email', valor: fieldData.email || 'Email não informado' },
+            { campo: 'telefone', valor: fieldData.phone_number || 'Telefone não informado' }
+        ],
+        formulario: { nome: 'Formulário de Contato', id: lead.form_id }
+    };
+    
+    // Adicionar outros campos customizados
+    Object.keys(fieldData).forEach(key => {
+        if (!['full_name', 'email', 'phone_number'].includes(key)) {
+            leadData.respostas.push({
+                campo: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                valor: fieldData[key]
+            });
+        }
+    });
+    
+    // Armazenar dados globalmente
+    if (!window.leadsData) {
+        window.leadsData = [];
+    }
+    if (!window.leadsGlobais) {
+        window.leadsGlobais = [];
+    }
+    
+    window.leadsData.push(leadData);
+    window.leadsGlobais.push(leadData);
+    
+    // Criar objeto resposta simulado para compatibilidade
+    const respostaSimulada = {
+        id: lead.id,
+        created_time: lead.created_time,
+        nome: fieldData.full_name || 'Nome não informado',
+        email: fieldData.email || 'Email não informado',
+        telefone: fieldData.phone_number || 'Telefone não informado',
+        respostas: fieldData
+    };
+    
+    // Criar card visual
+    criarCardLead(respostaSimulada, leadData.formulario);
 }
 
 // Função para limpar colunas e contadores
@@ -123,29 +233,15 @@ function criarCardLead(resposta, formulario) {
                 ${criarDetalhesResposta(resposta.respostas)}
             </div>
             
-            <!-- Área de Comentários -->
-            <div class="lead-comments-area">
-                <div class="comment-input-section">
-                    <textarea class="comment-input" placeholder="Adicionar comentário..." 
-                              onkeypress="handleCommentKeyPress(event, '${leadId}')"></textarea>
-                    <button class="btn-add-comment" onclick="adicionarComentario('${leadId}')" title="Adicionar comentário">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-                ${ultimoComentario ? `
-                    <div class="last-comment">
-                        <span class="comment-text">${ultimoComentario.texto}</span>
-                        <i class="fas fa-info-circle comment-info-icon" 
-                           onclick="mostrarInfoComentario('${leadId}')" 
-                           title="Informações do comentário"></i>
-                    </div>
-                ` : ''}
-            </div>
-            
             <div class="lead-footer">
                 <small class="text-muted">Form: ${formulario.nome}</small>
+                ${ultimoComentario ? `<small class="comment-indicator"><i class="fas fa-comment"></i> ${comentarios.length} comentário(s)</small>` : ''}
             </div>
             <div class="lead-actions">
+                <button class="btn-comment" onclick="abrirPopupComentario('${leadId}')" title="Comentários">
+                    <i class="fas fa-comments"></i>
+                    ${comentarios.length > 0 ? `<span class="comment-badge">${comentarios.length}</span>` : ''}
+                </button>
                 <button class="btn-whatsapp-main" onclick="chamarWhatsApp('${telefone}', '${nome}')" title="Chamar no WhatsApp">
                     <i class="fab fa-whatsapp"></i> WhatsApp
                 </button>
@@ -372,13 +468,22 @@ function obterNomeStatus(status) {
     return statusMap[status] || status;
 }
 
+// Funções wrapper para eventos onclick
+async function adicionarComentarioSync(leadId) {
+    await adicionarComentario(leadId);
+}
+
+async function handleCommentKeyPressSync(event, leadId) {
+    await handleCommentKeyPress(event, leadId);
+}
+
 // Função para obter comentários de um lead
 function obterComentarios(leadId) {
     return JSON.parse(localStorage.getItem(`lead_comments_${leadId}`)) || [];
 }
 
 // Função para adicionar comentário
-function adicionarComentario(leadId, textoPersonalizado = null) {
+async function adicionarComentario(leadId, textoPersonalizado = null) {
     const card = document.querySelector(`[data-lead-id="${leadId}"]`);
     let texto;
     
@@ -394,7 +499,8 @@ function adicionarComentario(leadId, textoPersonalizado = null) {
     
     // Obter informações do comentário
     const agora = new Date();
-    const usuario = 'Usuário Atual'; // Aqui você pode pegar do sistema de login
+    const usuarioSessao = await obterUsuarioSessao();
+    const usuario = usuarioSessao.nome || 'Usuário Anônimo';
     const coluna = obterNomeStatus(card.closest('.crm-column').getAttribute('data-stage'));
     
     // Criar objeto do comentário
@@ -605,7 +711,7 @@ function renderizarTodosComentarios(leadId) {
     }).join('');
 }
 
-function adicionarComentarioModal(leadId) {
+async function adicionarComentarioModal(leadId) {
     const textarea = document.getElementById(`modal-comment-${leadId}`);
     const texto = textarea.value.trim();
     
@@ -615,7 +721,7 @@ function adicionarComentarioModal(leadId) {
     }
 
     // Adicionar comentário
-    adicionarComentario(leadId, texto);
+    await adicionarComentario(leadId, texto);
     
     // Limpar textarea
     textarea.value = '';
@@ -629,10 +735,10 @@ function adicionarComentarioModal(leadId) {
 }
 
 // Função para handle do Enter no textarea
-function handleCommentKeyPress(event, leadId) {
+async function handleCommentKeyPress(event, leadId) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
-        adicionarComentario(leadId);
+        await adicionarComentario(leadId);
     }
 }
 
@@ -696,6 +802,141 @@ document.addEventListener('click', function(event) {
         }, 100);
     }
 });
+
+// Função para abrir pop-up de comentários
+function abrirPopupComentario(leadId) {
+    const leadData = window.leadsGlobais?.find(lead => lead.id === leadId);
+    if (!leadData) {
+        console.error('Lead não encontrado');
+        return;
+    }
+
+    const comentarios = obterComentarios(leadId);
+    const nomeCompleto = leadData.respostas.find(r => r.campo === 'nome')?.valor || 'Lead sem nome';
+
+    // Criar pop-up de comentários
+    const popupHTML = `
+        <div class="comment-popup-overlay" id="comment-popup-${leadId}" onclick="fecharPopupComentario('${leadId}')">
+            <div class="comment-popup-content" onclick="event.stopPropagation()">
+                <div class="comment-popup-header">
+                    <h5><i class="fas fa-comments"></i> Comentários - ${nomeCompleto}</h5>
+                    <button class="btn-close-popup" onclick="fecharPopupComentario('${leadId}')">&times;</button>
+                </div>
+                
+                <div class="comment-popup-body">
+                    <div class="comments-list" id="popup-comments-list-${leadId}">
+                        ${renderizarComentariosPopup(leadId)}
+                    </div>
+                    
+                    <div class="comment-input-section-popup">
+                        <textarea id="popup-comment-${leadId}" class="comment-input-popup" placeholder="Digite seu comentário..."></textarea>
+                        <button class="btn-add-comment-popup" onclick="adicionarComentarioPopup('${leadId}')" title="Adicionar comentário">
+                            <i class="fas fa-paper-plane"></i> Comentar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Adicionar pop-up ao body
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+    document.body.style.overflow = 'hidden';
+    
+    // Focar no textarea
+    setTimeout(() => {
+        const textarea = document.getElementById(`popup-comment-${leadId}`);
+        if (textarea) textarea.focus();
+    }, 100);
+}
+
+function fecharPopupComentario(leadId) {
+    const popup = document.getElementById(`comment-popup-${leadId}`);
+    if (popup) {
+        popup.remove();
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function renderizarComentariosPopup(leadId) {
+    const comentarios = obterComentarios(leadId);
+    if (comentarios.length === 0) {
+        return '<div class="no-comments-popup">💭 Nenhum comentário ainda. Seja o primeiro a comentar!</div>';
+    }
+
+    return comentarios.map(comentario => {
+        const data = new Date(comentario.timestamp);
+        const dataFormatada = data.toLocaleDateString('pt-BR');
+        const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        return `
+            <div class="comment-item-popup">
+                <div class="comment-header-popup">
+                    <div class="comment-user-info">
+                        <i class="fas fa-user-circle"></i>
+                        <strong>${comentario.usuario}</strong>
+                    </div>
+                    <span class="comment-meta-popup">
+                        <i class="fas fa-calendar"></i> ${dataFormatada} 
+                        <i class="fas fa-clock"></i> ${horaFormatada} 
+                        <i class="fas fa-tag"></i> ${comentario.coluna}
+                    </span>
+                </div>
+                <div class="comment-text-popup">${comentario.texto}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function adicionarComentarioPopup(leadId) {
+    const textarea = document.getElementById(`popup-comment-${leadId}`);
+    const texto = textarea.value.trim();
+    
+    if (!texto) {
+        alert('Por favor, digite um comentário.');
+        return;
+    }
+
+    try {
+        // Obter usuário da sessão
+        const usuario = await obterUsuarioSessao();
+        const nomeUsuario = usuario?.nome || 'Usuário';
+
+        // Obter coluna atual do lead
+        const leadCard = document.querySelector(`[data-lead-id="${leadId}"]`);
+        const coluna = leadCard?.closest('.crm-column')?.getAttribute('data-stage') || 'desconhecida';
+
+        const comentario = {
+            texto: texto,
+            timestamp: Date.now(),
+            usuario: nomeUsuario,
+            coluna: coluna
+        };
+
+        // Salvar comentário
+        const comentarios = obterComentarios(leadId);
+        comentarios.push(comentario);
+        localStorage.setItem(`lead_comments_${leadId}`, JSON.stringify(comentarios));
+
+        // Limpar textarea
+        textarea.value = '';
+
+        // Atualizar lista no pop-up
+        const commentsList = document.getElementById(`popup-comments-list-${leadId}`);
+        commentsList.innerHTML = renderizarComentariosPopup(leadId);
+
+        // Scroll para o último comentário
+        commentsList.scrollTop = commentsList.scrollHeight;
+
+        // Atualizar card principal
+        carregarLeadsCRM();
+
+        console.log('Comentário adicionado com sucesso');
+    } catch (error) {
+        console.error('Erro ao adicionar comentário:', error);
+        alert('Erro ao adicionar comentário. Tente novamente.');
+    }
+}
 
 // Expor funções globalmente para uso em outros arquivos
 window.carregarLeadsCRM = carregarLeadsCRM;
