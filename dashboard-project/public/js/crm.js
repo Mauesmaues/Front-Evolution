@@ -1,3 +1,6 @@
+// Variável global para armazenar dados dos leads
+window.leadsData = [];
+
 // Função principal para carregar leads da API
 async function carregarLeadsCRM() {
     try {
@@ -5,6 +8,9 @@ async function carregarLeadsCRM() {
         const data = await response.json();
         
         if (data.success && data.data) {
+            // Limpar dados anteriores
+            window.leadsData = [];
+            
             // Limpar colunas antes de carregar
             limparColunasEContadores();
             
@@ -12,6 +18,37 @@ async function carregarLeadsCRM() {
             data.data.forEach(formulario => {
                 if (formulario.respostas && formulario.respostas.length > 0) {
                     formulario.respostas.forEach(resposta => {
+                        // Criar objeto do lead com dados completos
+                        const leadData = {
+                            id: resposta.id,
+                            created_time: resposta.created_time,
+                            respostas: [
+                                { campo: 'nome', valor: resposta.nome || 'Nome não informado' },
+                                { campo: 'email', valor: resposta.email || 'Email não informado' },
+                                { campo: 'telefone', valor: resposta.telefone || 'Telefone não informado' }
+                            ],
+                            formulario: formulario.formulario
+                        };
+                        
+                        // Adicionar outras respostas customizadas
+                        if (resposta.respostas) {
+                            Object.keys(resposta.respostas).forEach(pergunta => {
+                                if (!['full_name', 'email', 'phone_number'].includes(pergunta)) {
+                                    const resposta_valor = resposta.respostas[pergunta];
+                                    if (resposta_valor && resposta_valor.length > 0) {
+                                        leadData.respostas.push({
+                                            campo: pergunta.replace(/_/g, ' ').replace(/\?/g, '').replace(/\b\w/g, l => l.toUpperCase()),
+                                            valor: resposta_valor[0]
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // Armazenar dados globalmente
+                        window.leadsData.push(leadData);
+                        
+                        // Criar card visual
                         criarCardLead(resposta, formulario.formulario);
                     });
                 }
@@ -56,12 +93,21 @@ function criarCardLead(resposta, formulario) {
         minute: '2-digit'
     });
     
+    // Carregar comentários salvos
+    const comentarios = JSON.parse(localStorage.getItem(`lead_comments_${leadId}`)) || [];
+    const ultimoComentario = comentarios.length > 0 ? comentarios[comentarios.length - 1] : null;
+    
     // Criar HTML do card
     const cardHTML = `
         <div class="lead-card" data-lead-id="${leadId}" draggable="true" ondragstart="drag(event)">
             <div class="lead-header">
                 <h6 class="lead-name">${nome}</h6>
-                <small class="lead-date">${dataFormatada}</small>
+                <div class="lead-header-actions">
+                    <button class="btn-expand" onclick="expandirCard('${leadId}')" title="Expandir card">
+                        <i class="fas fa-expand-alt"></i>
+                    </button>
+                    <small class="lead-date">${dataFormatada}</small>
+                </div>
             </div>
             <div class="lead-contact">
                 <div class="contact-item">
@@ -76,15 +122,32 @@ function criarCardLead(resposta, formulario) {
             <div class="lead-details">
                 ${criarDetalhesResposta(resposta.respostas)}
             </div>
+            
+            <!-- Área de Comentários -->
+            <div class="lead-comments-area">
+                <div class="comment-input-section">
+                    <textarea class="comment-input" placeholder="Adicionar comentário..." 
+                              onkeypress="handleCommentKeyPress(event, '${leadId}')"></textarea>
+                    <button class="btn-add-comment" onclick="adicionarComentario('${leadId}')" title="Adicionar comentário">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                ${ultimoComentario ? `
+                    <div class="last-comment">
+                        <span class="comment-text">${ultimoComentario.texto}</span>
+                        <i class="fas fa-info-circle comment-info-icon" 
+                           onclick="mostrarInfoComentario('${leadId}')" 
+                           title="Informações do comentário"></i>
+                    </div>
+                ` : ''}
+            </div>
+            
             <div class="lead-footer">
                 <small class="text-muted">Form: ${formulario.nome}</small>
             </div>
             <div class="lead-actions">
-                <button class="btn-action btn-edit" onclick="editarLead('${leadId}')" title="Editar">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn-action btn-whatsapp" onclick="abrirWhatsApp('${telefone}', '${nome}')" title="WhatsApp">
-                    <i class="fab fa-whatsapp"></i>
+                <button class="btn-whatsapp-main" onclick="chamarWhatsApp('${telefone}', '${nome}')" title="Chamar no WhatsApp">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
                 </button>
             </div>
         </div>
@@ -208,11 +271,369 @@ function editarLead(leadId) {
 }
 
 // Função para abrir WhatsApp
-function abrirWhatsApp(telefone, nome) {
+function chamarWhatsApp(telefone, nome) {
     const telefoneFormatado = telefone.replace(/\D/g, ''); // Remove caracteres não numéricos
     const mensagem = `Olá ${nome}! Vi que você demonstrou interesse em nossos serviços. Como posso te ajudar?`;
     const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, '_blank');
+}
+
+// Função para expandir card
+function expandirCard(leadId) {
+    const card = document.querySelector(`[data-lead-id="${leadId}"]`);
+    if (!card) return;
+    
+    // Buscar dados completos do lead
+    const nomeCompleto = card.querySelector('.lead-name').textContent;
+    const email = card.querySelector('.contact-text').textContent;
+    const telefone = card.querySelectorAll('.contact-text')[1].textContent;
+    const comentarios = JSON.parse(localStorage.getItem(`lead_comments_${leadId}`)) || [];
+    const posicaoAtual = card.closest('.crm-column').getAttribute('data-stage');
+    
+    // Criar modal expandido
+    const modalHTML = `
+        <div class="lead-modal-overlay" onclick="fecharModalExpandido()">
+            <div class="lead-modal-content" onclick="event.stopPropagation()">
+                <div class="modal-header">
+                    <h4>${nomeCompleto}</h4>
+                    <button class="btn-close-modal" onclick="fecharModalExpandido()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="lead-info-expanded">
+                        <div class="info-group">
+                            <label>Email:</label>
+                            <span>${email}</span>
+                        </div>
+                        <div class="info-group">
+                            <label>Telefone:</label>
+                            <span>${telefone}</span>
+                            <button class="btn-action btn-whatsapp-small" onclick="chamarWhatsApp('${telefone}', '${nomeCompleto}')" title="Chamar no WhatsApp">
+                                <i class="fab fa-whatsapp"></i> Chamar
+                            </button>
+                        </div>
+                        <div class="info-group">
+                            <label>Status Atual:</label>
+                            <span class="status-badge status-${posicaoAtual}">${obterNomeStatus(posicaoAtual)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="comments-section-expanded">
+                        <h5>Histórico de Comentários</h5>
+                        <div class="comments-list" id="commentsListModal">
+                            ${comentarios.length > 0 ? comentarios.map(comment => `
+                                <div class="comment-item-expanded">
+                                    <div class="comment-content">
+                                        <p>${comment.texto}</p>
+                                    </div>
+                                    <div class="comment-meta">
+                                        <span class="comment-author">👤 ${comment.usuario}</span>
+                                        <span class="comment-date">📅 ${comment.dataHora}</span>
+                                        <span class="comment-column">📍 ${obterNomeStatus(comment.coluna)}</span>
+                                    </div>
+                                </div>
+                            `).join('') : '<p class="no-comments">Nenhum comentário ainda.</p>'}
+                        </div>
+                        
+                        <div class="add-comment-section">
+                            <textarea id="modalCommentInput" placeholder="Adicionar novo comentário..." rows="3"></textarea>
+                            <button class="btn-add-comment-modal" onclick="adicionarComentarioModal('${leadId}')">
+                                <i class="fas fa-paper-plane"></i> Adicionar Comentário
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Função para fechar modal expandido
+function fecharModalExpandido() {
+    const modal = document.querySelector('.lead-modal-overlay');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Função para obter nome do status
+function obterNomeStatus(status) {
+    const statusMap = {
+        'entrou': 'Entrou!',
+        'agendou': 'Agendou',
+        'analisando': 'Analisando',
+        'fechou': 'Fechou!'
+    };
+    return statusMap[status] || status;
+}
+
+// Função para obter comentários de um lead
+function obterComentarios(leadId) {
+    return JSON.parse(localStorage.getItem(`lead_comments_${leadId}`)) || [];
+}
+
+// Função para adicionar comentário
+function adicionarComentario(leadId, textoPersonalizado = null) {
+    const card = document.querySelector(`[data-lead-id="${leadId}"]`);
+    let texto;
+    
+    if (textoPersonalizado) {
+        texto = textoPersonalizado.trim();
+    } else {
+        const textarea = card.querySelector('.comment-input');
+        if (!textarea) return;
+        texto = textarea.value.trim();
+    }
+    
+    if (!texto) return;
+    
+    // Obter informações do comentário
+    const agora = new Date();
+    const usuario = 'Usuário Atual'; // Aqui você pode pegar do sistema de login
+    const coluna = obterNomeStatus(card.closest('.crm-column').getAttribute('data-stage'));
+    
+    // Criar objeto do comentário
+    const comentario = {
+        id: Date.now(),
+        texto: texto,
+        timestamp: agora.getTime(),
+        usuario: usuario,
+        coluna: coluna
+    };
+    
+    // Salvar no localStorage
+    const comentarios = obterComentarios(leadId);
+    comentarios.push(comentario);
+    localStorage.setItem(`lead_comments_${leadId}`, JSON.stringify(comentarios));
+    
+    // Atualizar interface
+    if (!textoPersonalizado) {
+        const textarea = card.querySelector('.comment-input');
+        if (textarea) textarea.value = '';
+    }
+    
+    atualizarAreaComentarios(leadId, comentarios);
+}
+
+// Função para adicionar comentário no modal
+function adicionarComentarioModal(leadId) {
+    const textarea = document.getElementById('modalCommentInput');
+    const texto = textarea.value.trim();
+    
+    if (!texto) return;
+    
+    // Usar a mesma lógica da função principal
+    adicionarComentario(leadId);
+    
+    // Atualizar lista no modal
+    const comentarios = JSON.parse(localStorage.getItem(`lead_comments_${leadId}`)) || [];
+    const commentsList = document.getElementById('commentsListModal');
+    
+    if (comentarios.length > 0) {
+        commentsList.innerHTML = comentarios.map(comment => `
+            <div class="comment-item-expanded">
+                <div class="comment-content">
+                    <p>${comment.texto}</p>
+                </div>
+                <div class="comment-meta">
+                    <span class="comment-author">👤 ${comment.usuario}</span>
+                    <span class="comment-date">📅 ${comment.dataHora}</span>
+                    <span class="comment-column">📍 ${obterNomeStatus(comment.coluna)}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    textarea.value = '';
+}
+
+// Função para atualizar área de comentários no card
+function atualizarAreaComentarios(leadId, comentarios) {
+    const card = document.querySelector(`[data-lead-id="${leadId}"]`);
+    const commentsArea = card.querySelector('.lead-comments-area');
+    const ultimoComentario = comentarios.length > 0 ? comentarios[comentarios.length - 1] : null;
+    
+    // Atualizar apenas a seção de último comentário
+    const lastCommentSection = commentsArea.querySelector('.last-comment');
+    if (lastCommentSection) {
+        lastCommentSection.remove();
+    }
+    
+    if (ultimoComentario) {
+        const lastCommentHTML = `
+            <div class="last-comment">
+                <span class="comment-text">${ultimoComentario.texto}</span>
+                <i class="fas fa-info-circle comment-info-icon" 
+                   onclick="mostrarInfoComentario('${leadId}')" 
+                   title="Ver informações do comentário"></i>
+            </div>
+        `;
+        commentsArea.insertAdjacentHTML('beforeend', lastCommentHTML);
+    }
+}
+
+// Função para mostrar informações do comentário
+function mostrarInfoComentario(leadId) {
+    const comentarios = obterComentarios(leadId);
+    if (comentarios.length === 0) {
+        alert('Nenhum comentário encontrado para este lead.');
+        return;
+    }
+
+    const ultimoComentario = comentarios[comentarios.length - 1];
+    const data = new Date(ultimoComentario.timestamp);
+    const dataFormatada = data.toLocaleDateString('pt-BR');
+    const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    alert(`Informações do comentário:
+    
+👤 Usuário: ${ultimoComentario.usuario}
+📅 Data: ${dataFormatada}
+🕒 Hora: ${horaFormatada}
+📍 Coluna: ${ultimoComentario.coluna}
+📝 Total de comentários: ${comentarios.length}
+    
+💬 Comentário: "${ultimoComentario.texto}"`);
+}
+
+// Função para expandir card em modal
+function expandirCard(leadId) {
+    const leadData = window.leadsData?.find(lead => lead.id === leadId);
+    if (!leadData) {
+        console.error('Lead não encontrado');
+        return;
+    }
+
+    // Criar modal de expansão
+    const modalHTML = `
+        <div class="lead-modal-overlay" id="modal-${leadId}" onclick="fecharModal('${leadId}')">
+            <div class="lead-modal-content" onclick="event.stopPropagation()">
+                <div class="lead-modal-header">
+                    <h4>${leadData.respostas.find(r => r.campo === 'nome')?.valor || 'Nome não informado'}</h4>
+                    <button class="btn-close-modal" onclick="fecharModal('${leadId}')">&times;</button>
+                </div>
+                
+                <div class="lead-modal-body">
+                    <div class="lead-info-section">
+                        <h6>Informações de Contato</h6>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>📧 Email:</strong> ${leadData.respostas.find(r => r.campo === 'email')?.valor || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>📱 Telefone:</strong> ${leadData.respostas.find(r => r.campo === 'telefone')?.valor || 'Não informado'}
+                            </div>
+                            <div class="info-item">
+                                <strong>📅 Data do Lead:</strong> ${new Date(leadData.created_time).toLocaleDateString('pt-BR')}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lead-responses-section">
+                        <h6>Respostas do Formulário</h6>
+                        <div class="responses-grid">
+                            ${leadData.respostas.map(resposta => `
+                                <div class="response-item">
+                                    <strong>${resposta.campo}:</strong> ${resposta.valor}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <div class="lead-comments-section">
+                        <h6>💬 Comentários</h6>
+                        <div class="comments-list" id="comments-list-${leadId}">
+                            ${renderizarTodosComentarios(leadId)}
+                        </div>
+                        <div class="comment-input-section">
+                            <textarea id="modal-comment-${leadId}" class="comment-input" placeholder="Adicionar comentário..."></textarea>
+                            <button class="btn-add-comment" onclick="adicionarComentarioModal('${leadId}')" title="Adicionar comentário">
+                                <i class="fas fa-paper-plane"></i> Adicionar Comentário
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lead-modal-footer">
+                    <button class="btn-whatsapp-main" onclick="chamarWhatsApp('${leadData.respostas.find(r => r.campo === 'telefone')?.valor}', '${leadData.respostas.find(r => r.campo === 'nome')?.valor}')">
+                        <i class="fab fa-whatsapp"></i> WhatsApp
+                    </button>
+                    <button class="btn-secondary" onclick="fecharModal('${leadId}')">Fechar</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.style.overflow = 'hidden';
+}
+
+function fecharModal(leadId) {
+    const modal = document.getElementById(`modal-${leadId}`);
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = 'auto';
+    }
+}
+
+function renderizarTodosComentarios(leadId) {
+    const comentarios = obterComentarios(leadId);
+    if (comentarios.length === 0) {
+        return '<p class="no-comments">💭 Nenhum comentário ainda.</p>';
+    }
+
+    return comentarios.map(comentario => {
+        const data = new Date(comentario.timestamp);
+        const dataFormatada = data.toLocaleDateString('pt-BR');
+        const horaFormatada = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+        return `
+            <div class="comment-item">
+                <div class="comment-header">
+                    <strong>👤 ${comentario.usuario}</strong>
+                    <span class="comment-meta">📅 ${dataFormatada} às ${horaFormatada} • 📍 ${comentario.coluna}</span>
+                </div>
+                <div class="comment-text">${comentario.texto}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function adicionarComentarioModal(leadId) {
+    const textarea = document.getElementById(`modal-comment-${leadId}`);
+    const texto = textarea.value.trim();
+    
+    if (!texto) {
+        alert('Por favor, digite um comentário.');
+        return;
+    }
+
+    // Adicionar comentário
+    adicionarComentario(leadId, texto);
+    
+    // Limpar textarea
+    textarea.value = '';
+    
+    // Atualizar lista de comentários no modal
+    const commentsList = document.getElementById(`comments-list-${leadId}`);
+    commentsList.innerHTML = renderizarTodosComentarios(leadId);
+    
+    // Atualizar card na tela principal
+    carregarLeadsCRM();
+}
+
+// Função para handle do Enter no textarea
+function handleCommentKeyPress(event, leadId) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        adicionarComentario(leadId);
+    }
 }
 
 // Função para mostrar erro de carregamento
