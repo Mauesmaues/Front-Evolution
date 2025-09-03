@@ -15,7 +15,7 @@ app.use(session({
 
 // Middleware de autenticação para páginas protegidas
 app.use((req, res, next) => {
-  const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js'];
+  const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js', '/api/login'];
   if (publicPaths.includes(req.path) || req.path.startsWith('/api')) {
     return next();
   }

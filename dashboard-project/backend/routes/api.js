@@ -4,6 +4,7 @@ const router = express.Router();
 
 const EmpresaController = require('../controllers/EmpresaController');
 const usuarioController = require('../controllers/UsuarioController');
+const { carregarEmpresasPermitidas } = require('../controllers/PermissaoController');
 
 const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
@@ -14,8 +15,6 @@ router.post('/login', usuarioController.login);
 router.post('/criarUsuario', usuarioController.criarUsuario)
 router.get('/session-user', usuarioController.usuarioSecao);
 router.post('/sair', usuarioController.sair);
-
-
-
+router.get('/permission/:userId', carregarEmpresasPermitidas );
 
 module.exports = router;

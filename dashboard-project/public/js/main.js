@@ -1,4 +1,3 @@
-
 window.addEventListener('DOMContentLoaded', async function() {
 async function usuarioSession() {
   const response = await fetch('/api/session-user');
@@ -28,13 +27,12 @@ this.document.getElementById('sair').addEventListener('click', async function(ev
   window.location.href = '/login.html';
 
 });
-// Lógica JS para consumir API e atualizar UI
-
-// Substitua pelo ID real da conta
-const accountId = '537800105358529';
 
   try {
-    fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${accountId}/insights`)
+    accountId = await carregarAccountIdsPermitidos();
+
+    accountId.forEach(id => {
+      fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${id}/insights`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data && data.data.length > 0) {
@@ -72,9 +70,12 @@ const accountId = '537800105358529';
         document.getElementById('cpr').textContent = '-';
         console.error('Erro ao buscar insights:', err);
       });
+    })
   } catch (err) {
     console.error('Erro inesperado no carregamento de insights:', err);
   }
+
+    
   
   async function carregarEmpresasSelect() {
     try {

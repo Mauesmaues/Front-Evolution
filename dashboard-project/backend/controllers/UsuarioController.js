@@ -17,7 +17,6 @@ const UsuarioController = {
       const { email, password } = req.body;
 
       try {
-        // Buscar usuário pelo e-mail
         const { data: users, error } = await supabase
           .from('usuario')
           .select('*')
@@ -28,18 +27,15 @@ const UsuarioController = {
         }
 
         const user = (users && users.length > 0) ? users[0] : null;
-        console.log('Usuário encontrado:', user);
 
         if (!user) {
           return res.status(404).json({ mensagem: 'Usuário não encontrado.' });
         }
 
-        // Verificar password (supondo que esteja armazenada em texto plano — idealmente deveria estar criptografada)
         if (user.senha !== password) {
           return res.status(401).json({ mensagem: 'Senha incorreta.' });
         }
 
-        // Login bem-sucedido: salva usuário na sessão
         req.session.user = {
           id: user.id,
           nome: user.nome,
