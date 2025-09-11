@@ -1,21 +1,43 @@
 
 async function usuarioSession() {
-    const response = await fetch('/api/session-user');
-    const result = await response.json();
-    if(result.usuario) {
-      return result.usuario;
-    }else{
+    try {
+      const response = await fetch('/api/session-user');
+      
+      // Se não autenticado (401), redireciona para login
+      if (response.status === 401) {
+        console.log('Usuário não autenticado, redirecionando para login');
+        window.location.href = '/login.html';
+        return null;
+      }
+      
+      const result = await response.json();
+      if(result.usuario) {
+        return result.usuario;
+      }else{
+        return null;
+      }
+    } catch (error) {
+      console.error('Erro ao verificar sessão:', error);
+      // Em caso de erro, redireciona para login
+      window.location.href = '/login.html';
       return null;
     }
   }
 
 async function carregarEmpresasEMetricas() {
     try {
-      // 1. Buscar empresas do usuário logado
-      const resEmpresas = await fetch("/api/buscarEmpresas");
-      const resultado = await resEmpresas.json();
-  
-      const empresas = Array.isArray(resultado.data) ? resultado.data : [];
+      let empresas = [];
+      //buscar empresas permissionadas
+      let usuario = await usuarioSession();
+      if(usuario.permissao !== 'ADMIN') {
+        const resEmpresas = await fetch(`/api/permission/${usuario.id}`);
+        const resultadoPermissoes = await resEmpresas.json();
+        empresas = resultadoPermissoes.accountIds || [];
+      }else{
+        const resEmpresas = await fetch("/api/buscarEmpresas");
+        const resultado = await resEmpresas.json();
+        empresas = Array.isArray(resultado.data) ? resultado.data : [];
+      }
   
       // 2. Criar promessas para buscar métricas de cada empresa
       const promessas = empresas.map(async (emp) => {

@@ -4,7 +4,6 @@ const path = require('path');
 const session = require('express-session');
 const app = express();
 
-
 // Configuração de sessão
 app.use(session({
   secret: process.env.SESSION_SECRET || 'evolution_secret',
@@ -13,33 +12,47 @@ app.use(session({
   cookie: { secure: false } // true se usar HTTPS
 }));
 
-// Middleware de autenticação para páginas protegidas
-app.use((req, res, next) => {
-  const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js', '/api/login'];
-  if (publicPaths.includes(req.path) || req.path.startsWith('/api')) {
-    return next();
-  }
-  if (!req.session.user) {
-    return res.redirect('/login.html');
-  }
-  next();
-});
+// Middleware para parsing de JSON
+app.use(express.json());
 
 // Middleware para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, '../public')));
 
-
-app.use(express.json());
-
-// Rotas da API (opcional)
+// Rotas da API
 try {
   const apiRoutes = require('./routes/api');
   app.use('/api', apiRoutes);
+  console.log('✅ Rotas da API carregadas com sucesso');
 } catch (e) {
-  // Se não houver rotas, ignora
+  console.error('❌ Erro ao carregar rotas da API:', e.message);
 }
 
+// Middleware de autenticação para páginas protegidas
+app.use((req, res, next) => {
+  const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js', '/favicon.ico'];
+  
+  if (publicPaths.includes(req.path) || req.path.startsWith('/api') || req.path.startsWith('/css') || req.path.startsWith('/js') || req.path.startsWith('/img')) {
+    return next();
+  }
+  
+  if (!req.session || !req.session.user) {
+    return res.redirect('/login.html');
+  }
+  
+  next();
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+
+const server = app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+}).on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.log(`Porta ${PORT} já está em uso. Tentando porta ${PORT + 1}...`);
+    app.listen(PORT + 1, () => {
+      console.log(`Servidor rodando na porta ${PORT + 1}`);
+    });
+  } else {
+    console.error('Erro ao iniciar o servidor:', err);
+  }
 });

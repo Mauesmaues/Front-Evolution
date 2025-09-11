@@ -5,6 +5,14 @@ window.leadsData = [];
 async function obterUsuarioSessao() {
     try {
         const response = await fetch('/api/session-user');
+        
+        // Se não autenticado (401), redireciona para login
+        if (response.status === 401) {
+            console.log('Usuário não autenticado, redirecionando para login');
+            window.location.href = '/login.html';
+            return null;
+        }
+        
         const result = await response.json();
         if (result.usuario) {
             return result.usuario;
@@ -13,7 +21,9 @@ async function obterUsuarioSessao() {
         }
     } catch (error) {
         console.error('Erro ao obter usuário da sessão:', error);
-        return { nome: 'Usuário Anônimo' };
+        // Em caso de erro, redireciona para login
+        window.location.href = '/login.html';
+        return null;
     }
 }
 

@@ -1,4 +1,4 @@
-const supabase = require('../config/supabaseClient');
+const supabase = require('../utils/supabaseCliente');
 
 async function carregarEmpresasPermitidas(req, res) {
     try {
@@ -8,7 +8,7 @@ async function carregarEmpresasPermitidas(req, res) {
         let empresasPermitidas = [];
         
         const empresasResponse = await supabase
-            .from('usuarios_empresas')
+            .from('usuario_empresa')
             .select('empresa_id')
             .eq('usuario_id', userId);
         
@@ -40,7 +40,7 @@ async function carregarAccountIdsPermitidos(empresasPermitidas) {
         // Buscar todos os account_ids de uma só vez
         const accountIdsResponse = await supabase
             .from('empresas')
-            .select('account_id')
+            .select('contaDeAnuncio')
             .in('id', empresasPermitidas);
         
         if (accountIdsResponse.error) {
@@ -48,7 +48,7 @@ async function carregarAccountIdsPermitidos(empresasPermitidas) {
             return [];
         }
         
-        return accountIdsResponse.data.map(item => item.account_id);
+        return accountIdsResponse.data.map(item => item.contaDeAnuncio);
     } catch (error) {
         console.error('Erro em carregarAccountIdsPermitidos:', error);
         return [];
