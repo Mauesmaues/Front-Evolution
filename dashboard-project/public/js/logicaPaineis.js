@@ -3,6 +3,7 @@ window.addEventListener('DOMContentLoaded', function() {
 const painelMonitoramento = document.getElementById('painelMonitoramento');
 const painelAdministracao = document.getElementById('painelAdministracao');
 const painelCRM = document.getElementById('crmSection');
+const painelNotificacoes = document.getElementById('painelNotificacoes');
 
 //Painel administrção
 document.getElementById('administracao').addEventListener('click', function(ev) {
@@ -16,6 +17,9 @@ document.getElementById('administracao').addEventListener('click', function(ev) 
     painelCRM.dataset.theme = "default";
     painelMonitoramento.dataset.theme = "default";
     painelMonitoramento.style.setProperty('display', 'none');
+    painelNotificacoes.style.setProperty('display', 'none');
+    painelNotificacoes.dataset.theme = "default";
+
     carregarEmpresasCadastradas();
     refreshDados("cadastradas");
   }
@@ -33,6 +37,8 @@ document.getElementById('dashboard').addEventListener('click', function(ev) {
     painelAdministracao.dataset.theme = "default";
     painelCRM.style.setProperty('display', 'none');
     painelCRM.dataset.theme = "default";
+    painelNotificacoes.style.setProperty('display', 'none');
+    painelNotificacoes.dataset.theme = "default";
 
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
     document.getElementById('FormCadastroUsuario').style.display = 'none';
@@ -50,6 +56,8 @@ document.getElementById('crm').addEventListener('click', function(ev) {
     painelMonitoramento.dataset.theme = "default";
     painelAdministracao.style.setProperty('display', 'none');
     painelAdministracao.dataset.theme = "default";
+    painelNotificacoes.style.setProperty('display', 'none');
+    painelNotificacoes.dataset.theme = "default";
 
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
     document.getElementById('FormCadastroUsuario').style.display = 'none';
@@ -63,6 +71,22 @@ document.getElementById('crm').addEventListener('click', function(ev) {
         carregarLeadsCRM();
       }
     }, 100);
+  }
+});
+
+//Painel Notificações
+document.getElementById('Notificacoes').addEventListener('click', function(ev) {
+  ev.preventDefault();
+  console.log("função ativa");
+  if(painelNotificacoes.dataset.theme === "default") {
+    painelNotificacoes.dataset.theme = "ativo";
+    painelNotificacoes.style.setProperty('display', 'flex');
+    painelMonitoramento.style.setProperty('display', 'none');
+    painelMonitoramento.dataset.theme = "default";
+    painelAdministracao.style.setProperty('display', 'none');
+    painelAdministracao.dataset.theme = "default";
+    painelCRM.style.setProperty('display', 'none');
+    painelCRM.dataset.theme = "default";
   }
 });
 

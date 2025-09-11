@@ -27,6 +27,15 @@ try {
   console.error('❌ Erro ao carregar rotas da API:', e.message);
 }
 
+// Inicializar agendamentos de notificações
+try {
+  const NotificacaoScheduler = require('./schedulers/NotificacaoScheduler');
+  NotificacaoScheduler.iniciarAgendamentos();
+  console.log('✅ Agendamentos de notificações iniciados com sucesso');
+} catch (e) {
+  console.error('❌ Erro ao inicializar agendamentos:', e.message);
+}
+
 // Middleware de autenticação para páginas protegidas
 app.use((req, res, next) => {
   const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js', '/favicon.ico'];

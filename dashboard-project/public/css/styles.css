@@ -17,6 +17,14 @@
   animation: slideInRight 0.8s ease-out;
 }
 
+/* Formulário de notificação integrado ao painel */
+#FormCadastroNotificacao {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+}
+
 #FormCadastroEmpresa{
   height: 50vh;
 }
@@ -1803,6 +1811,114 @@ main {
   .lead-date {
     font-size: 9px;
   }
+}
+
+/* Estilo para checkboxes das notificações */
+.checkbox-container {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  background: var(--bg-card);
+}
+
+.form-check {
+  padding: 0.25rem 0;
+}
+
+.form-check-input {
+  margin-right: 0.5rem;
+  width: 1.1em;
+  height: 1.1em;
+  border: 2px solid var(--border);
+  border-radius: 3px;
+  background: var(--bg-primary);
+  transition: all 0.2s ease;
+}
+
+.form-check-input:checked {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.form-check-input:indeterminate {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  opacity: 0.7;
+}
+
+.form-check-label {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.form-check-label:hover {
+  color: var(--primary);
+}
+
+/* Sub-abas de notificações */
+#subAbasNotificacoes {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  height: 5vh;
+  width: 90%;
+  justify-content: space-around;
+}
+
+#subAbasNotificacoes .btnSubAba {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 40%;
+}
+
+#subAbasNotificacoes .btnSubAba:hover {
+  background: var(--primary-bg);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+#subAbasNotificacoes .btnSubAba.ativo {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Painel de notificações */
+#painelNotificacoes {
+  height: 100vh;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#conteudoSubAbaNotificacoes {
+  width: 100%;
+}
+
+#subAbaCadastroNotificacao,
+#subAbaListaNotificacoes {
+  width: 100%;
+}
+
+#subAbasNotificacoes .btnSubAba.ativo {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Mensagens de notificação */
+#mensagemNotificacao .alert {
+  border-radius: var(--radius);
+  font-size: 0.9rem;
 }
 
 /* Animações */

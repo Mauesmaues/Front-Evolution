@@ -23,6 +23,7 @@
         <li>Configurações</li>
         <li id = "administracao">Administracão</li>
         <li id="crm">CRM</li>
+        <li id="Notificacoes">Notificações <span id="badge" class="badge bg-danger">Conv</span></li>
         <li id="sair" style="color: red;">Sair</li>
 
       </ul>
@@ -193,6 +194,57 @@
                     </div>
                 </div>
           </div>
+
+      <div id="painelNotificacoes" data-theme="default" display="none">
+        <div id="subAbasNotificacoes">
+          <button class="btnSubAba" id="abaCadastroNotificacao">Cadastrar Notificação</button>
+          <button class="btnSubAba" id="abaListaNotificacoes">Lista de Notificações</button>
+        </div>
+
+        <div id="conteudoSubAbaNotificacoes">
+          <!-- Conteúdo da sub-aba Cadastro de Notificação -->
+          <div id="subAbaCadastroNotificacao">
+            <div id="FormCadastroNotificacao">
+              <h3>Cadastro de Notificação Diária</h3>
+              <div class="form-group">
+                <label for="nomeNotificacao" class="form-label">Nome da Notificação</label>
+                <input type="text" id="nomeNotificacao" class="inputFiltro" placeholder="Digite o nome da notificação" required>
+              </div>
+              <div class="form-group">
+                <label for="numeroDestinatario" class="form-label">Número do Destinatário</label>
+                <input type="tel" id="numeroDestinatario" class="inputFiltro" placeholder="(11) 99999-9999" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Empresas</label>
+                <div id="checkboxEmpresas" class="checkbox-container">
+                  <!-- Checkboxes das empresas serão carregados aqui via JS -->
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="horarioNotificacao" class="form-label">Horário de Envio</label>
+                <input type="time" id="horarioNotificacao" class="inputFiltro" value="09:00" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Status</label>
+                <div class="form-check">
+                  <input type="checkbox" id="notificacaoAtiva" class="form-check-input" checked>
+                  <label for="notificacaoAtiva" class="form-check-label">Notificação Ativa</label>
+                </div>
+              </div>
+              <button id="salvarNotificacao" class="btnFiltro aplicarFiltro">Salvar Notificação</button>
+            </div>
+          </div>
+          
+          <!-- Conteúdo da sub-aba Lista de Notificações -->
+          <div id="subAbaListaNotificacoes" style="display: none;">
+            <div id="listaNotificacoes">
+              <!-- Lista de notificações será carregada aqui -->
+            </div>
+          </div>
+        </div>
+
+        <div id="mensagemNotificacao" class="mt-3"></div>
+      </div>
     </div>
   </main>
 
@@ -201,5 +253,6 @@
   <script src="js/logicaPaineis.js"></script>
   <script src="js/crm.js"></script>
   <script src="js/painelDeMetricas.js"></script>
+  <script src="js/notificacoes.js"></script>
 </body>
 </html>
