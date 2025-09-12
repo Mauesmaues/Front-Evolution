@@ -48,6 +48,8 @@ function mostrarSubAbaNotificacao(tipo) {
 // Carregar empresas para checkboxes
 async function carregarEmpresasCheckbox() {
     try {
+        LoadingUtils.showContainer('checkboxEmpresas', 'Carregando empresas...');
+        
         const response = await fetch('/api/buscarEmpresas');
         const resultado = await response.json();
         const empresas = Array.isArray(resultado.data) ? resultado.data : [];
@@ -118,6 +120,9 @@ async function carregarEmpresasCheckbox() {
 document.getElementById('salvarNotificacao').addEventListener('click', async function(ev) {
     ev.preventDefault();
     
+    // Mostrar loading no botão
+    LoadingUtils.buttonLoading(this, true);
+    
     const nomeNotificacao = document.getElementById('nomeNotificacao').value;
     const numeroDestinatario = document.getElementById('numeroDestinatario').value;
     const horarioNotificacao = document.getElementById('horarioNotificacao').value;
@@ -131,16 +136,19 @@ document.getElementById('salvarNotificacao').addEventListener('click', async fun
     
     // Validações
     if (!nomeNotificacao.trim()) {
+        LoadingUtils.buttonLoading(this, false);
         mostrarMensagem('Por favor, insira o nome da notificação.', 'danger');
         return;
     }
     
     if (!numeroDestinatario.trim()) {
+        LoadingUtils.buttonLoading(this, false);
         mostrarMensagem('Por favor, insira o número do destinatário.', 'danger');
         return;
     }
     
     if (empresasSelecionadas.length === 0) {
+        LoadingUtils.buttonLoading(this, false);
         mostrarMensagem('Por favor, selecione pelo menos uma empresa.', 'danger');
         return;
     }
@@ -160,6 +168,8 @@ document.getElementById('salvarNotificacao').addEventListener('click', async fun
         
         const resultado = await response.json();
         
+        LoadingUtils.buttonLoading(this, false);
+        
         if (response.ok) {
             mostrarMensagem('Notificação cadastrada com sucesso!', 'success');
             limparFormulario();
@@ -176,6 +186,8 @@ document.getElementById('salvarNotificacao').addEventListener('click', async fun
 // Carregar lista de notificações
 async function carregarListaNotificacoes() {
     try {
+        LoadingUtils.showContainer('listaNotificacoes', 'Carregando notificações...');
+        
         const response = await fetch('/api/buscarNotificacoes');
         const resultado = await response.json();
         const notificacoes = Array.isArray(resultado.data) ? resultado.data : [];

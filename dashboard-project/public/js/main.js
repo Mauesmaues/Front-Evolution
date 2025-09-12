@@ -30,15 +30,27 @@ userSession.textContent = usuarioSessao?.nome || 'Usuário';
 
 this.document.getElementById('sair').addEventListener('click', async function(ev) {
   ev.preventDefault();
-  console.log("Sair clicado");
-  await fetch('/api/sair', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ action: 'logout' })
-  });
-  window.location.href = '/login.html';
+  
+  // Mostrar loading no botão
+  LoadingUtils.buttonLoading(this, true);
+  
+  try {
+    console.log("Sair clicado");
+    await fetch('/api/sair', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ action: 'logout' })
+    });
+    
+    LoadingUtils.buttonLoading(this, false);
+    window.location.href = '/login.html';
+  } catch (error) {
+    LoadingUtils.buttonLoading(this, false);
+    console.error('Erro ao fazer logout:', error);
+    alert('Erro ao sair do sistema');
+  }
 });
 
 try {

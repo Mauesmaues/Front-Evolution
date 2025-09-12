@@ -118,6 +118,8 @@ document.getElementById('abaEmpresas').addEventListener('click', function(ev){
 
 async function carregarEmpresasSelect() {
     try {
+      LoadingUtils.showOverlay('Carregando empresas...');
+      
       const response = await fetch('/api/buscarEmpresas', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
@@ -133,7 +135,10 @@ async function carregarEmpresasSelect() {
         option.textContent = empresa.nome; // ajuste conforme o nome da coluna
         select.appendChild(option);
       });
+      
+      LoadingUtils.hideOverlay();
     } catch (error) {
+      LoadingUtils.hideOverlay();
       console.error('Erro ao carregar empresas:', error);
     }
 }
@@ -175,6 +180,9 @@ document.getElementById('salvarEmpresa').addEventListener('click', async functio
     ev.preventDefault();
     console.log("função de salvar empresa ativa");
 
+    // Mostrar loading no botão
+    LoadingUtils.buttonLoading(this, true);
+
     let nome = document.getElementById('nomeEmpresa').value;
     let contaDeAnuncio = document.getElementById('idContaAnuncio').value;
 
@@ -188,18 +196,28 @@ document.getElementById('salvarEmpresa').addEventListener('click', async functio
     });
     const data = await response.json();
 
+    LoadingUtils.buttonLoading(this, false);
+
     if (data.error) {
       console.error('[MetaAdsService] Erro retornado pela API:', data.error);
-      // Apenas loga o erro, não lança para não parar o fluxo
+      alert('Erro ao salvar empresa: ' + data.error);
+    } else {
+      alert('Empresa salva com sucesso!');
     }
+    
     refreshDados("cadastradas");
     document.getElementById('FormCadastroEmpresa').style.display = 'none';
   } catch (error) {
+    LoadingUtils.buttonLoading(this, false);
     console.error('Erro ao salvar empresa:', error);
+    alert('Erro ao salvar empresa');
   }
 });
 
 async function carregarEmpresasCadastradas() {
+  // Mostrar loading no container das empresas
+  LoadingUtils.showContainer('subAbaEmpresas', 'Carregando empresas cadastradas...');
+  
   try {
     // 1. Buscar empresas do usuário logado
     const resEmpresas = await fetch("/api/buscarEmpresas");
@@ -240,7 +258,7 @@ async function carregarEmpresasCadastradas() {
     // 3. Aguardar todas as promessas de uma vez
     const dadosComMetricas = (await Promise.all(promessas)).filter(Boolean);
 
-    // 4. Renderizar tabela
+    // 4. Renderizar tabela (isso remove automaticamente o loading)
     renderTabelaEmpresas(dadosComMetricas);
 
   } catch (err) {
@@ -260,14 +278,15 @@ function renderTabelaEmpresas(dados) {
   }
 
   let tabela = `
-    <table class="tabela-empresas">
-      <thead>
-        <tr>
-          <th>Empresa</th>
-          <th>Saldo</th>
-        </tr>
-      </thead>
-      <tbody>
+    <div class="tabela-empresas-container">
+      <table class="tabela-empresas">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
   `;
 
   dados.forEach(emp => {
@@ -279,21 +298,16 @@ function renderTabelaEmpresas(dados) {
     `;
   });
 
-  tabela += `</tbody></table>`;
+  tabela += `</tbody></table></div>`;
   container.innerHTML = tabela;
 }
 
 function refreshDados(tipo = "cadastradas") {
-  const container = document.getElementById("subAbaEmpresas") 
-                    || document.getElementById("dropDownEmpresa");
-
-  if (container) {
-    container.innerHTML = "<p>🔄 Atualizando dados...</p>";
-  }
-
   if (tipo === "cadastradas") {
+    // O loading será mostrado dentro da função carregarEmpresasCadastradas
     carregarEmpresasCadastradas();
   } else if (tipo === "metricas") {
+    // O loading será mostrado dentro da função carregarEmpresasEMetricas
     carregarEmpresasEMetricas();
   }
 }

@@ -34,6 +34,9 @@ window.leadsData = [];
 // Função principal para carregar leads do CRM
 async function carregarLeadsCRM() {
     try {
+        // Mostrar loading overlay
+        LoadingUtils.showOverlay('Carregando leads do CRM...');
+        
         // Limpar colunas e reinicializar variáveis globais
         limparColunasEContadores();
         window.leadsGlobais = [];
@@ -63,9 +66,13 @@ async function carregarLeadsCRM() {
             // Atualizar contadores após carregar todos os leads
             atualizarContadoresColunas();
             
+            LoadingUtils.hideOverlay();
+            console.log(`✅ ${data.data.length} leads carregados com sucesso!`);
+            
             console.log(`${data.data.length} leads carregados com sucesso!`);
         }
     } catch (error) {
+        LoadingUtils.hideOverlay();
         console.warn('API externa indisponível, carregando dados de exemplo:', error);
         carregarLeadsExemplo();
     }

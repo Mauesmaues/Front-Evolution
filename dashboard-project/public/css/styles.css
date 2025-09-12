@@ -346,6 +346,84 @@ main {
   box-shadow: var(--shadow-md);
 }
 
+/* Estilo para filtro ativo */
+.btnFiltro.filtro-ativo {
+  background: var(--success);
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+  transform: translateY(-1px);
+  font-weight: 700;
+}
+
+.btnFiltro.filtro-ativo:hover {
+  background: var(--success-light);
+}
+
+/* Loading Spinner Azul Brilhante */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(2px);
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid rgba(59, 130, 246, 0.2);
+  border-left: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.8));
+}
+
+.loading-spinner-small {
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(59, 130, 246, 0.2);
+  border-left: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+  filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.7));
+  margin: 0 auto;
+}
+
+.loading-container {
+  position: relative;
+  min-height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.loading-text {
+  color: #3b82f6;
+  font-weight: 600;
+  margin-top: 15px;
+  font-size: 14px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .aplicarFiltro {
   background: var(--success);
   color: white;
@@ -379,17 +457,43 @@ main {
   background: var(--bg-card);
 }
 
-/* Estilos para tabelas modernas */
-.tabela-empresas {
+/* Estilos para tabelas modernas - Sobrescrevendo tabele.css */
+#subAbaEmpresas .tabela-empresas {
   width: 100%;
   border-collapse: collapse;
   background: var(--bg-card);
-  border-radius: var(--radius);
-  overflow: hidden;
   box-shadow: var(--shadow-md);
+  margin-bottom: 20px;
+  table-layout: auto;
 }
 
-.tabela-empresas th {
+#subAbaEmpresas .tabela-empresas-container {
+  width: 100%;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+}
+
+#subAbaEmpresas .tabela-empresas-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+#subAbaEmpresas .tabela-empresas-container::-webkit-scrollbar-track {
+  background: var(--bg-card-secondary);
+  border-radius: 4px;
+}
+
+#subAbaEmpresas .tabela-empresas-container::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+}
+
+#subAbaEmpresas .tabela-empresas-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
+
+#subAbaEmpresas .tabela-empresas th {
   background: var(--bg-card-secondary);
   color: var(--text-secondary);
   padding: 16px;
@@ -399,22 +503,28 @@ main {
   text-transform: uppercase;
   font-size: 12px;
   letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.tabela-empresas td {
+#subAbaEmpresas .tabela-empresas td {
   padding: 14px 16px;
   border-bottom: 1px solid var(--border-light);
   transition: all var(--trans);
   color: var(--text-primary);
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.tabela-empresas tr:hover {
+#subAbaEmpresas .tabela-empresas tr:hover {
   background: var(--bg-card-hover);
   transform: scale(1.001);
 }
 
-.tabela-empresas .valor {
+#subAbaEmpresas .tabela-empresas .valor {
   color: var(--success);
   font-weight: 700;
 }
@@ -655,7 +765,6 @@ main {
   height: calc(100% - 60px);
   width: 100%;
   padding: 15px;
-  overflow: hidden;
 }
 
 
