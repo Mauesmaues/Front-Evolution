@@ -1,4 +1,7 @@
 window.addEventListener('DOMContentLoaded', function() {
+// Verificar permissões do usuário e configurar interface
+verificarPermissoesEConfigurarInterface();
+
 //Seleção de painel
 const painelMonitoramento = document.getElementById('painelMonitoramento');
 const painelAdministracao = document.getElementById('painelAdministracao');
@@ -19,6 +22,8 @@ document.getElementById('administracao').addEventListener('click', function(ev) 
     painelMonitoramento.style.setProperty('display', 'none');
     painelNotificacoes.style.setProperty('display', 'none');
     painelNotificacoes.dataset.theme = "default";
+    document.getElementById('subAbaUsuario').style.display = 'none';
+    document.getElementById('subAbaEmpresas').style.display = 'flex';
 
     carregarEmpresasCadastradas();
     refreshDados("cadastradas");
@@ -120,6 +125,7 @@ async function carregarEmpresasSelect() {
     try {
       LoadingUtils.showOverlay('Carregando empresas...');
       
+      // A API /api/buscarEmpresas já considera as permissões do usuário logado
       const response = await fetch('/api/buscarEmpresas', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
@@ -129,10 +135,13 @@ async function carregarEmpresasSelect() {
       const empresas = Array.isArray(resultado.data) ? resultado.data : [];
 
       const select = document.getElementById('empresaSelect');
+      // Limpar opções existentes
+      select.innerHTML = '<option value="">Selecione uma empresa</option>';
+      
       empresas.forEach(empresa => {
         const option = document.createElement('option');
         option.value = empresa.id;
-        option.textContent = empresa.nome; // ajuste conforme o nome da coluna
+        option.textContent = empresa.nome;
         select.appendChild(option);
       });
       
@@ -144,11 +153,73 @@ async function carregarEmpresasSelect() {
 }
 
 const PermissaoEnum = {
-    ADMIN: 'adm',
-    GESTOR: 'gestor',
-    DESIGNER: 'designer',
-    USUARIO: 'usuario'
+    ADMIN: 'ADMIN',
+    GESTOR: 'GESTOR',
+    USER: 'USER'
   };
+
+// Função para verificar permissões e configurar interface
+async function verificarPermissoesEConfigurarInterface() {
+  try {
+    const response = await fetch('/api/session-user');
+    if (response.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    const { usuario } = await response.json();
+    if (!usuario) {
+      window.location.href = '/login.html';
+      return;
+    }
+
+    // Configurar interface baseado na permissão
+    configurarInterfacePorPermissao(usuario.permissao);
+    
+  } catch (error) {
+    console.error('Erro ao verificar permissões:', error);
+    window.location.href = '/login.html';
+  }
+}
+
+// Função para configurar interface baseado na permissão
+function configurarInterfacePorPermissao(permissao) {
+  const administracaoLi = document.getElementById('administracao');
+  const subAbasAdmin = document.getElementById('subAbasAdmin');
+  const btnAdicionarSubAbaAdmin = document.getElementById('btnAdicionarSubAbaAdmin');
+  const notificacoesLi = document.getElementById('Notificacoes');
+  
+  if (permissao === 'USER') {
+    // USER: Ocultar painel de administração e notificações
+    if (administracaoLi) {
+      administracaoLi.style.display = 'none';
+    }
+    if (notificacoesLi) {
+      notificacoesLi.style.display = 'none';
+    }
+  } else if (permissao === 'GESTOR') {
+    // GESTOR: Mostrar administração e notificações, mas ocultar criação de usuários
+    if (administracaoLi) {
+      administracaoLi.style.display = 'block';
+    }
+    if (notificacoesLi) {
+      notificacoesLi.style.display = 'block';
+    }
+    // Ocultar aba de usuários para gestores
+    const abaUsuario = document.getElementById('abaUsuario');
+    if (abaUsuario) {
+      abaUsuario.style.display = 'none';
+    }
+  } else if (permissao === 'ADMIN') {
+    // ADMIN: Acesso total
+    if (administracaoLi) {
+      administracaoLi.style.display = 'block';
+    }
+    if (notificacoesLi) {
+      notificacoesLi.style.display = 'block';
+    }
+  }
+}
 
   function carregarPermissoes() {
     const select = document.getElementById('permissaoSelect');
@@ -219,13 +290,26 @@ async function carregarEmpresasCadastradas() {
   LoadingUtils.showContainer('subAbaEmpresas', 'Carregando empresas cadastradas...');
   
   try {
-    // 1. Buscar empresas do usuário logado
+    // 1. Verificar se há usuário logado
+    const usuarioResponse = await fetch('/api/session-user');
+    if (usuarioResponse.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    const { usuario } = await usuarioResponse.json();
+    if (!usuario) {
+      window.location.href = '/login.html';
+      return;
+    }
+
+    // 2. Buscar empresas baseado na permissão do usuário
     const resEmpresas = await fetch("/api/buscarEmpresas");
     const resultado = await resEmpresas.json();
 
     const empresas = Array.isArray(resultado.data) ? resultado.data : [];
 
-    // 2. Criar promessas para cada empresa
+    // 3. Criar promessas para cada empresa
     const promessas = empresas.map(async (emp) => {
       try {
         const [resMetrica, resSaldo] = await Promise.all([
@@ -255,10 +339,10 @@ async function carregarEmpresasCadastradas() {
       }
     });
 
-    // 3. Aguardar todas as promessas de uma vez
+    // 4. Aguardar todas as promessas de uma vez
     const dadosComMetricas = (await Promise.all(promessas)).filter(Boolean);
 
-    // 4. Renderizar tabela (isso remove automaticamente o loading)
+    // 5. Renderizar tabela (isso remove automaticamente o loading)
     renderTabelaEmpresas(dadosComMetricas);
 
   } catch (err) {

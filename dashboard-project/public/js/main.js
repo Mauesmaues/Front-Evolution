@@ -56,52 +56,75 @@ this.document.getElementById('sair').addEventListener('click', async function(ev
 try {
     let usuario = await usuarioSession();
     if (usuario && usuario.id) {
-      const response = await fetch('/api/permission/' + usuario.id);
-      const result = await response.json();
-      const accountIds = result.accountIds || [];
+      // Buscar dados baseado na permissão do usuário
+      let accountIds = [];
+      
+      if (usuario.permissao === 'USER') {
+        // USER: apenas contas vinculadas
+        const response = await fetch('/api/permission/' + usuario.id);
+        const result = await response.json();
+        accountIds = result.accountIds || [];
+      } else if (usuario.permissao === 'ADMIN' || usuario.permissao === 'GESTOR') {
+        // ADMIN e GESTOR: todas as contas
+        const empresasResponse = await fetch('/api/buscarEmpresas');
+        const empresasResult = await empresasResponse.json();
+        if (empresasResult.success && empresasResult.data) {
+          accountIds = empresasResult.data.map(empresa => empresa.contaDeAnuncio);
+        }
+      }
       
       console.log('Account IDs permitidos:', accountIds);
       
-      accountIds.forEach(id => {
-        fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${id}/insights`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success && data.data && data.data.length > 0) {
-            const insight = data.data[0];
-            document.getElementById('cliques').innerText = parseInt(insight.cliques).toLocaleString();
-            document.getElementById('cliques').style.color = 'black';
-            document.getElementById('impressoes').innerText = parseInt(insight.impressoes).toLocaleString();
-            document.getElementById('impressoes').style.color = 'black';
-            document.getElementById('alcance').innerText = parseInt(insight.alcance).toLocaleString();
-            document.getElementById('alcance').style.color = 'black';
-            document.getElementById('gasto').innerText = parseFloat(insight.gasto).toLocaleString();
-            document.getElementById('ctr').innerText = parseFloat(insight.ctr).toFixed(2) + '%';
-            document.getElementById('ctr').style.color = 'black';
-            document.getElementById('cpc').innerText = parseFloat(insight.cpc).toLocaleString();
-            document.getElementById('cpc').style.color = 'black';
-            document.getElementById('cpr').innerText = parseFloat(insight.cpr).toLocaleString();
-            document.getElementById('cpr').style.color = 'black';
-          } else {
-            document.getElementById('cliques').textContent = '-';
-            document.getElementById('impressoes').textContent = '-';
-            document.getElementById('alcance').textContent = '-';
-            document.getElementById('gasto').textContent = '-';
-            document.getElementById('ctr').textContent = '-';
-            document.getElementById('cpc').textContent = '-';
-            document.getElementById('cpr').textContent = '-';
-          }
-        })
-        .catch(err => {
-          document.getElementById('cliques').textContent = '-';
-          document.getElementById('impressoes').textContent = '-';
-          document.getElementById('alcance').textContent = '-';
-          document.getElementById('gasto').textContent = '-';
-          document.getElementById('ctr').textContent = '-';
-          document.getElementById('cpc').textContent = '-';
-          document.getElementById('cpr').textContent = '-';
-          console.error('Erro ao buscar insights:', err);
-        });
-      });
+      // Agregar métricas de todas as contas permitidas
+      let totalCliques = 0, totalImpressoes = 0, totalAlcance = 0, totalGasto = 0;
+      let totalCtr = 0, totalCpc = 0, totalCpr = 0, contadorContas = 0;
+      
+      const promessas = accountIds.map(id => 
+        fetch(`http://localhost:3001/api/v1/metrics/account/${id}/insights`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.data && data.data.length > 0) {
+              const insight = data.data[0];
+              totalCliques += parseInt(insight.cliques) || 0;
+              totalImpressoes += parseInt(insight.impressoes) || 0;
+              totalAlcance += parseInt(insight.alcance) || 0;
+              totalGasto += parseFloat(insight.gasto) || 0;
+              totalCtr += parseFloat(insight.ctr) || 0;
+              totalCpc += parseFloat(insight.cpc) || 0;
+              totalCpr += parseFloat(insight.cpr) || 0;
+              contadorContas++;
+            }
+          })
+          .catch(err => console.error(`Erro ao buscar insights da conta ${id}:`, err))
+      );
+      
+      await Promise.all(promessas);
+      
+      // Atualizar interface com totais
+      if (contadorContas > 0) {
+        document.getElementById('cliques').innerText = totalCliques.toLocaleString();
+        document.getElementById('cliques').style.color = 'black';
+        document.getElementById('impressoes').innerText = totalImpressoes.toLocaleString();
+        document.getElementById('impressoes').style.color = 'black';
+        document.getElementById('alcance').innerText = totalAlcance.toLocaleString();
+        document.getElementById('alcance').style.color = 'black';
+        document.getElementById('gasto').innerText = totalGasto.toLocaleString();
+        document.getElementById('ctr').innerText = (totalCtr / contadorContas).toFixed(2) + '%';
+        document.getElementById('ctr').style.color = 'black';
+        document.getElementById('cpc').innerText = (totalCpc / contadorContas).toLocaleString();
+        document.getElementById('cpc').style.color = 'black';
+        document.getElementById('cpr').innerText = (totalCpr / contadorContas).toLocaleString();
+        document.getElementById('cpr').style.color = 'black';
+      } else {
+        // Sem dados disponíveis
+        document.getElementById('cliques').textContent = '-';
+        document.getElementById('impressoes').textContent = '-';
+        document.getElementById('alcance').textContent = '-';
+        document.getElementById('gasto').textContent = '-';
+        document.getElementById('ctr').textContent = '-';
+        document.getElementById('cpc').textContent = '-';
+        document.getElementById('cpr').textContent = '-';
+      }
     } else {
       console.log('Usuário não encontrado ou sem ID');
     }
@@ -111,6 +134,7 @@ try {
   
   async function carregarEmpresasSelect() {
     try {
+      // A API /api/buscarEmpresas já considera as permissões do usuário logado
       const response = await fetch('/api/buscarEmpresas', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
@@ -120,10 +144,15 @@ try {
       const empresas = Array.isArray(resultado.data) ? resultado.data : [];
 
       const select = document.getElementById('empresaFiltro');
+      // Limpar opções existentes (exceto "Todas as empresas")
+      const opcaoTodas = select.querySelector('option[value="todas"]');
+      select.innerHTML = '';
+      if (opcaoTodas) select.appendChild(opcaoTodas);
+      
       empresas.forEach(empresa => {
         const option = document.createElement('option');
         option.value = empresa.id;
-        option.textContent = empresa.nome; // ajuste conforme o nome da coluna
+        option.textContent = empresa.nome;
         select.appendChild(option);
       });
     } catch (error) {

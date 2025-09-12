@@ -4,13 +4,31 @@ const supabase = require('../utils/supabaseCliente');
 const responseFormatter = require('../utils/responseFormatter');
 
 const UsuarioController = {
-  criarUsuario: (req, res) => {
-    const { nome, email, senha, permissao, empresas } = req.body;
-    if (!Object.values(PermissaoEnum).includes(permissao)) {
-      return res.status(400).json({ erro: 'Permissão inválida.' });
+  criarUsuario: async (req, res) => {
+    try {
+      const { nome, email, senha, permissao, empresas } = req.body;
+      
+      // Validação dos campos obrigatórios
+      if (!nome || !email || !senha || !permissao) {
+        return res.status(400).json({ erro: 'Todos os campos obrigatórios devem ser preenchidos.' });
+      }
+      
+      // Validação da permissão
+      if (!Object.values(PermissaoEnum).includes(permissao)) {
+        return res.status(400).json({ erro: 'Permissão inválida.' });
+      }
+      
+      // Validação de empresas para usuários não admin
+      if (permissao !== 'ADMIN' && (!empresas || empresas.length === 0)) {
+        return res.status(400).json({ erro: 'Usuários não administradores devem ter pelo menos uma empresa associada.' });
+      }
+      
+      const usuario = await usuarioDAO.criar({ nome, email, senha, permissao, empresas });
+      res.status(201).json({ success: true, data: usuario, mensagem: 'Usuário criado com sucesso!' });
+    } catch (error) {
+      console.error('Erro ao criar usuário:', error);
+      res.status(500).json({ erro: 'Erro interno do servidor: ' + error.message });
     }
-    const usuario = usuarioDAO.criar({ nome, email, senha, permissao, empresas });
-    res.status(201).json(usuario);
   },
 
     login: async (req, res) => {

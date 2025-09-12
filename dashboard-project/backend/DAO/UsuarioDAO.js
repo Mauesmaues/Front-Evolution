@@ -3,18 +3,44 @@ const supabase = require('../utils/supabaseCliente');
 
 class UsuarioDAO {
 
+  // Cria um novo usuário e associa empresas se necessário
   async criar(usuarioData) {
-    try{
-        const usuario = new Usuario(usuarioData);
-        const {data, error} = await supabase
-                    .from('usuario')
-                    .insert(usuario)
-                    .single();
-        res.status(201).json(responseFormatter.success(data));
+    try {
+      // Instancia o modelo de usuário
+      const usuario = new Usuario(usuarioData);
 
-        if (error) throw error;
-    }catch(error){
-        res.status(500).json(responseFormatter.error('Erro ao criar empresa', error));
+      // Formata os dados para inserir no banco
+      const usuarioFormatter = {
+        nome: usuario.nome,
+        email: usuario.email,
+        senha: usuario.senha,
+        permissao: usuario.permissao,
+      };
+
+      // Insere o usuário na tabela 'usuario'
+      const { data, error } = await supabase
+        .from('usuario')
+        .insert(usuarioFormatter)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Se o usuário não for admin, associa empresas
+      if (usuario.permissao !== 'ADMIN' && usuarioData.empresas) {
+        for (const empresaId of usuarioData.empresas) {
+          const { error: relError } = await supabase
+            .from('usuario_empresa')
+            .insert({ usuario_id: data.id, empresa_id: empresaId });
+          if (relError) throw relError;
+        }
+      }
+
+      // Retorna os dados do usuário criado
+      return data;
+    } catch (error) {
+      // Lança erro com mensagem personalizada
+      throw new Error(`Erro ao criar usuario: ${error.message}`);
     }
   }
 

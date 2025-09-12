@@ -115,17 +115,29 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
     
     try {
       let empresas = [];
-      //buscar empresas permissionadas
+      // Buscar empresas baseado na permissão do usuário
       let usuario = await usuarioSession();
-      if(usuario.permissao !== 'ADMIN') {
-        const resEmpresas = await fetch(`/api/permission/${usuario.id}`);
-        const resultadoPermissoes = await resEmpresas.json();
-        empresas = resultadoPermissoes.accountIds || [];
-      }else{
+      console.log('Usuário logado:', usuario);
+      
+      if (usuario.permissao === 'USER') {
+        // USER: buscar empresas vinculadas (não apenas accountIds)
         const resEmpresas = await fetch("/api/buscarEmpresas");
         const resultado = await resEmpresas.json();
-        empresas = Array.isArray(resultado.data) ? resultado.data : [];
+        console.log('Resultado buscarEmpresas para USER:', resultado);
+        if (resultado.success && resultado.data) {
+          empresas = resultado.data;
+        }
+      } else if (usuario.permissao === 'ADMIN' || usuario.permissao === 'GESTOR') {
+        // ADMIN e GESTOR: todas as empresas
+        const resEmpresas = await fetch("/api/buscarEmpresas");
+        const resultado = await resEmpresas.json();
+        console.log('Resultado buscarEmpresas para ADMIN/GESTOR:', resultado);
+        if (resultado.success && resultado.data) {
+          empresas = resultado.data;
+        }
       }
+
+      console.log('Empresas carregadas:', empresas);
 
       // Armazenar empresas globalmente para uso nos filtros
       empresasGlobais = empresas;
@@ -136,6 +148,8 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
         empresasFiltradas = empresas.filter(emp => emp.id == empresaSelecionada);
       }
 
+      console.log('Empresas filtradas:', empresasFiltradas);
+
       // Definir filtro de data
       const filtro = filtroData || obterFiltroData(filtroAtivo);
       console.log('Aplicando filtro:', filtro);
@@ -143,8 +157,14 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
       // 2. Criar promessas para buscar métricas de cada empresa
       const promessas = empresasFiltradas.map(async (emp) => {
         try {
+          // Verificar se a empresa tem contaDeAnuncio válida
+          if (!emp || !emp.contaDeAnuncio) {
+            console.error(`Empresa inválida ou sem contaDeAnuncio:`, emp);
+            return null;
+          }
+
           // Construir URL com ou sem filtro de data
-          let url = `http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}`;
+          let url = `http://http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}`;
           if (filtro) {
             url += `/${filtro}`;
           }
@@ -152,7 +172,24 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
 
           console.log(`Buscando métricas para ${emp.nome}:`, url);
 
-          const resMetrica = await fetch(url);
+          let resMetrica = await fetch(url);
+          console.log(`Status da resposta para ${emp.nome}:`, resMetrica.status);
+          
+          // Se der erro 500 com filtro de data, tentar sem filtro
+          if (!resMetrica.ok && resMetrica.status === 500 && filtro) {
+            console.warn(`Erro 500 com filtro para ${emp.nome}, tentando sem filtro...`);
+            const urlSemFiltro = `http://http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`;
+            resMetrica = await fetch(urlSemFiltro);
+            console.log(`Status da resposta sem filtro para ${emp.nome}:`, resMetrica.status);
+          }
+          
+          if (!resMetrica.ok) {
+            console.error(`Erro ${resMetrica.status} para ${emp.nome}:`, resMetrica.statusText);
+            const errorText = await resMetrica.text();
+            console.error(`Detalhes do erro:`, errorText);
+            return null;
+          }
+          
           const metricas = await resMetrica.json();
           console.log(`Resposta da API para ${emp.nome}:`, metricas);
   

@@ -1,8 +1,7 @@
 const PermissaoEnum = Object.freeze({
-  ADMIN: 'adm',
-  GESTOR: 'gestor',
-  DESIGNER: 'designer',
-  USUARIO: 'usuario'
+  ADMIN: 'ADMIN',
+  GESTOR: 'GESTOR', 
+  USER: 'USER'
 });
 
 module.exports = PermissaoEnum;

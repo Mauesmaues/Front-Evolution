@@ -221,7 +221,7 @@ async function carregarListaNotificacoes() {
             html += `
                 <tr>
                     <td>${notificacao.nome}</td>
-                    <td>${notificacao.numeroDestinatario}</td>
+                    <td>${parseInt(notificacao.numeroDestinatario)}</td>
                     <td>${notificacao.horario}</td>
                     <td>${status}</td>
                     <td>
