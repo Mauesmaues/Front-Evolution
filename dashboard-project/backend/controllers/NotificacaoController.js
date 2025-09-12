@@ -85,8 +85,6 @@ class NotificacaoController {
             )
           )
         `)
-        .eq('usuario_id', req.session.user.id)
-        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Erro ao buscar notificações:', error);
@@ -212,10 +210,12 @@ class NotificacaoController {
                     .select(`*`)
                     .eq('id', empresaNotifica.data[j].empresa_id) 
                 
-                if (contaDeAnuncio.data && contaDeAnuncio.data[0] && contaDeAnuncio.data[0].contaDeAnuncio) {
-                    const conta = contaDeAnuncio.data[0].contaDeAnuncio;
+                if(contaDeAnuncio.data && contaDeAnuncio.data[j] && contaDeAnuncio.data[j].contaDeAnuncio){
+                    const conta = contaDeAnuncio.data[j].contaDeAnuncio;
                     contaDeAnuncioArray.push(conta);
-                    
+                }
+
+                if (contaDeAnuncio.data && contaDeAnuncio.data[j] && contaDeAnuncio.data[j].contaDeAnuncio) {
                     try {
                         // Usar a conta específica da empresa em vez de hardcoded
                         const conversoes = await fetch(`https://graph.facebook.com/v23.0/act_${conta}/insights?fields=actions&time_range={"since":"${today}","until":"${today}"}&access_token=EAAKMZBbIAoCoBPJXG9kL2JUyS6WBU8ZADqX17cQwt7HqhUM6gaDmjy51ZCQUB8mNbD3qPqGdvb1BfZA7NAcm6zZBCvKl34d6yO0hOIeSmb3WKjaVtlmeZBfrTRZCTh95780p249AyttHrmTQRNUMpL81qh9kk0DhHzgaPBOaVpkg22fETWMI3TZCJZBgD0wZCtnoxx9ZCttI28ZD`);
@@ -250,7 +250,7 @@ class NotificacaoController {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        telefone: 41996435603,
+                        telefone: numero,
                         nome: nome,
                         mensagem: msg
                     })
