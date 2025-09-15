@@ -312,16 +312,21 @@ async function carregarEmpresasCadastradas() {
     // 3. Criar promessas para cada empresa
     const promessas = empresas.map(async (emp) => {
       try {
+        console.log(`Processando empresa:`, emp);
+        
         const [resMetrica, resSaldo] = await Promise.all([
-          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
-          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
+          fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
+          fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
         ]);
 
         const metricas = await resMetrica.json();
         const saldo = await resSaldo.json();
+        
+        console.log(`Métricas para ${emp.nome}:`, metricas);
+        console.log(`Saldo para ${emp.nome}:`, saldo);
 
         if (metricas?.data?.length > 0) {
-          return {
+          const resultado = {
             empresa: emp.nome,
             cliques: metricas.data[0].cliques || 0,
             impressoes: metricas.data[0].impressoes || 0,
@@ -332,6 +337,8 @@ async function carregarEmpresasCadastradas() {
             cpr: metricas.data[0].cpr || 0,
             saldo: saldo?.data?.saldo || 0,
           };
+          console.log(`Resultado final para ${emp.nome}:`, resultado);
+          return resultado;
         }
       } catch (err) {
         console.error(`Erro ao buscar métricas da empresa ${emp.nome}:`, err);

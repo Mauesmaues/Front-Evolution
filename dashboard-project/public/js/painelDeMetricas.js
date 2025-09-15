@@ -164,7 +164,7 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
           }
 
           // Construir URL com ou sem filtro de data
-          let url = `http://http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}`;
+          let url = `http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}`;
           if (filtro) {
             url += `/${filtro}`;
           }
@@ -178,7 +178,7 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
           // Se der erro 500 com filtro de data, tentar sem filtro
           if (!resMetrica.ok && resMetrica.status === 500 && filtro) {
             console.warn(`Erro 500 com filtro para ${emp.nome}, tentando sem filtro...`);
-            const urlSemFiltro = `http://http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`;
+            const urlSemFiltro = `http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`;
             resMetrica = await fetch(urlSemFiltro);
             console.log(`Status da resposta sem filtro para ${emp.nome}:`, resMetrica.status);
           }
