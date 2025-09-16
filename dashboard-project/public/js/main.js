@@ -72,61 +72,6 @@ try {
           accountIds = empresasResult.data.map(empresa => empresa.contaDeAnuncio);
         }
       }
-      
-      console.log('Account IDs permitidos:', accountIds);
-      
-      // Agregar métricas de todas as contas permitidas
-      let totalCliques = 0, totalImpressoes = 0, totalAlcance = 0, totalGasto = 0;
-      let totalCtr = 0, totalCpc = 0, totalCpr = 0, contadorContas = 0;
-      
-      const promessas = accountIds.map(id => 
-        fetch(`http://localhost:3001/api/v1/metrics/account/${id}/insights`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.data && data.data.length > 0) {
-              const insight = data.data[0];
-              totalCliques += parseInt(insight.cliques) || 0;
-              totalImpressoes += parseInt(insight.impressoes) || 0;
-              totalAlcance += parseInt(insight.alcance) || 0;
-              totalGasto += parseFloat(insight.gasto) || 0;
-              totalCtr += parseFloat(insight.ctr) || 0;
-              totalCpc += parseFloat(insight.cpc) || 0;
-              totalCpr += parseFloat(insight.cpr) || 0;
-              contadorContas++;
-            }
-          })
-          .catch(err => console.error(`Erro ao buscar insights da conta ${id}:`, err))
-      );
-      
-      await Promise.all(promessas);
-      
-      // Atualizar interface com totais
-      if (contadorContas > 0) {
-        document.getElementById('cliques').innerText = totalCliques.toLocaleString();
-        document.getElementById('cliques').style.color = 'black';
-        document.getElementById('impressoes').innerText = totalImpressoes.toLocaleString();
-        document.getElementById('impressoes').style.color = 'black';
-        document.getElementById('alcance').innerText = totalAlcance.toLocaleString();
-        document.getElementById('alcance').style.color = 'black';
-        document.getElementById('gasto').innerText = totalGasto.toLocaleString();
-        document.getElementById('ctr').innerText = (totalCtr / contadorContas).toFixed(2) + '%';
-        document.getElementById('ctr').style.color = 'black';
-        document.getElementById('cpc').innerText = (totalCpc / contadorContas).toLocaleString();
-        document.getElementById('cpc').style.color = 'black';
-        document.getElementById('cpr').innerText = (totalCpr / contadorContas).toLocaleString();
-        document.getElementById('cpr').style.color = 'black';
-      } else {
-        // Sem dados disponíveis
-        document.getElementById('cliques').textContent = '-';
-        document.getElementById('impressoes').textContent = '-';
-        document.getElementById('alcance').textContent = '-';
-        document.getElementById('gasto').textContent = '-';
-        document.getElementById('ctr').textContent = '-';
-        document.getElementById('cpc').textContent = '-';
-        document.getElementById('cpr').textContent = '-';
-      }
-    } else {
-      console.log('Usuário não encontrado ou sem ID');
     }
   } catch (err) {
     console.error('Erro inesperado no carregamento de insights:', err);

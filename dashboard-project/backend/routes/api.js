@@ -12,9 +12,15 @@ const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
 
 router.post('/criarEmpresa', EmpresaController.create);
-router.get('/buscarEmpresas', EmpresaController.buscarEmpresas)
+router.get('/buscarEmpresas', EmpresaController.buscarEmpresas);
+router.put('/atualizarEmpresa/:id', EmpresaController.atualizarEmpresa);
+router.delete('/excluirEmpresa/:id', EmpresaController.excluirEmpresa);
 router.post('/login', usuarioController.login);
 router.post('/criarUsuario', usuarioController.criarUsuario)
+router.get('/listarUsuarios', usuarioController.listarUsuarios);
+router.put('/atualizarUsuario/:id', usuarioController.atualizarUsuario);
+router.delete('/removerUsuario/:id', usuarioController.removerUsuario);
+router.post('/adicionarEmpresaUsuario', usuarioController.adicionarEmpresaAoUsuario);
 router.get('/session-user', usuarioController.usuarioSecao);
 router.post('/sair', usuarioController.sair);
 router.get('/permission/:userId', carregarEmpresasPermitidas );

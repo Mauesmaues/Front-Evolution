@@ -6,11 +6,11 @@ class NotificacaoScheduler {
     static iniciarAgendamentos() {
         console.log('🕐 Iniciando agendamentos de notificações...');
         
-        // Executa todos os dias às 18:00 (18h)
+        // Executa todos os dias às 9:30 da manhã
         // Formato: segundo minuto hora dia mês dia-da-semana
-        // '0 0 18 * * *' = 0 segundos, 0 minutos, 18 horas, todos os dias, todos os meses, todos os dias da semana
-        cron.schedule('0 0 18 * * *', async () => {
-            console.log('⏰ Executando envio de notificações diárias às 18:00');
+        // '0 30 9 * * *' = 0 segundos, 30 minutos, 9 horas, todos os dias, todos os meses, todos os dias da semana
+        cron.schedule('0 39 17 * * *', async () => {
+            console.log('⏰ Executando envio de notificações diárias às 17:39');
             
             try {
                 // Criar um objeto mock de request e response
@@ -37,7 +37,7 @@ class NotificacaoScheduler {
             timezone: "America/Sao_Paulo" // Fuso horário do Brasil
         });
         
-        console.log('✅ Agendamento configurado para 18:00 todos os dias');
+        console.log('✅ Agendamento configurado para 17:39 todos os dias');
     }
     
     // Método para testar o agendamento (executa imediatamente)

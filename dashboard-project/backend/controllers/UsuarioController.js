@@ -77,37 +77,73 @@ const UsuarioController = {
         }
     },
 
-  listarUsuarios: (req, res) => {
-    const usuarios = usuarioDAO.listar();
-    res.json(usuarios);
+  listarUsuarios: async (req, res) => {
+    try {
+      const usuarios = await usuarioDAO.listar();
+      res.json({ success: true, data: usuarios, error: null });
+    } catch (error) {
+      console.error('Erro ao listar usuários:', error);
+      res.status(500).json({ success: false, data: null, error: error.message });
+    }
   },
 
-  buscarUsuarioPorEmail: (req, res) => {
-    const { email } = req.params;
-    const usuario = usuarioDAO.buscarPorEmail(email);
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+  buscarUsuarioPorEmail: async (req, res) => {
+    try {
+      const { email } = req.params;
+      const usuario = await usuarioDAO.buscarPorEmail(email);
+      if (!usuario) {
+        return res.status(404).json(responseFormatter.error('Usuário não encontrado.'));
+      }
+      res.json(responseFormatter.success(usuario, 'Usuário encontrado.'));
+    } catch (error) {
+      console.error('Erro ao buscar usuário:', error);
+      res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
     }
-    res.json(usuario);
   },
 
-  atualizarUsuario: (req, res) => {
-    const { email } = req.params;
-    const novosDados = req.body;
-    const usuario = usuarioDAO.atualizar(email, novosDados);
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+  atualizarUsuario: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const novosDados = req.body;
+      
+      // Validação da permissão se fornecida
+      if (novosDados.permissao && !Object.values(PermissaoEnum).includes(novosDados.permissao)) {
+        return res.status(400).json(responseFormatter.error('Permissão inválida.'));
+      }
+      
+      const usuario = await usuarioDAO.atualizar(id, novosDados);
+      res.json(responseFormatter.success(usuario, 'Usuário atualizado com sucesso.'));
+    } catch (error) {
+      console.error('Erro ao atualizar usuário:', error);
+      res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
     }
-    res.json(usuario);
   },
 
-  removerUsuario: (req, res) => {
-    const { email } = req.params;
-    const usuario = usuarioDAO.remover(email);
-    if (!usuario) {
-      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+  removerUsuario: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const usuario = await usuarioDAO.remover(id);
+      res.json(responseFormatter.success(usuario, 'Usuário removido com sucesso.'));
+    } catch (error) {
+      console.error('Erro ao remover usuário:', error);
+      res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
     }
-    res.json({ mensagem: 'Usuário removido com sucesso.', usuario });
+  },
+
+  adicionarEmpresaAoUsuario: async (req, res) => {
+    try {
+      const { usuarioId, empresaId } = req.body;
+      
+      if (!usuarioId || !empresaId) {
+        return res.status(400).json(responseFormatter.error('ID do usuário e ID da empresa são obrigatórios.'));
+      }
+      
+      const resultado = await usuarioDAO.adicionarEmpresa(usuarioId, empresaId);
+      res.json(responseFormatter.success(resultado, 'Empresa adicionada ao usuário com sucesso.'));
+    } catch (error) {
+      console.error('Erro ao adicionar empresa ao usuário:', error);
+      res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
+    }
   },
 
   sair: (req, res) => {

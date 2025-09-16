@@ -96,19 +96,25 @@ document.getElementById('Notificacoes').addEventListener('click', function(ev) {
 });
 
 document.getElementById('abaUsuario').addEventListener('click', function(ev){
-    ev.preventDefault;
+    ev.preventDefault();
     let btnAdicionarSubAbaAdmin = document.getElementById('btnAdicionarSubAbaAdmin');
+    let subAbaEmpresas = document.getElementById('subAbaEmpresas');
+    let subAbaUsuario = document.getElementById('subAbaUsuario');
+    
     if(btnAdicionarSubAbaAdmin.dataset.theme === "empresa"){
         btnAdicionarSubAbaAdmin.textContent = "Adicionar Usuario";
         btnAdicionarSubAbaAdmin.dataset.theme = "usuario";
 
         subAbaEmpresas.style.setProperty('display', 'none');
         subAbaUsuario.style.setProperty('display', 'flex');
+        
+        // Carregar lista de usuários quando a aba for ativada
+        carregarUsuariosCadastrados();
     }
 })
 
 document.getElementById('abaEmpresas').addEventListener('click', function(ev){
-    ev.preventDefault;
+    ev.preventDefault();
     let btnAdicionarSubAbaAdmin = document.getElementById('btnAdicionarSubAbaAdmin');
     let subAbaUsuario = document.getElementById('subAbaUsuario');
     let subAbaEmpresas = document.getElementById('subAbaEmpresas');
@@ -327,7 +333,9 @@ async function carregarEmpresasCadastradas() {
 
         if (metricas?.data?.length > 0) {
           const resultado = {
+            id: emp.id,
             empresa: emp.nome,
+            contaDeAnuncio: emp.contaDeAnuncio,
             cliques: metricas.data[0].cliques || 0,
             impressoes: metricas.data[0].impressoes || 0,
             alcance: metricas.data[0].alcance || 0,
@@ -359,22 +367,24 @@ async function carregarEmpresasCadastradas() {
   }
 }
 
-// Função de renderizar tabela (igual à sua)
+// Função de renderizar tabela de empresas
 function renderTabelaEmpresas(dados) {
   const container = document.getElementById("subAbaEmpresas");
 
   if (dados.length === 0) {
-    container.innerHTML = "<p>Nenhuma métrica disponível.</p>";
+    container.innerHTML = "<p>Nenhuma empresa cadastrada.</p>";
     return;
   }
 
   let tabela = `
     <div class="tabela-empresas-container">
-      <table class="tabela-empresas">
+      <table class="tabela-empresas table table-striped">
         <thead>
           <tr>
             <th>Empresa</th>
+            <th>Conta de Anúncio</th>
             <th>Saldo</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -384,7 +394,16 @@ function renderTabelaEmpresas(dados) {
     tabela += `
       <tr>
         <td>${emp.empresa}</td>
+        <td>${emp.contaDeAnuncio || 'Não informado'}</td>
         <td class="valor">R$ ${parseFloat(emp.saldo).toFixed(2)}</td>
+        <td>
+          <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}', '${emp.contaDeAnuncio}')">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="excluirEmpresa(${emp.id}, '${emp.empresa}')">
+            <i class="fas fa-trash"></i> Excluir
+          </button>
+        </td>
       </tr>
     `;
   });
@@ -398,8 +417,8 @@ function refreshDados(tipo = "cadastradas") {
     // O loading será mostrado dentro da função carregarEmpresasCadastradas
     carregarEmpresasCadastradas();
   } else if (tipo === "metricas") {
-    // O loading será mostrado dentro da função carregarEmpresasEMetricas
-    carregarEmpresasEMetricas();
+    // O loading será mostrado dentro da função carregarEmpresasCadastradas
+    carregarEmpresasCadastradas();
   }
 }
 
@@ -428,7 +447,477 @@ function adicionarHeaderCRM() {
   }
 }
 
+// Função para carregar usuários cadastrados
+async function carregarUsuariosCadastrados() {
+  try {
+    LoadingUtils.showContainer('subAbaUsuario', 'Carregando usuários cadastrados...');
+    
+    // Verificar se há usuário logado e suas permissões
+    const usuarioResponse = await fetch('/api/session-user');
+    if (usuarioResponse.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    const { usuario } = await usuarioResponse.json();
+    if (!usuario) {
+      window.location.href = '/login.html';
+      return;
+    }
+
+    // Verificar se o usuário tem permissão para ver usuários
+    if (usuario.permissao === 'USER') {
+      document.getElementById('subAbaUsuario').innerHTML = 
+        "<p style='color:orange'>Você não tem permissão para visualizar usuários.</p>";
+      return;
+    }
+    
+    const response = await fetch('/api/listarUsuarios', {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+    }
+
+    const resultado = await response.json();
+    console.log('Resposta da API listarUsuarios:', resultado);
+    
+    if (resultado.error) {
+      throw new Error(resultado.error);
+    }
+
+    const usuarios = Array.isArray(resultado.data) ? resultado.data : [];
+    renderTabelaUsuarios(usuarios);
+    
+  } catch (error) {
+    console.error('Erro detalhado ao carregar usuários:', error);
+    const errorMessage = error.message || 'Erro desconhecido';
+    document.getElementById('subAbaUsuario').innerHTML = 
+      "<p style='color:red'>Erro ao carregar usuários: " + errorMessage + "</p>";
+  }
+}
+
+// Função para renderizar tabela de usuários
+function renderTabelaUsuarios(usuarios) {
+  const container = document.getElementById('subAbaUsuario');
+
+  if (usuarios.length === 0) {
+    container.innerHTML = "<p>Nenhum usuário cadastrado.</p>";
+    return;
+  }
+
+  let tabela = `
+    <div class="tabela-usuarios-container">
+      <table class="tabela-usuarios table table-striped">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Permissão</th>
+            <th>Empresas</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  usuarios.forEach(usuario => {
+    const empresasTexto = usuario.empresas && usuario.empresas.length > 0 
+      ? usuario.empresas.map(emp => emp.nome).join(', ')
+      : 'Nenhuma empresa';
+
+    tabela += `
+      <tr>
+        <td>${usuario.nome}</td>
+        <td>${usuario.email}</td>
+        <td><span class="badge bg-${getPermissaoBadgeColor(usuario.permissao)}">${usuario.permissao}</span></td>
+        <td>${empresasTexto}</td>
+        <td>
+          <button class="btn btn-sm btn-primary me-1" onclick="editarUsuario(${usuario.id})">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+          <button class="btn btn-sm btn-success me-1" onclick="adicionarEmpresaUsuario(${usuario.id})">
+            <i class="fas fa-building"></i> Add Empresa
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="excluirUsuario(${usuario.id}, '${usuario.nome}')">
+            <i class="fas fa-trash"></i> Excluir
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tabela += `</tbody></table></div>`;
+  container.innerHTML = tabela;
+}
+
+// Função para obter cor do badge baseado na permissão
+function getPermissaoBadgeColor(permissao) {
+  switch (permissao) {
+    case 'ADMIN': return 'danger';
+    case 'GESTOR': return 'warning';
+    case 'USER': return 'secondary';
+    default: return 'light';
+  }
+}
+
+// Função para editar usuário
+async function editarUsuario(usuarioId) {
+  try {
+    const response = await fetch('/api/listarUsuarios');
+    const resultado = await response.json();
+    const usuarios = resultado.data || [];
+    const usuario = usuarios.find(u => u.id === usuarioId);
+    
+    if (!usuario) {
+      alert('Usuário não encontrado');
+      return;
+    }
+
+    // Criar modal de edição
+    const modalHtml = `
+      <div class="modal fade" id="modalEditarUsuario" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Editar Usuário</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form id="formEditarUsuario">
+                <div class="mb-3">
+                  <label class="form-label">Nome</label>
+                  <input type="text" class="form-control" id="editNome" value="${usuario.nome}" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" id="editEmail" value="${usuario.email}" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Permissão</label>
+                  <select class="form-control" id="editPermissao" required>
+                    <option value="USER" ${usuario.permissao === 'USER' ? 'selected' : ''}>User</option>
+                    <option value="GESTOR" ${usuario.permissao === 'GESTOR' ? 'selected' : ''}>Gestor</option>
+                    <option value="ADMIN" ${usuario.permissao === 'ADMIN' ? 'selected' : ''}>Admin</option>
+                  </select>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" onclick="salvarEdicaoUsuario(${usuarioId})">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remover modal existente se houver
+    const modalExistente = document.getElementById('modalEditarUsuario');
+    if (modalExistente) {
+      modalExistente.remove();
+    }
+
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
+    modal.show();
+
+  } catch (error) {
+    console.error('Erro ao carregar dados do usuário:', error);
+    alert('Erro ao carregar dados do usuário');
+  }
+}
+
+// Função para salvar edição do usuário
+async function salvarEdicaoUsuario(usuarioId) {
+  try {
+    const nome = document.getElementById('editNome').value;
+    const email = document.getElementById('editEmail').value;
+    const permissao = document.getElementById('editPermissao').value;
+
+    if (!nome || !email || !permissao) {
+      alert('Todos os campos são obrigatórios');
+      return;
+    }
+
+    const response = await fetch(`/api/atualizarUsuario/${usuarioId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, email, permissao })
+    });
+
+    const resultado = await response.json();
+
+    if (resultado.error) {
+      alert('Erro ao atualizar usuário: ' + resultado.error);
+      return;
+    }
+
+    alert('Usuário atualizado com sucesso!');
+    
+    // Fechar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario'));
+    modal.hide();
+    
+    // Recarregar lista
+    carregarUsuariosCadastrados();
+
+  } catch (error) {
+    console.error('Erro ao atualizar usuário:', error);
+    alert('Erro ao atualizar usuário');
+  }
+}
+
+// Função para excluir usuário
+async function excluirUsuario(usuarioId, nomeUsuario) {
+  if (!confirm(`Tem certeza que deseja excluir o usuário "${nomeUsuario}"?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/removerUsuario/${usuarioId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const resultado = await response.json();
+
+    if (resultado.error) {
+      alert('Erro ao excluir usuário: ' + resultado.error);
+      return;
+    }
+
+    alert('Usuário excluído com sucesso!');
+    carregarUsuariosCadastrados();
+
+  } catch (error) {
+    console.error('Erro ao excluir usuário:', error);
+    alert('Erro ao excluir usuário');
+  }
+}
+
+// Função para adicionar empresa ao usuário
+async function adicionarEmpresaUsuario(usuarioId) {
+  try {
+    // Carregar empresas disponíveis
+    const response = await fetch('/api/buscarEmpresas');
+    const resultado = await response.json();
+    const empresas = resultado.data || [];
+
+    if (empresas.length === 0) {
+      alert('Nenhuma empresa disponível para associação');
+      return;
+    }
+
+    // Criar modal para seleção de empresa
+    const modalHtml = `
+      <div class="modal fade" id="modalAdicionarEmpresa" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Adicionar Empresa ao Usuário</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label">Selecione uma empresa</label>
+                <select class="form-control" id="selectEmpresa" required>
+                  <option value="">Selecione uma empresa</option>
+                  ${empresas.map(emp => `<option value="${emp.id}">${emp.nome}</option>`).join('')}
+                </select>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" onclick="salvarEmpresaUsuario(${usuarioId})">Adicionar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remover modal existente se houver
+    const modalExistente = document.getElementById('modalAdicionarEmpresa');
+    if (modalExistente) {
+      modalExistente.remove();
+    }
+
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalAdicionarEmpresa'));
+    modal.show();
+
+  } catch (error) {
+    console.error('Erro ao carregar empresas:', error);
+    alert('Erro ao carregar empresas');
+  }
+}
+
+// Função para salvar empresa ao usuário
+async function salvarEmpresaUsuario(usuarioId) {
+  try {
+    const empresaId = document.getElementById('selectEmpresa').value;
+
+    if (!empresaId) {
+      alert('Selecione uma empresa');
+      return;
+    }
+
+    const response = await fetch('/api/adicionarEmpresaUsuario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuarioId: parseInt(usuarioId), empresaId: parseInt(empresaId) })
+    });
+
+    const resultado = await response.json();
+
+    if (resultado.error) {
+      alert('Erro ao adicionar empresa: ' + resultado.error);
+      return;
+    }
+
+    alert('Empresa adicionada com sucesso!');
+    
+    // Fechar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalAdicionarEmpresa'));
+    modal.hide();
+    
+    // Recarregar lista
+    carregarUsuariosCadastrados();
+
+  } catch (error) {
+    console.error('Erro ao adicionar empresa:', error);
+    alert('Erro ao adicionar empresa');
+  }
+}
+
+// Função para editar empresa
+async function editarEmpresa(empresaId, nomeAtual, contaAtual) {
+  try {
+    // Criar modal de edição
+    const modalHtml = `
+      <div class="modal fade" id="modalEditarEmpresa" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Editar Empresa</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <form id="formEditarEmpresa">
+                <div class="mb-3">
+                  <label class="form-label">Nome da Empresa</label>
+                  <input type="text" class="form-control" id="editNomeEmpresa" value="${nomeAtual}" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Conta de Anúncio</label>
+                  <input type="text" class="form-control" id="editContaEmpresa" value="${contaAtual}" required>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" onclick="salvarEdicaoEmpresa(${empresaId})">Salvar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Remover modal existente se houver
+    const modalExistente = document.getElementById('modalEditarEmpresa');
+    if (modalExistente) {
+      modalExistente.remove();
+    }
+
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalEditarEmpresa'));
+    modal.show();
+
+  } catch (error) {
+    console.error('Erro ao carregar dados da empresa:', error);
+    alert('Erro ao carregar dados da empresa');
+  }
+}
+
+// Função para salvar edição da empresa
+async function salvarEdicaoEmpresa(empresaId) {
+  try {
+    const nome = document.getElementById('editNomeEmpresa').value;
+    const contaDeAnuncio = document.getElementById('editContaEmpresa').value;
+
+    if (!nome || !contaDeAnuncio) {
+      alert('Todos os campos são obrigatórios');
+      return;
+    }
+
+    const response = await fetch(`/api/atualizarEmpresa/${empresaId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, contaDeAnuncio })
+    });
+
+    const resultado = await response.json();
+
+    if (resultado.error) {
+      alert('Erro ao atualizar empresa: ' + resultado.error.message);
+      return;
+    }
+
+    alert('Empresa atualizada com sucesso!');
+    
+    // Fechar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarEmpresa'));
+    modal.hide();
+    
+    // Recarregar lista
+    carregarEmpresasCadastradas();
+
+  } catch (error) {
+    console.error('Erro ao atualizar empresa:', error);
+    alert('Erro ao atualizar empresa');
+  }
+}
+
+// Função para excluir empresa
+async function excluirEmpresa(empresaId, nomeEmpresa) {
+  if (!confirm(`Tem certeza que deseja excluir a empresa "${nomeEmpresa}"?`)) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/api/excluirEmpresa/${empresaId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    const resultado = await response.json();
+
+    if (resultado.error) {
+      alert('Erro ao excluir empresa: ' + resultado.error.message);
+      return;
+    }
+
+    alert('Empresa excluída com sucesso!');
+    carregarEmpresasCadastradas();
+
+  } catch (error) {
+    console.error('Erro ao excluir empresa:', error);
+    alert('Erro ao excluir empresa');
+  }
+}
+
 // Executa quando a página carrega
-carregarEmpresasEMetricas();
+carregarEmpresasCadastradas();
 
 });

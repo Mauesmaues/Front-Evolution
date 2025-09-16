@@ -66,6 +66,55 @@ const Empresa = require('../models/Empresa');
             res.status(500).json(responseFormatter.error("Erro ao buscar empresas", error));
         }
     }
+    async function atualizarEmpresa(req, res) {
+        try {
+            const { id } = req.params;
+            const { nome, contaDeAnuncio } = req.body;
+
+            if (!nome || !contaDeAnuncio) {
+                return res.status(400).json(responseFormatter.error('Nome e conta de anúncio são obrigatórios'));
+            }
+
+            const { data, error } = await supabase
+                .from('empresas')
+                .update({ nome, contaDeAnuncio })
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            res.status(200).json(responseFormatter.success(data));
+        } catch (error) {
+            res.status(500).json(responseFormatter.error('Erro ao atualizar empresa', error));
+        }
+    }
+
+    async function excluirEmpresa(req, res) {
+        try {
+            const { id } = req.params;
+
+            // Primeiro, remover associações com usuários
+            await supabase
+                .from('usuario_empresa')
+                .delete()
+                .eq('empresa_id', id);
+
+            // Depois, remover a empresa
+            const { data, error } = await supabase
+                .from('empresas')
+                .delete()
+                .eq('id', id)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            res.status(200).json(responseFormatter.success(data));
+        } catch (error) {
+            res.status(500).json(responseFormatter.error('Erro ao excluir empresa', error));
+        }
+    }
     
 
-module.exports = { create, buscarEmpresas };
+module.exports = { create, buscarEmpresas, atualizarEmpresa, excluirEmpresa };

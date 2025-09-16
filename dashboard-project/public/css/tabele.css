@@ -162,3 +162,163 @@
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
+
+/* Estilos para tabela de usuários */
+.tabela-usuarios-container {
+  height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.tabela-usuarios {
+  margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.tabela-usuarios thead {
+  background: #F3F4F6;
+  color: #374151;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tabela-usuarios thead th {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+  color: #374151;
+}
+
+.tabela-usuarios tbody tr:nth-child(even) {
+  background: #F9FAFB;
+}
+
+.tabela-usuarios tbody tr:nth-child(odd) {
+  background: #FFFFFF;
+}
+
+.tabela-usuarios tbody tr:hover {
+  background: #EFF6FF;
+  transform: scale(1.001);
+  transition: all 0.15s ease-in-out;
+}
+
+.tabela-usuarios tbody td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #F3F4F6;
+  color: #111827;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.tabela-usuarios .btn-group {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.tabela-usuarios .btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+/* Badges para permissões */
+.badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Estilos para tabela de empresas - mesmo layout dos usuários */
+.tabela-empresas-container {
+  height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.tabela-empresas {
+  margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.tabela-empresas thead {
+  background: #F3F4F6;
+  color: #374151;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tabela-empresas thead th {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #E5E7EB;
+  color: #374151;
+}
+
+.tabela-empresas tbody tr:nth-child(even) {
+  background: #F9FAFB;
+}
+
+.tabela-empresas tbody tr:nth-child(odd) {
+  background: #FFFFFF;
+}
+
+.tabela-empresas tbody tr:hover {
+  background: #EFF6FF;
+  transform: scale(1.001);
+  transition: all 0.15s ease-in-out;
+}
+
+.tabela-empresas tbody td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid #F3F4F6;
+  color: #111827;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+.tabela-empresas .btn-group {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.tabela-empresas .btn-sm {
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 4px;
+}
+
+.tabela-empresas .valor {
+  font-weight: 600;
+  color: #059669;
+}
