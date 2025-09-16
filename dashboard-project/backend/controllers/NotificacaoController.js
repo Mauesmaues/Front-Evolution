@@ -177,12 +177,17 @@ class NotificacaoController {
 
   static async enviarNotificação(req, res) {
     try {
+        console.log('🚀 Iniciando envio de notificações...');
+        
         const notificações = await supabase
             .from('notificacoes')
             .select(`*`)
             .eq('ativo', true); // Só notificações ativas
 
+        console.log('📋 Notificações encontradas:', notificações.data?.length || 0);
+
         if (!notificações || !notificações.data || notificações.data.length === 0) {
+            console.log('⚠️ Nenhuma notificação ativa encontrada');
             return res.status(404).json(
                 responseFormatter.error('Nenhuma notificação ativa encontrada.')
             );
@@ -191,12 +196,21 @@ class NotificacaoController {
         const today = new Date().toISOString().split('T')[0]; // Formato: 2025-09-11
         
         for(let i = 0; i < notificações.data.length; i++){
-            console.log(notificações.data[i])
+            const notificacao = notificações.data[i];
+            
+            // Verificação adicional se a notificação está ativa
+            if (!notificacao.ativo) {
+                console.log(`⏭️ Pulando notificação ${notificacao.nome} - Status inativo`);
+                continue;
+            }
+            
+            console.log(`📨 Processando notificação: ${notificacao.nome} (ID: ${notificacao.id})`);
+            console.log('Dados da notificação:', notificacao);
 
             const empresaNotifica = await supabase
                 .from('notificacao_empresas')
                 .select(`*`)
-                .eq('notificacao_id', notificações.data[i].id)
+                .eq('notificacao_id', notificacao.id)
                 
             const contaDeAnuncioArray = []
             let totalConversoes = 0;
@@ -210,18 +224,29 @@ class NotificacaoController {
                     .select(`*`)
                     .eq('id', empresaNotifica.data[j].empresa_id) 
                 
-                if(contaDeAnuncio.data && contaDeAnuncio.data[j] && contaDeAnuncio.data[j].contaDeAnuncio){
-                    const conta = contaDeAnuncio.data[j].contaDeAnuncio;
+                if(contaDeAnuncio.data && contaDeAnuncio.data[0] && contaDeAnuncio.data[0].contaDeAnuncio){
+                    const conta = contaDeAnuncio.data[0].contaDeAnuncio;
                     contaDeAnuncioArray.push(conta);
-                }
-
-                if (contaDeAnuncio.data && contaDeAnuncio.data[j] && contaDeAnuncio.data[j].contaDeAnuncio) {
+                
+                    // Buscar conversões apenas se a conta for válida
                     try {
                         // Usar a conta específica da empresa em vez de hardcoded
-                        const conversoes = await fetch(`https://graph.facebook.com/v23.0/act_${conta}/insights?fields=actions&time_range={"since":"${today}","until":"${today}"}&access_token=EAAKMZBbIAoCoBPJXG9kL2JUyS6WBU8ZADqX17cQwt7HqhUM6gaDmjy51ZCQUB8mNbD3qPqGdvb1BfZA7NAcm6zZBCvKl34d6yO0hOIeSmb3WKjaVtlmeZBfrTRZCTh95780p249AyttHrmTQRNUMpL81qh9kk0DhHzgaPBOaVpkg22fETWMI3TZCJZBgD0wZCtnoxx9ZCttI28ZD`);
+                        const facebookToken = process.env.FACEBOOK_ACCESS_TOKEN || 'EAAKMZBbIAoCoBPJXG9kL2JUyS6WBU8ZADqX17cQwt7HqhUM6gaDmjy51ZCQUB8mNbD3qPqGdvb1BfZA7NAcm6zZBCvKl34d6yO0hOIeSmb3WKjaVtlmeZBfrTRZCTh95780p249AyttHrmTQRNUMpL81qh9kk0DhHzgaPBOaVpkg22fETWMI3TZCJZBgD0wZCtnoxx9ZCttI28ZD';
+                        const conversoes = await fetch(`https://graph.facebook.com/v23.0/act_${conta}/insights?fields=actions&time_range={"since":"${today}","until":"${today}"}&access_token=${facebookToken}`);
+                        
+                        if (!conversoes.ok) {
+                            console.error(`❌ Erro na API Facebook para conta ${conta}: ${conversoes.status} ${conversoes.statusText}`);
+                            continue;
+                        }
+                        
                         const conversoesJson = await conversoes.json();
 
-                        console.log(`Dados da conta ${conta}:`, conversoesJson);
+                        console.log(`✅ Dados da conta ${conta}:`, conversoesJson);
+
+                        if (conversoesJson.error) {
+                            console.error(`❌ Erro nos dados do Facebook para conta ${conta}:`, conversoesJson.error);
+                            continue;
+                        }
 
                         if (conversoesJson.data && Array.isArray(conversoesJson.data)) {
                             const conversoesConta = conversoesJson.data.reduce((total, item) => {
@@ -233,13 +258,15 @@ class NotificacaoController {
                             totalConversoes += conversoesConta;
                         }
                     } catch (error) {
-                        console.error(`Erro ao buscar conversões da conta ${conta}:`, error);
+                        console.error(`❌ Erro ao buscar conversões da conta ${conta}:`, error);
                     }
+                } else {
+                    console.log(`⚠️ Empresa ${empresaNotifica.data[j].empresa_id} não tem conta de anúncio válida`);
                 }
             }
 
-            const numero = notificações.data[i].numero_destinatario;
-            const nome = notificações.data[i].nome;
+            const numero = notificacao.numero_destinatario;
+            const nome = notificacao.nome;
             const msg = `Notificação: ${nome}\nTotal de conversões hoje: ${totalConversoes}\n`;
             
             try {
