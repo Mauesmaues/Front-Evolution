@@ -565,7 +565,7 @@ main {
   
   .modalMetric {
     width: calc(50% - 8px);
-    min-width: 100px;
+    min-width: 5vh;
     height: 60px;
   }
   
@@ -595,13 +595,7 @@ main {
   #painelPrincipal {
     width: calc(100% - 180px);
   }
-  
-  .modalMetric {
-    width: calc(100% - 8px);
-    margin-bottom: 8px;
-    height: 50px;
-  }
-  
+
   .releatorioGeral {
     flex-direction: column;
     gap: 8px;
@@ -632,8 +626,7 @@ main {
   background: var(--bg-card);
   border: 1px solid var(--border);
   height: 100px;
-  width: calc(14.28% - 16px);
-  min-width: 140px;
+  min-width: 85px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -644,7 +637,7 @@ main {
   transition: all var(--trans);
   position: relative;
   overflow: hidden;
-  padding: 16px;
+  padding: 12px;
   cursor: pointer;
 }
 

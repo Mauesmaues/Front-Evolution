@@ -1,3 +1,4 @@
+const { parse } = require("dotenv");
 
 // Variáveis globais para controle de filtros
 let empresasGlobais = [];
@@ -192,7 +193,7 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
           
           const metricas = await resMetrica.json();
           console.log(`Resposta da API para ${emp.nome}:`, metricas);
-  
+          console.log(`Resposta da API para ${emp.nome}:`, metricas.data[0].cpr);
           if (metricas?.data?.length > 0) {
             return {
               empresa: emp.nome,
@@ -265,7 +266,8 @@ function carregarEmpresasSelect() {
             <th>Gasto</th>
             <th>CTR</th>
             <th>CPC</th>
-            <th>CPR</th>
+            <th>Resultados</th>
+            <th>CPL</th>
           </tr>
         </thead>
         <tbody>
@@ -277,34 +279,42 @@ function carregarEmpresasSelect() {
     let somadorCtr = 0;
     let somadorCpc = 0;
     let somadorCpr = 0;
+    let somadorCpl = 0;
+    
     dados.forEach(emp => {
+      let cpl = emp.gasto / emp.cpr || emp.gasto;
       tabela += `
         <tr>
           <td>${emp.empresa}</td>
-          <td>${parseFloat(emp.cliques).toLocaleString()}</td>
-          <td>${parseFloat(emp.impressoes).toLocaleString()}</td>
-          <td>${parseInt(emp.alcance).toLocaleString()}</td>
+          <td>${parseInt(emp.cliques)}</td>
+          <td>${parseInt(emp.impressoes)}</td>
+          <td>${parseInt(emp.alcance)}</td>
           <td class="valor">R$ ${parseFloat(emp.gasto).toFixed(2)}</td>
           <td>${parseFloat(emp.ctr).toFixed(2)}%</td>
           <td>R$ ${parseFloat(emp.cpc).toFixed(2)}</td>
-          <td>R$ ${parseFloat(emp.cpr).toFixed(2)}</td>
+          <td>${parseInt(emp.cpr)}</td>
+          <td>R$ ${cpl.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</td>
         </tr>
       `;
       somadorCliques += parseInt(emp.cliques) || 0;
       somadorImpressoes += parseInt(emp.impressoes) || 0;
       somadorAlcance += parseInt(emp.alcance) || 0;
       somadorGasto += parseFloat(emp.gasto) || 0;
+      somadorCpr += parseFloat(emp.cpr) || 0;
+      somadorCpl = somadorGasto / somadorCpr || 0;
   
     });
-  
+    
     document.getElementById('cliques').innerText = somadorCliques.toLocaleString();
     document.getElementById('impressoes').innerText = somadorImpressoes.toLocaleString();
     document.getElementById('alcance').innerText = somadorAlcance.toLocaleString();
-    document.getElementById('gasto').innerText = somadorGasto.toLocaleString();
+    document.getElementById('gasto').innerText = somadorGasto.toLocaleString("pt-BR", {style: "currency", currency: "BRL"});
     somadorCtr = (somadorCliques / somadorImpressoes) * 100 || 0;
     document.getElementById('ctr').innerText = somadorCtr.toFixed(2) + '%';
     somadorCpc = (somadorGasto / somadorCliques) || 0;
-    document.getElementById('cpc').innerText = somadorCpc.toFixed(2);
+    document.getElementById('cpc').innerText = somadorCpc.toLocaleString("pt-BR", {style: "currency", currency: "BRL"});
+    document.getElementById('cpr').innerText = somadorCpr.toFixed(2);
+    document.getElementById('cpl').innerText = somadorCpl.toLocaleString("pt-BR", {style: "currency", currency: "BRL"});
   
     tabela += `</tbody></table>`;
     container.innerHTML = tabela;
