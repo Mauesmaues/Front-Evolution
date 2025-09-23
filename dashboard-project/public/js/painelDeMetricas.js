@@ -1,5 +1,3 @@
-const { parse } = require("dotenv");
-
 // Variáveis globais para controle de filtros
 let empresasGlobais = [];
 let filtroAtivo = 'hoje'; // Filtro padrão
@@ -143,6 +141,9 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
       // Armazenar empresas globalmente para uso nos filtros
       empresasGlobais = empresas;
 
+      // Carregar empresas no select IMEDIATAMENTE após carregar as empresas
+      carregarEmpresasSelect();
+
       // Filtrar por empresa se selecionada
       let empresasFiltradas = empresas;
       if (empresaSelecionada !== 'todas') {
@@ -218,9 +219,6 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
   
       // 4. Renderizar tabela (isso remove automaticamente o loading)
       renderTabelaEmpresas(dadosComMetricas);
-
-      // 5. Carregar empresas no select se ainda não foi carregado
-      carregarEmpresasSelect();
   
     } catch (err) {
       console.error("Erro ao carregar empresas e métricas:", err);
@@ -229,20 +227,68 @@ async function carregarEmpresasEMetricas(filtroData = null, empresaSelecionada =
     }
 }
 
+// Função para carregar apenas empresas (para popular o dropdown rapidamente)
+async function carregarEmpresasDropdown() {
+  try {
+    let usuario = await usuarioSession();
+    if (!usuario) return;
+
+    const resEmpresas = await fetch("/api/buscarEmpresas");
+    const resultado = await resEmpresas.json();
+    
+    if (resultado.success && resultado.data) {
+      empresasGlobais = resultado.data;
+      carregarEmpresasSelect();
+      console.log('Dropdown de empresas carregado com sucesso');
+    }
+  } catch (error) {
+    console.error('Erro ao carregar empresas para dropdown:', error);
+  }
+}
+
 // Função para carregar empresas no select
 function carregarEmpresasSelect() {
   const select = document.getElementById('empresaFiltro');
-  if (select && empresasGlobais.length > 0 && select.children.length <= 1) {
-    // Limpar opções existentes (exceto a primeira)
-    select.innerHTML = '<option value="todas">Todas as empresas</option>';
-    
-    // Adicionar cada empresa
-    empresasGlobais.forEach(empresa => {
-      const option = document.createElement('option');
-      option.value = empresa.id;
-      option.textContent = empresa.nome;
-      select.appendChild(option);
+  if (!select) {
+    console.warn('Elemento empresaFiltro não encontrado');
+    return;
+  }
+
+  if (empresasGlobais.length === 0) {
+    console.warn('Nenhuma empresa disponível para carregar no select');
+    return;
+  }
+
+  // Verificar se já foi carregado (evitar duplicação)
+  if (select.children.length > 1) {
+    console.log('Select já carregado, ignorando...');
+    return;
+  }
+
+  console.log('Carregando empresas no select:', empresasGlobais);
+  
+  // Limpar e adicionar opção padrão
+  select.innerHTML = '<option value="todas">Todas as empresas</option>';
+  
+  // Adicionar cada empresa
+  empresasGlobais.forEach(empresa => {
+    const option = document.createElement('option');
+    option.value = empresa.id;
+    option.textContent = empresa.nome;
+    select.appendChild(option);
+  });
+
+  // Adicionar event listener para mudança de empresa (apenas uma vez)
+  if (!select.hasAttribute('data-listener-added')) {
+    select.addEventListener('change', function() {
+      const empresaSelecionada = this.value;
+      console.log('Empresa selecionada:', empresaSelecionada);
+      
+      // Recarregar métricas com a empresa selecionada
+      carregarEmpresasEMetricas(null, empresaSelecionada);
     });
+    
+    select.setAttribute('data-listener-added', 'true');
   }
 }
   
@@ -313,7 +359,7 @@ function carregarEmpresasSelect() {
     document.getElementById('ctr').innerText = somadorCtr.toFixed(2) + '%';
     somadorCpc = (somadorGasto / somadorCliques) || 0;
     document.getElementById('cpc').innerText = somadorCpc.toLocaleString("pt-BR", {style: "currency", currency: "BRL"});
-    document.getElementById('cpr').innerText = somadorCpr.toFixed(2);
+    document.getElementById('cpr').innerText = parseInt(somadorCpr);
     document.getElementById('cpl').innerText = somadorCpl.toLocaleString("pt-BR", {style: "currency", currency: "BRL"});
   
     tabela += `</tbody></table>`;
@@ -389,6 +435,11 @@ function carregarEmpresasSelect() {
   // Executa quando a página carrega
   document.addEventListener('DOMContentLoaded', function() {
     inicializarFiltros();
+    
+    // Carregar empresas no dropdown primeiro (rápido)
+    carregarEmpresasDropdown();
+    
+    // Depois carregar métricas (mais lento)
     carregarEmpresasEMetricas();
   });
 
@@ -397,10 +448,12 @@ function carregarEmpresasSelect() {
     // Se ainda está carregando, aguardar o DOMContentLoaded
     document.addEventListener('DOMContentLoaded', function() {
       inicializarFiltros();
+      carregarEmpresasDropdown();
       carregarEmpresasEMetricas();
     });
   } else {
     // Se já carregou, executar imediatamente
     inicializarFiltros();
+    carregarEmpresasDropdown();
     carregarEmpresasEMetricas();
   }

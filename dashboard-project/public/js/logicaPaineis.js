@@ -343,7 +343,7 @@ async function carregarEmpresasCadastradas() {
             ctr: metricas.data[0].ctr || 0,
             cpc: metricas.data[0].cpc || 0,
             cpr: metricas.data[0].cpr || 0,
-            saldo: saldo?.data?.saldo || 0,
+            saldo: saldo?.data?.saldoOriginal || 0,
           };
           console.log(`Resultado final para ${emp.nome}:`, resultado);
           return resultado;
@@ -395,7 +395,7 @@ function renderTabelaEmpresas(dados) {
       <tr>
         <td>${emp.empresa}</td>
         <td>${emp.contaDeAnuncio || 'Não informado'}</td>
-        <td class="valor">R$ ${parseFloat(emp.saldo).toFixed(2)}</td>
+        <td class="valor">${emp.saldo}</td>
         <td>
           <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}', '${emp.contaDeAnuncio}')">
             <i class="fas fa-edit"></i> Editar
