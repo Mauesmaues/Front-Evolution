@@ -302,21 +302,22 @@ function carregarEmpresasSelect() {
     }
   
     let tabela = `
-      <table class="tabela-empresas">
-        <thead>
-          <tr>
-            <th>Empresa</th>
-            <th>Cliques</th>
-            <th>Impressões</th>
-            <th>Alcance</th>
-            <th>Gasto</th>
-            <th>CTR</th>
-            <th>CPC</th>
-            <th>Resultados</th>
-            <th>CPL</th>
-          </tr>
-        </thead>
-        <tbody>
+      <div class="tabela-empresas-container">
+        <table class="tabela-empresas">
+          <thead>
+            <tr>
+              <th>Empresa</th>
+              <th>Cliques</th>
+              <th>Impressões</th>
+              <th>Alcance</th>
+              <th>Gasto</th>
+              <th>CTR</th>
+              <th>CPC</th>
+              <th>Resultados</th>
+              <th>CPL</th>
+            </tr>
+          </thead>
+          <tbody>
     `;
     let somadorCliques = 0;
     let somadorImpressoes = 0;
@@ -362,7 +363,11 @@ function carregarEmpresasSelect() {
     document.getElementById('cpr').innerText = parseInt(somadorCpr);
     document.getElementById('cpl').innerText = somadorCpl.toLocaleString("pt-BR", {style: "currency", currency: "BRL"});
   
-    tabela += `</tbody></table>`;
+    tabela += `
+          </tbody>
+        </table>
+      </div>
+    `;
     container.innerHTML = tabela;
   }
 

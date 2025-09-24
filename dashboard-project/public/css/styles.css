@@ -48,6 +48,445 @@
   background: var(--bg-card);
 }
 
+/* Estilos para tabela hierárquica de métricas de vídeo */
+#painelMetricasVideo .table td {
+  vertical-align: middle;
+  padding: 0.75rem 0.5rem;
+}
+
+#painelMetricasVideo .table .btn {
+  border: none;
+  background: transparent;
+  color: #6c757d;
+  padding: 0.25rem 0.5rem;
+  transition: color 0.2s ease;
+}
+
+#painelMetricasVideo .table .btn:hover {
+  color: #0d6efd;
+  background: rgba(13, 110, 253, 0.1);
+}
+
+#painelMetricasVideo .table .btn i {
+  font-size: 0.875rem;
+}
+
+#painelMetricasVideo .table .img-thumbnail {
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  transition: transform 0.2s ease;
+}
+
+#painelMetricasVideo .table .img-thumbnail:hover {
+  transform: scale(1.1);
+  border-color: #0d6efd;
+}
+
+/* Estilos para diferentes níveis da hierarquia */
+#painelMetricasVideo .table .table-primary {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  border-left: 4px solid #0d6efd;
+}
+
+#painelMetricasVideo .table .table-secondary {
+  background-color: rgba(108, 117, 125, 0.1) !important;
+  border-left: 3px solid #6c757d;
+}
+
+#painelMetricasVideo .table .table-light {
+  background-color: rgba(248, 249, 250, 0.8) !important;
+  border-left: 2px solid #dee2e6;
+}
+
+/* Animações para transições suaves */
+#painelMetricasVideo .table tr {
+  transition: all 0.3s ease;
+}
+
+#painelMetricasVideo .table tr[style*="display: none"] {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Estilos para ícones dos tipos */
+#painelMetricasVideo .fa-building {
+  color: #0d6efd;
+}
+
+#painelMetricasVideo .fa-bullhorn {
+  color: #6c757d;
+}
+
+#painelMetricasVideo .fa-layer-group {
+  color: #198754;
+}
+
+#painelMetricasVideo .fa-ad {
+  color: #fd7e14;
+}
+
+/* Estilos para imagens dos criativos */
+#painelMetricasVideo .criativo-thumbnail {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#painelMetricasVideo .criativo-thumbnail:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#painelMetricasVideo .btn-expand-image {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  transform: translate(25%, -25%);
+}
+
+#painelMetricasVideo .position-relative:hover .btn-expand-image {
+  opacity: 1;
+}
+
+#painelMetricasVideo .btn-expand-image:hover {
+  transform: translate(25%, -25%) scale(1.1);
+}
+
+/* Estilos para o modal da imagem */
+#modalImagemAnuncio .modal-dialog {
+  max-width: 80vw;
+  width: 80vw;
+}
+
+#modalImagemAnuncio .modal-body {
+  padding: 1rem;
+  text-align: center;
+}
+
+#modalImagemAnuncio .modal-body img {
+  max-width: 100%;
+  max-height: 70vh;
+  width: auto;
+  height: auto;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+}
+
+#modalImagemAnuncio .modal-header {
+  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+#modalImagemAnuncio .modal-title {
+  color: #495057;
+  font-weight: 600;
+}
+
+#modalImagemAnuncio .text-muted {
+  font-size: 0.9rem;
+}
+
+/* Responsividade para o modal */
+@media (max-width: 768px) {
+  #modalImagemAnuncio .modal-dialog {
+    margin: 0.5rem;
+    max-width: calc(100% - 1rem);
+    width: calc(100% - 1rem);
+  }
+  
+  #modalImagemAnuncio .modal-body img {
+    max-height: 60vh;
+  }
+}
+
+@media (max-width: 576px) {
+  #modalImagemAnuncio .modal-dialog {
+    margin: 0.25rem;
+    max-width: calc(100% - 0.5rem);
+    width: calc(100% - 0.5rem);
+  }
+  
+  #modalImagemAnuncio .modal-body img {
+    max-height: 50vh;
+  }
+}
+
+/* Estilos para dropdown de empresas no painel de métricas de vídeo */
+#painelMetricasVideo .form-select {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+#painelMetricasVideo .form-select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-bg);
+  outline: none;
+}
+
+#painelMetricasVideo .form-select:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Customização do dropdown quando aberto */
+#painelMetricasVideo select[size] {
+  max-height: 250px !important;
+  overflow-y: auto !important;
+  border: 2px solid var(--primary);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+#painelMetricasVideo select option {
+  padding: 8px 12px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: none;
+  transition: all 0.2s ease;
+}
+
+#painelMetricasVideo select option:hover,
+#painelMetricasVideo select option:focus {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+#painelMetricasVideo select option:checked {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+/* Scrollbar para o select */
+#painelMetricasVideo select::-webkit-scrollbar {
+  width: 8px;
+}
+
+#painelMetricasVideo select::-webkit-scrollbar-track {
+  background: var(--bg-card-secondary);
+  border-radius: 4px;
+}
+
+#painelMetricasVideo select::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 4px;
+  border: 1px solid var(--bg-card);
+}
+
+#painelMetricasVideo select::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
+
+/* Estilo para label do filtro */
+#painelMetricasVideo .form-label {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Container dos filtros com melhor espaçamento */
+#painelMetricasVideo .row.mb-4 {
+  background: var(--bg-card);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  margin-bottom: 24px !important;
+}
+
+/* Dropdown customizado para empresas */
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+}
+
+.custom-dropdown {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.dropdown-selected:hover {
+  border-color: var(--primary-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-selected.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+.selected-text {
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dropdown-arrow {
+  transition: transform 0.3s ease;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dropdown-selected.active .dropdown-arrow {
+  transform: rotate(180deg);
+  color: var(--primary);
+}
+
+.dropdown-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 2px solid var(--primary);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-options.show {
+  max-height: 350px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dropdown-search {
+  position: relative;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card-secondary);
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 35px 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-bg);
+}
+
+.search-icon {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.options-list {
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.options-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.options-list::-webkit-scrollbar-track {
+  background: var(--bg-card-secondary);
+}
+
+.options-list::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 3px;
+}
+
+.options-list::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-hover);
+}
+
+.option {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: center;
+}
+
+.option:last-child {
+  border-bottom: none;
+}
+
+.option:hover {
+  background: var(--primary-bg);
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+.option.selected {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.option.selected::after {
+  content: '✓';
+  margin-left: auto;
+  font-weight: bold;
+}
+
+.option.hidden {
+  display: none;
+}
+
+/* Responsividade para o dropdown customizado */
+@media (max-width: 768px) {
+  .dropdown-options {
+    max-height: 280px;
+  }
+  
+  .dropdown-options.show {
+    max-height: 250px;
+  }
+  
+  .options-list {
+    max-height: 180px;
+  }
+}
+
 .form-group {
   margin-bottom: 1rem;
 }
@@ -340,12 +779,6 @@ main {
   box-shadow: var(--shadow);
 }
 
-.btnFiltro:hover {
-  background: var(--primary-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-}
-
 /* Estilo para filtro ativo */
 .btnFiltro.filtro-ativo {
   background: var(--success);
@@ -546,12 +979,6 @@ main {
   animation: shimmer 2s infinite;
 }
 
-/* Efeitos de loading */
-.loading {
-  position: relative;
-  overflow: hidden;
-}
-
 /* Responsividade para telas menores */
 @media (max-width: 768px) {
   #sidebar {
@@ -583,6 +1010,20 @@ main {
   #dropDownEmpresa {
     height: calc(100vh - 5vh - 220px);
   }
+  
+  #dropDownEmpresa .tabela-empresas th {
+    padding: 14px 16px;
+    font-size: 11px;
+  }
+  
+  #dropDownEmpresa .tabela-empresas td {
+    padding: 12px 16px;
+    max-width: 120px;
+  }
+  
+  #dropDownEmpresa .tabela-empresas td:first-child {
+    padding-left: 40px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -604,6 +1045,30 @@ main {
 
   #dropDownEmpresa {
     height: calc(100vh - 5vh - 280px);
+  }
+  
+  #dropDownEmpresa .tabela-empresas {
+    min-width: 700px;
+  }
+  
+  #dropDownEmpresa .tabela-empresas th {
+    padding: 12px 12px;
+    font-size: 10px;
+  }
+  
+  #dropDownEmpresa .tabela-empresas td {
+    padding: 10px 12px;
+    max-width: 100px;
+    font-size: 13px;
+  }
+  
+  #dropDownEmpresa .tabela-empresas td:first-child {
+    padding-left: 35px;
+  }
+  
+  #dropDownEmpresa .tabela-empresas td:first-child::before {
+    left: 15px;
+    font-size: 12px;
   }
 }
 /* Estilos do painel de metricas */
@@ -666,17 +1131,176 @@ main {
   letter-spacing: 0.5px;
 }
 
-#dropDownEmpresa{
+/* Container principal do dropdown - Estilo limpo com scroll garantido */
+#dropDownEmpresa {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   width: 100%;
   flex: 1;
-  height: calc(100vh - 5vh - 260px);
+  height: calc(100vh - 300px);
+  max-height: 600px;
+  min-height: 300px;
   padding: 20px;
   box-shadow: var(--shadow-md);
   animation: fadeInUp 0.8s ease-out 0.2s both;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Container da tabela com scroll garantido */
+#dropDownEmpresa .tabela-empresas-container {
+  width: 100%;
+  height: 100%;
+  max-height: calc(100vh - 380px);
+  overflow-y: auto;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  flex: 1;
+  position: relative;
+}
+
+/* Scrollbar moderna e elegante */
+#dropDownEmpresa .tabela-empresas-container::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+#dropDownEmpresa .tabela-empresas-container::-webkit-scrollbar-track {
+  background: var(--bg-card-secondary);
+  border-radius: 6px;
+  margin: 4px;
+}
+
+#dropDownEmpresa .tabela-empresas-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, var(--primary) 0%, #8B5CF6 100%);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.3s ease;
+}
+
+#dropDownEmpresa .tabela-empresas-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, #7C3AED 100%);
+  transform: scale(1.05);
+}
+
+#dropDownEmpresa .tabela-empresas-container::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Tabela com design moderno */
+#dropDownEmpresa .tabela-empresas {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: var(--bg-card);
+  margin: 0;
+  table-layout: auto;
+  min-width: 800px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Cabeçalho da tabela - Design moderno */
+#dropDownEmpresa .tabela-empresas th {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #ffffff;
+  padding: 16px 18px;
+  text-align: left;
+  font-weight: 800;
+  border: none;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.8px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#dropDownEmpresa .tabela-empresas th:first-child {
+  border-top-left-radius: 12px;
+}
+
+#dropDownEmpresa .tabela-empresas th:last-child {
+  border-top-right-radius: 12px;
+}
+
+#dropDownEmpresa .tabela-empresas th::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary) 0%, #8B5CF6 100%);
+}
+
+/* Células da tabela com hover moderno */
+#dropDownEmpresa .tabela-empresas td {
+  padding: 14px 18px;
+  border: none;
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  background: var(--bg-card);
+}
+
+/* Linhas alternadas com cor sutil */
+#dropDownEmpresa .tabela-empresas tbody tr:nth-child(even) td {
+  background: var(--bg-card-secondary);
+}
+
+/* Hover effect moderno */
+#dropDownEmpresa .tabela-empresas tbody tr:hover td {
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+#dropDownEmpresa .tabela-empresas tbody tr:hover td:first-child {
+  border-left: 3px solid var(--primary);
+}
+
+/* Valores monetários com destaque especial */
+#dropDownEmpresa .tabela-empresas .valor {
+  color: #059669;
+  font-weight: 700;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: inline-block;
+  font-size: 12px;
+  border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+/* Nome da empresa com ícone */
+#dropDownEmpresa .tabela-empresas td:first-child {
+  font-weight: 700;
+  color: var(--text-primary);
+  position: relative;
+  padding-left: 45px;
+}
+
+#dropDownEmpresa .tabela-empresas td:first-child::before {
+  content: '🏢';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
 }
 
 /* Estilos painel de administração */
