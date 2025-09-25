@@ -276,18 +276,36 @@ async function carregarListaNotificacoes() {
 
 // Funções auxiliares
 function mostrarMensagem(mensagem, tipo) {
-    const container = document.getElementById('mensagemNotificacao');
-    container.innerHTML = `
-        <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
-            ${mensagem}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `;
+    // Mapear tipos do Bootstrap para tipos do Toast
+    const tipoMap = {
+        'success': 'success',
+        'danger': 'error',
+        'warning': 'warning',
+        'info': 'info'
+    };
     
-    // Auto-remover após 5 segundos
-    setTimeout(() => {
-        container.innerHTML = '';
-    }, 5000);
+    const tipoToast = tipoMap[tipo] || 'info';
+    
+    // Usar o novo sistema de toast se disponível
+    if (typeof showToast === 'function') {
+        showToast(tipoToast, '', mensagem, 5000);
+    } else {
+        // Fallback para o sistema antigo
+        const container = document.getElementById('mensagemNotificacao');
+        if (container) {
+            container.innerHTML = `
+                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
+                    ${mensagem}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            // Auto-remover após 5 segundos
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+    }
 }
 
 function limparFormulario() {

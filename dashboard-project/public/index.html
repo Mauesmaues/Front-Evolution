@@ -11,22 +11,61 @@
 </head>
 <body>
   <header>
-    <div id = "headerNome">Evolution</div>
-    <div id = "headerLogin">Login </div>
+    <div id="headerLogo">
+      <div id="logoIcon">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#2563EB"/>
+          <path d="M8 24V8h3l6 12 6-12h3v16h-3v-10l-5 10h-2l-5-10v10H8z" fill="white"/>
+        </svg>
+      </div>
+      <div id="logoText">
+        <span class="logo-name">Evolution</span>
+        <span class="logo-tagline">Analytics Dashboard</span>
+      </div>
+    </div>
+    <div id="headerUser">
+      <div id="userInfo">
+        <span id="headerLogin">Login</span>
+        <div class="user-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+      </div>
+    </div>
   </header>
 
   <main>
-    <div id = "sidebar">
-      <ul id = "navSidebar">
-        <li id = "dashboard">Dashboard</li>
-        <li id = "metricasVideo">Metrícas de Anúncios</li>
-        <li>Configurações</li>
-        <li id = "administracao" class="admin-only">Administracão</li>
-        <li id="crm">CRM</li>
-        <li id="Notificacoes">Notificações <span id="badge" class="badge bg-danger">Conv</span></li>
-        <li id="sair" style="color: red;">Sair</li>
-
-      </ul>
+    <div id="sidebar">
+      <div id="sidebarMain">
+        <ul id="navSidebar">
+          <li id="dashboard" class="nav-item active">
+            <i class="nav-icon fas fa-chart-line"></i>
+            <span class="nav-text">Dashboard</span>
+          </li>
+          <li id="metricasVideo" class="nav-item">
+            <i class="nav-icon fas fa-play-circle"></i>
+            <span class="nav-text">Métricas de Anúncios</span>
+          </li>
+          <li id="administracao" class="nav-item admin-only">
+            <i class="nav-icon fas fa-cog"></i>
+            <span class="nav-text">Administração</span>
+          </li>
+          <li id="crm" class="nav-item">
+            <i class="nav-icon fas fa-users"></i>
+            <span class="nav-text">CRM</span>
+          </li>
+          <li id="Notificacoes" class="nav-item">
+            <i class="nav-icon fas fa-bell"></i>
+            <span class="nav-text">Notificações</span>
+            <span id="badge" class="notification-badge">Conv</span>
+          </li>
+        </ul>
+      </div>
+      <div id="sidebarFooter">
+        <div id="sair" class="nav-item logout-item">
+          <i class="nav-icon fas fa-sign-out-alt"></i>
+          <span class="nav-text">Sair</span>
+        </div>
+      </div>
     </div>
 
     <div id = "painelPrincipal">
@@ -34,30 +73,106 @@
         <div id = "painelMonitoramento" data-theme="ativo">
 
           <section id="filtro">
-            <select id="empresaFiltro" class="inputFiltro">
+            <select id="empresaFiltro" class="form-input filtro-empresa">
               <option value="todas">Todas as empresas</option>
               <!-- Adicione mais opções conforme necessário -->
             </select>
-            <input type="date" id="dataInicio" class="inputFiltro" placeholder="Data de início">
-            <input type="date" id="dataFim" class="inputFiltro" placeholder="Data de término">
-            <div id="filtroPreSelecionado">
-              <button class="btnFiltro">Hoje</button>
-              <button class="btnFiltro">Ontem</button>
-              <button class="btnFiltro">Este mês</button>
-              <button class="btnFiltro">Período total</button>
+            
+            <input type="date" id="dataInicio" class="form-input filtro-data" placeholder="Data de início">
+            <input type="date" id="dataFim" class="form-input filtro-data" placeholder="Data de término">
+            
+            <div class="filtro-presets">
+              <button class="btn-filtro-preset active" data-filtro="hoje">Hoje</button>
+              <button class="btn-filtro-preset" data-filtro="ontem">Ontem</button>
+              <button class="btn-filtro-preset" data-filtro="este-mes">Este mês</button>
+              <button class="btn-filtro-preset" data-filtro="periodo-total">Período total</button>
             </div>
-            <button id="aplicarFiltro" class="btnFiltro aplicarFiltro">Aplicar Filtros</button>
+            
+            <button id="aplicarFiltro" class="btn btn-primary btn-aplicar">
+              <i class="fas fa-filter"></i>Aplicar Filtros
+            </button>
           </section>
 
-          <section class="releatorioGeral">
-            <div class="modalMetric"><span class="metrica" id="cliques"></span>Cliques</div>
-            <div class="modalMetric"><span class="metrica" id="impressoes"></span>Impressões</div>
-            <div class="modalMetric"><span class="metrica" id="alcance"></span>Alcance</div>
-            <div class="modalMetric"><span class="metrica" id="gasto"></span>Gasto</div>
-            <div class="modalMetric"><span class="metrica" id="ctr"></span>CTR</div>
-            <div class="modalMetric"><span class="metrica" id="cpc"></span>CPC</div>
-            <div class="modalMetric" style="border: 2px solid green;"><span class="metrica" id="cpr"></span>Resultados</div>
-            <div class="modalMetric"><span class="metrica" id="cpl"></span>CPL</div>
+          <section class="metricsGrid">
+            <div class="metric-card">
+              <div class="metric-icon">
+                <i class="fas fa-mouse-pointer"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="cliques">0</div>
+                <div class="metric-label">Cliques</div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-icon">
+                <i class="fas fa-eye"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="impressoes">0</div>
+                <div class="metric-label">Impressões</div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="alcance">0</div>
+                <div class="metric-label">Alcance</div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-icon cost">
+                <i class="fas fa-dollar-sign"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="gasto">R$ 0,00</div>
+                <div class="metric-label">Gasto</div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-icon">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="ctr">0%</div>
+                <div class="metric-label">CTR</div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-icon cost">
+                <i class="fas fa-coins"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="cpc">R$ 0,00</div>
+                <div class="metric-label">CPC</div>
+              </div>
+            </div>
+            
+            <div class="metric-card highlight">
+              <div class="metric-icon success">
+                <i class="fas fa-trophy"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="cpr">0</div>
+                <div class="metric-label">Resultados</div>
+              </div>
+            </div>
+            
+            <div class="metric-card">
+              <div class="metric-icon cost">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="metric-content">
+                <div class="metric-value" id="cpl">R$ 0,00</div>
+                <div class="metric-label">CPL</div>
+              </div>
+            </div>
           </section>
 
           <section id="dropDownEmpresa">
@@ -144,10 +259,12 @@
             <!--Painel Administração-->
       <div id="painelAdministracao" data-theme="default" style="display: none;">
 
-        <div id="subAbasAdmin">
-          <button class="btnSubAba" id="abaUsuario">Usuário</button>
-          <button class="btnSubAba" id="abaEmpresas">Empresas</button>
-          <button id="btnAdicionarSubAbaAdmin" class="btnFiltro aplicarFiltro" data-theme="usuario">Adicionar Usuario</button>
+        <div id="subAbasAdmin" class="btn-group">
+          <button class="btn btn-outline" id="abaUsuario">Usuário</button>
+          <button class="btn btn-outline" id="abaEmpresas">Empresas</button>
+          <button id="btnAdicionarSubAbaAdmin" class="btn btn-success" data-theme="usuario">
+            <i class="fas fa-plus"></i>Adicionar Usuario
+          </button>
         </div>
 
         <div id="conteudoSubAba">
@@ -170,7 +287,9 @@
               <label for="idContaAnuncio" class="form-label">ID da conta de anúncio</label>
               <input type="text" id="idContaAnuncio" class="inputFiltro" placeholder="ID da conta de anúncio">
             </div>
-            <button id="salvarEmpresa" class="btnFiltro aplicarFiltro">Salvar</button>
+            <button id="salvarEmpresa" class="btn btn-primary">
+              <i class="fas fa-save"></i>Salvar
+            </button>
         </div>
 
         <div id="FormCadastroUsuario">
@@ -199,7 +318,9 @@
                 <option value="">Selecione uma empresa</option>
               </select>
             </div>
-            <button id="salvarUsuario" class="btnFiltro aplicarFiltro">Salvar</button>
+            <button id="salvarUsuario" class="btn btn-primary">
+              <i class="fas fa-save"></i>Salvar
+            </button>
         </div>
       </div>
       <!--Painel CRM-->
@@ -276,8 +397,8 @@
       <div id="painelNotificacoes" data-theme="default" style="display: none;">
         <div id="headerNotificacoes">
           <h2><i class="fas fa-bell me-2"></i>Gerenciar Notificações</h2>
-          <button id="btnCadastrarNotificacao" class="btnFiltro aplicarFiltro">
-            <i class="fas fa-plus me-1"></i>Cadastrar Notificação
+          <button id="btnCadastrarNotificacao" class="btn btn-primary">
+            <i class="fas fa-plus"></i>Cadastrar Notificação
           </button>
         </div>
 
@@ -331,11 +452,11 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button id="btnCancelarCadastro" class="btnFiltro btn-cancelar">
-          <i class="fas fa-times me-1"></i>Cancelar
+        <button id="btnCancelarCadastro" class="btn btn-secondary">
+          <i class="fas fa-times"></i>Cancelar
         </button>
-        <button id="salvarNotificacao" class="btnFiltro aplicarFiltro">
-          <i class="fas fa-save me-1"></i>Salvar Notificação
+        <button id="salvarNotificacao" class="btn btn-primary">
+          <i class="fas fa-save"></i>Salvar Notificação
         </button>
       </div>
     </div>
@@ -382,6 +503,7 @@
 
   
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/toastSystem.js"></script>
   <script src="js/loadingUtils.js"></script>
   <script src="js/main.js"></script>
   <script src="js/logicaPaineis.js"></script>

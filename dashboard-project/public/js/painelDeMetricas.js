@@ -95,14 +95,14 @@ function obterFiltroData(tipo) {
 // Função para aplicar estilo ao filtro ativo
 function marcarFiltroAtivo(filtroSelecionado) {
   // Remove classe ativo de todos os botões
-  document.querySelectorAll('#filtroPreSelecionado .btnFiltro').forEach(btn => {
-    btn.classList.remove('filtro-ativo');
+  document.querySelectorAll('.btn-filtro-preset').forEach(btn => {
+    btn.classList.remove('active');
   });
   
   // Adiciona classe ativo ao filtro selecionado
-  const botaoAtivo = document.querySelector(`#filtroPreSelecionado .btnFiltro[data-filtro="${filtroSelecionado}"]`);
+  const botaoAtivo = document.querySelector(`.btn-filtro-preset[data-filtro="${filtroSelecionado}"]`);
   if (botaoAtivo) {
-    botaoAtivo.classList.add('filtro-ativo');
+    botaoAtivo.classList.add('active');
   }
   
   filtroAtivo = filtroSelecionado;
@@ -374,7 +374,7 @@ function carregarEmpresasSelect() {
   // Função para inicializar eventos dos filtros
   function inicializarFiltros() {
     // Adicionar data-filtro aos botões de filtro rápido
-    const botoesRapidos = document.querySelectorAll('#filtroPreSelecionado .btnFiltro');
+    const botoesRapidos = document.querySelectorAll('.btn-filtro-preset');
     if (botoesRapidos.length > 0) {
       botoesRapidos[0].setAttribute('data-filtro', 'hoje');
       botoesRapidos[0].textContent = 'Hoje';
@@ -396,7 +396,7 @@ function carregarEmpresasSelect() {
     }
 
     // Event listeners para filtros rápidos
-    document.querySelectorAll('#filtroPreSelecionado .btnFiltro').forEach(botao => {
+    document.querySelectorAll('.btn-filtro-preset').forEach(botao => {
       botao.addEventListener('click', function() {
         const tipoFiltro = this.getAttribute('data-filtro');
         console.log('Filtro rápido selecionado:', tipoFiltro);
@@ -417,8 +417,8 @@ function carregarEmpresasSelect() {
 
       if (dataInicio && dataFim) {
         // Remover seleção dos filtros rápidos quando usar datas personalizadas
-        document.querySelectorAll('#filtroPreSelecionado .btnFiltro').forEach(btn => {
-          btn.classList.remove('filtro-ativo');
+        document.querySelectorAll('.btn-filtro-preset').forEach(btn => {
+          btn.classList.remove('active');
         });
         
         filtroAtivo = 'personalizado';
