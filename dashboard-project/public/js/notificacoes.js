@@ -1,48 +1,74 @@
 window.addEventListener('DOMContentLoaded', function() {
 
-// Verificar se os elementos existem
-console.log('Elementos encontrados:');
-console.log('abaCadastroNotificacao:', document.getElementById('abaCadastroNotificacao'));
-console.log('abaListaNotificacoes:', document.getElementById('abaListaNotificacoes'));
-console.log('subAbaCadastroNotificacao:', document.getElementById('subAbaCadastroNotificacao'));
-console.log('FormCadastroNotificacao:', document.getElementById('FormCadastroNotificacao'));
+// Elementos do modal
+const modal = document.getElementById('modalCadastroNotificacao');
+const btnCadastrar = document.getElementById('btnCadastrarNotificacao');
+const btnFechar = document.getElementById('btnFecharModal');
+const btnCancelar = document.getElementById('btnCancelarCadastro');
 
-// Gerenciamento das sub-abas de notificações
-document.getElementById('abaCadastroNotificacao').addEventListener('click', function(ev) {
-    ev.preventDefault();
-    mostrarSubAbaNotificacao('cadastro');
+// Gerenciamento do modal de cadastro
+if (btnCadastrar) {
+    btnCadastrar.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        abrirModalCadastro();
+    });
+}
+
+if (btnFechar) {
+    btnFechar.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        fecharModalCadastro();
+    });
+}
+
+if (btnCancelar) {
+    btnCancelar.addEventListener('click', function(ev) {
+        ev.preventDefault();
+        fecharModalCadastro();
+    });
+}
+
+// Fechar modal ao clicar no overlay
+if (modal) {
+    modal.addEventListener('click', function(ev) {
+        if (ev.target === modal) {
+            fecharModalCadastro();
+        }
+    });
+}
+
+// Fechar modal com tecla ESC
+document.addEventListener('keydown', function(ev) {
+    if (ev.key === 'Escape' && modal && modal.style.display === 'flex') {
+        fecharModalCadastro();
+    }
 });
 
-document.getElementById('abaListaNotificacoes').addEventListener('click', function(ev) {
-    ev.preventDefault();
-    mostrarSubAbaNotificacao('lista');
-    carregarListaNotificacoes();
-});
+function abrirModalCadastro() {
+    if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Impede scroll da página
+        carregarEmpresasCheckbox(); // Carregar empresas quando abrir o modal
+        limparFormulario(); // Limpar campos do formulário
+    }
+}
 
-function mostrarSubAbaNotificacao(tipo) {
-    console.log('Mostrando sub-aba:', tipo);
-    const subAbaCadastro = document.getElementById('subAbaCadastroNotificacao');
-    const subAbaLista = document.getElementById('subAbaListaNotificacoes');
-    
-    if (!subAbaCadastro || !subAbaLista) {
-        console.error('Elementos de sub-aba não encontrados');
-        return;
+function fecharModalCadastro() {
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto'; // Restaura scroll da página
     }
+}
+
+function limparFormulario() {
+    document.getElementById('nomeNotificacao').value = '';
+    document.getElementById('numeroDestinatario').value = '';
+    document.getElementById('horarioNotificacao').value = '09:00';
+    document.getElementById('notificacaoAtiva').checked = true;
     
-    if (tipo === 'cadastro') {
-        subAbaCadastro.style.display = 'block';
-        subAbaLista.style.display = 'none';
-        // Remover classe ativa de outros botões e adicionar ao atual
-        document.querySelectorAll('#subAbasNotificacoes .btnSubAba').forEach(btn => btn.classList.remove('ativo'));
-        document.getElementById('abaCadastroNotificacao').classList.add('ativo');
-        console.log('Sub-aba de cadastro exibida');
-    } else {
-        subAbaCadastro.style.display = 'none';
-        subAbaLista.style.display = 'block';
-        document.querySelectorAll('#subAbasNotificacoes .btnSubAba').forEach(btn => btn.classList.remove('ativo'));
-        document.getElementById('abaListaNotificacoes').classList.add('ativo');
-        console.log('Sub-aba de lista exibida');
-    }
+    // Limpar checkboxes das empresas
+    const checkboxes = document.querySelectorAll('#checkboxEmpresas input[type="checkbox"]');
+    checkboxes.forEach(checkbox => checkbox.checked = false);
 }
 
 // Carregar empresas para checkboxes
@@ -173,6 +199,8 @@ document.getElementById('salvarNotificacao').addEventListener('click', async fun
         if (response.ok) {
             mostrarMensagem('Notificação cadastrada com sucesso!', 'success');
             limparFormulario();
+            fecharModalCadastro();
+            carregarListaNotificacoes(); // Recarregar a lista
         } else {
             mostrarMensagem(resultado.message || 'Erro ao cadastrar notificação.', 'danger');
         }
@@ -322,18 +350,30 @@ observer.observe(document.getElementById('painelNotificacoes'), {
     attributeFilter: ['data-theme']
 });
 
-// Garantir que a aba de cadastro seja exibida quando a página carregar
+// Carregar lista de notificações quando o painel for ativado
 setTimeout(() => {
     const painelNotificacoes = document.getElementById('painelNotificacoes');
     if (painelNotificacoes && painelNotificacoes.dataset.theme === 'ativo') {
-        mostrarSubAbaNotificacao('cadastro');
-        carregarEmpresasCheckbox();
+        carregarListaNotificacoes();
     }
 }, 100);
 
-// Inicialização manual - sempre mostrar aba de cadastro por padrão
-setTimeout(() => {
-    mostrarSubAbaNotificacao('cadastro');
-}, 500);
+// Observar mudanças no painel para carregar a lista automaticamente
+const painelNotificacoes = document.getElementById('painelNotificacoes');
+if (painelNotificacoes) {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            if (mutation.attributeName === 'data-theme' && 
+                painelNotificacoes.dataset.theme === 'ativo') {
+                carregarListaNotificacoes();
+            }
+        });
+    });
+    
+    observer.observe(painelNotificacoes, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+}
 
 });

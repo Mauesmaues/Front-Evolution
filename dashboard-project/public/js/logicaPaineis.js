@@ -15,30 +15,48 @@ const btnCRM = document.getElementById('crm');
 const btnNotificacoes = document.getElementById('Notificacoes');
 const btnMetricasVideo = document.getElementById('metricasVideo');
 
+// Função centralizada para esconder todos os painéis
+function esconderTodosPaineis() {
+  // Esconder painéis
+  painelMonitoramento.style.setProperty('display', 'none');
+  painelMonitoramento.dataset.theme = "default";
+  
+  painelAdministracao.style.setProperty('display', 'none');
+  painelAdministracao.dataset.theme = "default";
+  
+  painelCRM.style.setProperty('display', 'none');
+  painelCRM.dataset.theme = "default";
+  
+  painelNotificacoes.style.setProperty('display', 'none');
+  painelNotificacoes.dataset.theme = "default";
+  
+  painelMetricasVideo.style.setProperty('display', 'none');
+  painelMetricasVideo.dataset.theme = "default";
+
+  // Resetar botões
+  btnDashboard.style.setProperty('background-color', 'transparent');
+  btnAdministracao.style.setProperty('background-color', 'transparent');
+  btnCRM.style.setProperty('background-color', 'transparent');
+  btnNotificacoes.style.setProperty('background-color', 'transparent');
+  btnMetricasVideo.style.setProperty('background-color', 'transparent');
+
+  // Esconder formulários
+  const formEmpresa = document.getElementById('FormCadastroEmpresa');
+  const formUsuario = document.getElementById('FormCadastroUsuario');
+  if (formEmpresa) formEmpresa.style.display = 'none';
+  if (formUsuario) formUsuario.style.display = 'none';
+}
+
 //Painel administrção
 document.getElementById('administracao').addEventListener('click', function(ev) {
   ev.preventDefault();
   
   if(painelAdministracao.dataset.theme === "default") {
-    btnAdministracao.style.setProperty('background-color', '#dde9f5ff')
+    esconderTodosPaineis();
+    
     painelAdministracao.dataset.theme = "ativo";
     painelAdministracao.style.setProperty('display', 'flex');
-
-    painelCRM.style.setProperty('display', 'none');
-    painelCRM.dataset.theme = "default";
-    btnCRM.style.setProperty('background-color', 'transparent')
-
-    painelMonitoramento.dataset.theme = "default";
-    painelMonitoramento.style.setProperty('display', 'none');
-    btnDashboard.style.setProperty('background-color', 'transparent');
-
-    painelNotificacoes.style.setProperty('display', 'none');
-    painelNotificacoes.dataset.theme = "default";
-    btnNotificacoes.style.setProperty('background-color', 'transparent');
-
-    painelMetricasVideo.style.setProperty('display', 'none');
-    painelMetricasVideo.dataset.theme = "default";
-    btnMetricasVideo.style.setProperty('background-color', 'transparent');
+    btnAdministracao.style.setProperty('background-color', '#dde9f5ff');
 
     document.getElementById('subAbaUsuario').style.display = 'none';
     document.getElementById('subAbaEmpresas').style.display = 'flex';
@@ -54,29 +72,11 @@ document.getElementById('dashboard').addEventListener('click', function(ev) {
   console.log("função ativa");
 
   if(painelMonitoramento.dataset.theme === "default") {
-
+    esconderTodosPaineis();
+    
     painelMonitoramento.dataset.theme = "ativo";
     painelMonitoramento.style.setProperty('display', 'flex');
     btnDashboard.style.setProperty('background-color', '#dde9f5ff');
-
-    painelAdministracao.dataset.theme = "default";
-    painelAdministracao.style.setProperty('display', 'none');
-    btnAdministracao.style.setProperty('background-color', 'transparent');
-
-    painelCRM.style.setProperty('display', 'none');
-    painelCRM.dataset.theme = "default";
-    btnCRM.style.setProperty('background-color', 'transparent');
-
-    painelNotificacoes.style.setProperty('display', 'none');
-    painelNotificacoes.dataset.theme = "default";
-    btnNotificacoes.style.setProperty('background-color', 'transparent');
-
-    document.getElementById('FormCadastroEmpresa').style.display = 'none';
-    document.getElementById('FormCadastroUsuario').style.display = 'none';
-
-    painelMetricasVideo.style.setProperty('display', 'none');
-    painelMetricasVideo.dataset.theme = "default";
-    btnMetricasVideo.style.setProperty('background-color', 'transparent');
   }
 });
 
@@ -84,25 +84,11 @@ this.document.getElementById('metricasVideo').addEventListener('click', function
   ev.preventDefault();
 
   if(painelMetricasVideo.dataset.theme === "default") {
+    esconderTodosPaineis();
+    
     painelMetricasVideo.dataset.theme = "ativo";
     painelMetricasVideo.style.setProperty('display', 'flex');
     btnMetricasVideo.style.setProperty('background-color', '#dde9f5ff');
-
-    painelMonitoramento.style.setProperty('display', 'none');
-    painelMonitoramento.dataset.theme = "default";
-    btnDashboard.style.setProperty('background-color', 'transparent');
-
-    painelAdministracao.style.setProperty('display', 'none');
-    painelAdministracao.dataset.theme = "default";
-    btnAdministracao.style.setProperty('background-color', 'transparent');
-
-    painelCRM.style.setProperty('display', 'none');
-    painelCRM.dataset.theme = "default";
-    btnCRM.style.setProperty('background-color', 'transparent');
-
-    painelNotificacoes.style.setProperty('display', 'none');
-    painelNotificacoes.dataset.theme = "default";
-    btnNotificacoes.style.setProperty('background-color', 'transparent');
   }
 });
 
@@ -113,25 +99,11 @@ document.getElementById('crm').addEventListener('click', function(ev) {
   console.log("função ativa");
 
   if(painelCRM.dataset.theme === "default") {
-
+    esconderTodosPaineis();
+    
     painelCRM.dataset.theme = "ativo";
     painelCRM.style.setProperty('display', 'flex');
     btnCRM.style.setProperty('background-color', '#dde9f5ff');
-
-    painelMonitoramento.style.setProperty('display', 'none');
-    painelMonitoramento.dataset.theme = "default";
-    btnDashboard.style.setProperty('background-color', 'transparent');
-
-    painelAdministracao.style.setProperty('display', 'none');
-    painelAdministracao.dataset.theme = "default";
-    btnAdministracao.style.setProperty('background-color', 'transparent');
-
-    painelNotificacoes.style.setProperty('display', 'none');
-    painelNotificacoes.dataset.theme = "default";
-    btnNotificacoes.style.setProperty('background-color', 'transparent');
-
-    document.getElementById('FormCadastroEmpresa').style.display = 'none';
-    document.getElementById('FormCadastroUsuario').style.display = 'none';
     
     // Adicionar header do CRM se não existir
     adicionarHeaderCRM();
@@ -151,22 +123,11 @@ document.getElementById('Notificacoes').addEventListener('click', function(ev) {
 
   console.log("função ativa");
   if(painelNotificacoes.dataset.theme === "default") {
-
+    esconderTodosPaineis();
+    
     painelNotificacoes.dataset.theme = "ativo";
     painelNotificacoes.style.setProperty('display', 'flex');
     btnNotificacoes.style.setProperty('background-color', '#dde9f5ff');
-
-    painelMonitoramento.style.setProperty('display', 'none');
-    painelMonitoramento.dataset.theme = "default";
-    btnDashboard.style.setProperty('background-color', 'transparent');
-
-    painelAdministracao.style.setProperty('display', 'none');
-    painelAdministracao.dataset.theme = "default";
-    btnAdministracao.style.setProperty('background-color', 'transparent');
-
-    painelCRM.style.setProperty('display', 'none');
-    painelCRM.dataset.theme = "default";
-    btnCRM.style.setProperty('background-color', 'transparent');
   }
 });
 
@@ -992,7 +953,19 @@ async function excluirEmpresa(empresaId, nomeEmpresa) {
   }
 }
 
+// Função para inicializar os painéis corretamente
+function inicializarPaineis() {
+  // Esconder todos os painéis primeiro
+  esconderTodosPaineis();
+  
+  // Mostrar apenas o painel Dashboard no carregamento
+  painelMonitoramento.style.setProperty('display', 'flex');
+  painelMonitoramento.dataset.theme = "ativo";
+  btnDashboard.style.setProperty('background-color', '#dde9f5ff');
+}
+
 // Executa quando a página carrega
 carregarEmpresasCadastradas();
+inicializarPaineis();
 
 });

@@ -142,7 +142,7 @@
           </div>
         </div>
             <!--Painel Administração-->
-      <div id="painelAdministracao" data-theme="default" display="none">
+      <div id="painelAdministracao" data-theme="default" style="display: none;">
 
         <div id="subAbasAdmin">
           <button class="btnSubAba" id="abaUsuario">Usuário</button>
@@ -272,50 +272,18 @@
                 </div>
           </div>
 
-      <div id="painelNotificacoes" data-theme="default" display="none">
-        <div id="subAbasNotificacoes">
-          <button class="btnSubAba" id="abaCadastroNotificacao">Cadastrar Notificação</button>
-          <button class="btnSubAba" id="abaListaNotificacoes">Lista de Notificações</button>
+      <!--Painel Notificações-->
+      <div id="painelNotificacoes" data-theme="default" style="display: none;">
+        <div id="headerNotificacoes">
+          <h2><i class="fas fa-bell me-2"></i>Gerenciar Notificações</h2>
+          <button id="btnCadastrarNotificacao" class="btnFiltro aplicarFiltro">
+            <i class="fas fa-plus me-1"></i>Cadastrar Notificação
+          </button>
         </div>
 
-        <div id="conteudoSubAbaNotificacoes">
-          <!-- Conteúdo da sub-aba Cadastro de Notificação -->
-          <div id="subAbaCadastroNotificacao">
-            <div id="FormCadastroNotificacao">
-              <div class="form-group">
-                <label for="nomeNotificacao" class="form-label">Nome da Notificação</label>
-                <input type="text" id="nomeNotificacao" class="inputFiltro" placeholder="Digite o nome da notificação" required>
-              </div>
-              <div class="form-group">
-                <label for="numeroDestinatario" class="form-label">Número do Destinatário</label>
-                <input type="tel" id="numeroDestinatario" class="inputFiltro" placeholder="(11) 99999-9999" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Empresas</label>
-                <div id="checkboxEmpresas" class="checkbox-container">
-                  <!-- Checkboxes das empresas serão carregadas aqui via JS -->
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="horarioNotificacao" class="form-label">Horário de Envio</label>
-                <input type="time" id="horarioNotificacao" class="inputFiltro" value="09:00" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Status</label>
-                <div class="form-check">
-                  <input type="checkbox" id="notificacaoAtiva" class="form-check-input" checked>
-                  <label for="notificacaoAtiva" class="form-check-label">Notificação Ativa</label>
-                </div>
-              </div>
-              <button id="salvarNotificacao" class="btnFiltro aplicarFiltro">Salvar Notificação</button>
-            </div>
-          </div>
-          
-          <!-- Conteúdo da sub-aba Lista de Notificações -->
-          <div id="subAbaListaNotificacoes" style="display: none;">
-            <div id="listaNotificacoes">
-              <!-- Lista de notificações será carregada aqui -->
-            </div>
+        <div id="conteudoNotificacoes">
+          <div id="listaNotificacoes">
+            <!-- Lista de notificações será carregada aqui -->
           </div>
         </div>
 
@@ -323,6 +291,55 @@
       </div>
     </div>
   </main>
+
+  <!-- Modal para Cadastro de Notificação -->
+  <div id="modalCadastroNotificacao" class="modal-overlay" style="display: none;">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-bell me-2"></i>Cadastrar Nova Notificação</h3>
+        <button id="btnFecharModal" class="btn-close-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="FormCadastroNotificacao">
+          <div class="form-group">
+            <label for="nomeNotificacao" class="form-label">Nome da Notificação</label>
+            <input type="text" id="nomeNotificacao" class="inputFiltro" placeholder="Digite o nome da notificação" required>
+          </div>
+          <div class="form-group">
+            <label for="numeroDestinatario" class="form-label">Número do Destinatário</label>
+            <input type="tel" id="numeroDestinatario" class="inputFiltro" placeholder="(11) 99999-9999" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Empresas</label>
+            <div id="checkboxEmpresas" class="checkbox-container">
+              <!-- Checkboxes das empresas serão carregadas aqui via JS -->
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="horarioNotificacao" class="form-label">Horário de Envio</label>
+            <input type="time" id="horarioNotificacao" class="inputFiltro" value="09:00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <div class="form-check">
+              <input type="checkbox" id="notificacaoAtiva" class="form-check-input" checked>
+              <label for="notificacaoAtiva" class="form-check-label">Notificação Ativa</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelarCadastro" class="btnFiltro btn-cancelar">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button id="salvarNotificacao" class="btnFiltro aplicarFiltro">
+          <i class="fas fa-save me-1"></i>Salvar Notificação
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal para visualizar imagem do anúncio -->
   <div class="modal fade" id="modalImagemAnuncio" tabindex="-1" aria-labelledby="modalImagemAnuncioLabel" aria-hidden="true">
