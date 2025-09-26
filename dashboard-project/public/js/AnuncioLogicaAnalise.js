@@ -116,44 +116,229 @@ function formatarPercentual(valor) {
   return `${parseFloat(valor).toFixed(2)}%`;
 }
 
-// Função para organizar dados em estrutura hierárquica
-function organizarDadosHierarquicos(dadosAnuncios, nomeEmpresa) {
+// Função para organizar dados simplificada - apenas empresa e anúncios
+function organizarDadosSimplificados(dadosAnuncios, nomeEmpresa) {
   const estrutura = {
     empresa: nomeEmpresa,
     totalAnuncios: dadosAnuncios.length,
-    campanhas: {}
+    totalVisualizacoes: 0,
+    totalAlcance: 0,
+    totalConversoes: 0,
+    mediaCPL: 0,
+    anuncios: []
   };
 
+  let somaCPL = 0;
+  let anunciosComCPL = 0;
+
   dadosAnuncios.forEach(anuncio => {
-    const campanhaName = anuncio.campanha || 'Campanha Desconhecida';
-    const grupoName = anuncio.grupo || 'Grupo Desconhecido';
+    const anuncioProcessado = {
+      campanha: anuncio.campanha || 'Campanha Desconhecida',
+      grupo: anuncio.grupo || 'Grupo Desconhecido',
+      nome: anuncio.nome || 'Anúncio Sem Nome',
+      imagem: anuncio.img || anuncio.thumbnail || anuncio.imagem || anuncio.image || anuncio.foto || anuncio.url_imagem || '',
+      visualizacoes: parseInt(anuncio.visualizacoes) || 0,
+      alcance: parseInt(anuncio.alcance) || 0,
+      cpl: parseFloat(anuncio.cpl) || 0,
+      conversoes: parseFloat(anuncio.conversoes) || parseFloat(anuncio.convs) || parseFloat(anuncio.resultados) || 0,
+      id: anuncio.id || `anuncio_${Date.now()}_${Math.random()}`
+    };
 
-    // Inicializar campanha se não existir
-    if (!estrutura.campanhas[campanhaName]) {
-      estrutura.campanhas[campanhaName] = {
-        nome: campanhaName,
-        totalGrupos: 0,
-        totalAnuncios: 0,
-        grupos: {}
-      };
+    estrutura.anuncios.push(anuncioProcessado);
+    
+    // Somar totais
+    estrutura.totalVisualizacoes += anuncioProcessado.visualizacoes;
+    estrutura.totalAlcance += anuncioProcessado.alcance;
+    estrutura.totalConversoes += anuncioProcessado.conversoes;
+    
+    if (anuncioProcessado.cpl > 0) {
+      somaCPL += anuncioProcessado.cpl;
+      anunciosComCPL++;
     }
-
-    // Inicializar grupo se não existir
-    if (!estrutura.campanhas[campanhaName].grupos[grupoName]) {
-      estrutura.campanhas[campanhaName].grupos[grupoName] = {
-        nome: grupoName,
-        campanhaName: campanhaName,
-        anuncios: []
-      };
-      estrutura.campanhas[campanhaName].totalGrupos++;
-    }
-
-    // Adicionar anúncio ao grupo
-    estrutura.campanhas[campanhaName].grupos[grupoName].anuncios.push(anuncio);
-    estrutura.campanhas[campanhaName].totalAnuncios++;
   });
 
+  // Calcular média CPL
+  estrutura.mediaCPL = anunciosComCPL > 0 ? (somaCPL / anunciosComCPL) : 0;
+  
   return estrutura;
+}
+
+// Função para renderizar cards das empresas com anúncios
+function renderizarCardsEmpresas(dadosEmpresas) {
+  const container = document.getElementById('cardsEmpresas');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  if (!dadosEmpresas || dadosEmpresas.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <h3>Nenhum anúncio encontrado</h3>
+        <p>Aplique filtros diferentes para visualizar os dados</p>
+      </div>
+    `;
+    return;
+  }
+
+  let totalGeralAnuncios = 0;
+  dadosEmpresas.forEach(empresaData => {
+    totalGeralAnuncios += empresaData.totalAnuncios;
+    
+    const empresaCard = document.createElement('div');
+    empresaCard.className = 'empresa-card';
+    empresaCard.dataset.empresa = empresaData.empresa;
+
+    empresaCard.innerHTML = `
+      <div class="empresa-header" onclick="toggleEmpresaCard('${empresaData.empresa}')">
+        <div class="empresa-info">
+          <div class="empresa-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="empresa-details">
+            <h3>${empresaData.empresa}</h3>
+            <div class="empresa-stats">
+              <span><i class="fas fa-ad me-1"></i>${empresaData.totalAnuncios} anúncios</span>
+              <span><i class="fas fa-eye me-1"></i>${formatarNumero(empresaData.totalVisualizacoes)} visualizações</span>
+              <span><i class="fas fa-users me-1"></i>${formatarNumero(empresaData.totalAlcance)} alcance</span>
+              <span><i class="fas fa-trophy me-1"></i>${empresaData.totalConversoes} conversões</span>
+            </div>
+          </div>
+        </div>
+        <button class="expand-btn">
+          <span>Ver Anúncios</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+      
+      <div class="anuncios-container">
+        <table class="tabela-anuncios">
+          <thead>
+            <tr>
+              <th>Campanha</th>
+              <th>Grupo</th>
+              <th>Anúncio</th>
+              <th>Imagem</th>
+              <th>Visualizações</th>
+              <th>Alcance</th>
+              <th>CPL</th>
+              <th>Conversões</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${empresaData.anuncios.map(anuncio => `
+              <tr>
+                <td>${anuncio.campanha}</td>
+                <td>${anuncio.grupo}</td>
+                <td>${anuncio.nome}</td>
+                <td>
+                  ${anuncio.imagem ? 
+                    `<div class="imagem-container">
+                       <img src="${anuncio.imagem}" alt="${anuncio.nome}" class="anuncio-imagem" onerror="mostrarErroImagem(this);">
+                       <button class="btn-expandir-imagem" onclick="expandirImagemAnuncio('${anuncio.imagem}', '${anuncio.nome}', ${anuncio.visualizacoes}, ${anuncio.alcance}, ${anuncio.cpl})" title="Expandir imagem">
+                         <i class="fas fa-expand"></i>
+                       </button>
+                       <div class="imagem-erro" style="display:none;">
+                         <i class="fas fa-image"></i>
+                         <small>Erro ao carregar</small>
+                       </div>
+                     </div>` :
+                    '<div class="sem-imagem"><i class="fas fa-image"></i><small>Sem imagem</small></div>'
+                  }
+                </td>
+                <td><span class="valor-metrica">${formatarNumero(anuncio.visualizacoes)}</span></td>
+                <td><span class="valor-metrica">${formatarNumero(anuncio.alcance)}</span></td>
+                <td><span class="valor-metrica">${formatarMoeda(anuncio.cpl)}</span></td>
+                <td><span class="valor-metrica ${anuncio.conversoes > 0 ? 'valor-positivo' : ''}">${anuncio.conversoes}</span></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.appendChild(empresaCard);
+  });
+
+  // Atualizar contador total
+  const totalElement = document.getElementById('totalAnuncios');
+  if (totalElement) {
+    totalElement.textContent = totalGeralAnuncios;
+  }
+}
+
+// Função para toggle do card da empresa
+function toggleEmpresaCard(nomeEmpresa) {
+  const card = document.querySelector(`.empresa-card[data-empresa="${nomeEmpresa}"]`);
+  if (!card) return;
+
+  card.classList.toggle('expandida');
+}
+
+// Função para tratar erro de carregamento de imagem
+function mostrarErroImagem(imgElement) {
+  imgElement.style.display = 'none';
+  const container = imgElement.parentElement;
+  const erroDiv = container.querySelector('.imagem-erro');
+  if (erroDiv) {
+    erroDiv.style.display = 'flex';
+  }
+}
+
+// Função auxiliar para expandir imagem do anúncio
+function expandirImagemAnuncio(imagemSrc, nomeAnuncio, visualizacoes, alcance, cpl) {
+  const dadosAnuncio = {
+    visualizacoes: visualizacoes || 0,
+    alcance: alcance || 0,
+    cpl: cpl || 0
+  };
+  abrirImagemModal(imagemSrc, nomeAnuncio, dadosAnuncio);
+}
+
+// Função para abrir modal de imagem usando o modal do Bootstrap
+function abrirImagemModal(imagemSrc, nomeAnuncio, anuncioData = {}) {
+  // Elementos do modal Bootstrap
+  const modalElement = document.getElementById('modalImagemAnuncio');
+  const imagemExpandida = document.getElementById('imagemExpandida');
+  const infoAnuncio = document.getElementById('infoAnuncio');
+  const visualizacoesModal = document.getElementById('visualizacoesModal');
+  const alcanceModal = document.getElementById('alcanceModal');
+  const cplModal = document.getElementById('cplModal');
+  const linkImagemOriginal = document.getElementById('linkImagemOriginal');
+  
+  if (!modalElement || !imagemExpandida) {
+    console.error('Modal de imagem não encontrado');
+    return;
+  }
+
+  // Configurar conteúdo do modal
+  imagemExpandida.src = imagemSrc;
+  imagemExpandida.alt = nomeAnuncio;
+  
+  if (infoAnuncio) {
+    infoAnuncio.textContent = nomeAnuncio;
+  }
+  
+  // Atualizar métricas se disponíveis
+  if (visualizacoesModal && anuncioData.visualizacoes !== undefined) {
+    visualizacoesModal.textContent = formatarNumero(anuncioData.visualizacoes);
+  }
+  
+  if (alcanceModal && anuncioData.alcance !== undefined) {
+    alcanceModal.textContent = formatarNumero(anuncioData.alcance);
+  }
+  
+  if (cplModal && anuncioData.cpl !== undefined) {
+    cplModal.textContent = parseFloat(anuncioData.cpl).toFixed(2);
+  }
+  
+  if (linkImagemOriginal) {
+    linkImagemOriginal.href = imagemSrc;
+  }
+  
+  // Mostrar modal usando Bootstrap
+  const modal = new bootstrap.Modal(modalElement);
+  modal.show();
 }
 
 // Função para calcular totais de uma campanha
@@ -416,49 +601,48 @@ function aplicarFiltrosLocais(dados, filtroNomeCampanha) {
   );
 }
 
-// Função para mostrar loading na tabela
+// Função para mostrar loading no container de cards
 function mostrarLoadingTabela() {
-  const tbody = document.getElementById('tabelaMetricasVideo');
-  if (tbody) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="10" class="text-center p-4">
-          <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-            <span class="visually-hidden">Carregando...</span>
-          </div>
-          Carregando dados...
-        </td>
-      </tr>
+  const container = document.getElementById('cardsEmpresas');
+  if (container) {
+    container.innerHTML = `
+      <div class="loading-state">
+        <div class="spinner-border text-primary me-2" role="status">
+          <span class="visually-hidden">Carregando...</span>
+        </div>
+        <span>Carregando dados dos anúncios...</span>
+      </div>
     `;
   }
 }
 
-// Função para mostrar erro na tabela
+// Função para mostrar erro no container de cards
 function mostrarErroTabela(mensagem) {
-  const tbody = document.getElementById('tabelaMetricasVideo');
-  if (tbody) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="10" class="text-center p-4 text-danger">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          ${mensagem}
-        </td>
-      </tr>
+  const container = document.getElementById('cardsEmpresas');
+  if (container) {
+    container.innerHTML = `
+      <div class="error-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Erro ao carregar dados</h3>
+        <p>${mensagem}</p>
+        <button class="btn btn-primary btn-sm" onclick="aplicarFiltrosMetricasVideo()">
+          <i class="fas fa-redo me-1"></i>Tentar novamente
+        </button>
+      </div>
     `;
   }
 }
 
 // Função para mostrar mensagem de dados vazios
 function mostrarTabelaVazia() {
-  const tbody = document.getElementById('tabelaMetricasVideo');
-  if (tbody) {
-    tbody.innerHTML = `
-      <tr>
-        <td colspan="10" class="text-center p-4 text-muted">
-          <i class="fas fa-info-circle me-2"></i>
-          Nenhum dado encontrado para os filtros aplicados
-        </td>
-      </tr>
+  const container = document.getElementById('cardsEmpresas');
+  if (container) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-search"></i>
+        <h3>Nenhum anúncio encontrado</h3>
+        <p>Tente ajustar os filtros ou verificar se existem dados para o período selecionado</p>
+      </div>
     `;
   }
 }
@@ -705,7 +889,7 @@ async function aplicarFiltrosMetricasVideo() {
   mostrarLoadingTabela();
   
   try {
-    // Organizar dados por empresa
+    // Organizar dados por empresa (nova estrutura simplificada)
     const dadosEstruturados = [];
     
     if (empresaSelecionada === 'todas') {
@@ -716,7 +900,7 @@ async function aplicarFiltrosMetricasVideo() {
           if (dados && dados.data && Array.isArray(dados.data)) {
             const anunciosFiltrados = aplicarFiltrosLocais(dados.data, filtroNomeCampanha);
             if (anunciosFiltrados.length > 0) {
-              const estrutura = organizarDadosHierarquicos(anunciosFiltrados, empresa.nome);
+              const estrutura = organizarDadosSimplificados(anunciosFiltrados, empresa.nome);
               dadosEstruturados.push(estrutura);
             }
           }
@@ -729,7 +913,7 @@ async function aplicarFiltrosMetricasVideo() {
         const dados = await buscarDadosAnuncios(empresaSelecionadaObj.contaDeAnuncio);
         if (dados && dados.data && Array.isArray(dados.data)) {
           const anunciosFiltrados = aplicarFiltrosLocais(dados.data, filtroNomeCampanha);
-          const estrutura = organizarDadosHierarquicos(anunciosFiltrados, empresaSelecionadaObj.nome);
+          const estrutura = organizarDadosSimplificados(anunciosFiltrados, empresaSelecionadaObj.nome);
           dadosEstruturados.push(estrutura);
         }
       }
@@ -738,8 +922,8 @@ async function aplicarFiltrosMetricasVideo() {
     // Filtrar por data (se implementado na API)
     // Nota: A filtragem por data seria melhor implementada na API para melhor performance
     
-    // Renderizar dados estruturados
-    renderizarTabelaAnuncios(dadosEstruturados);
+    // Renderizar dados usando nova estrutura de cards
+    renderizarCardsEmpresas(dadosEstruturados);
     
   } catch (error) {
     console.error('Erro ao aplicar filtros:', error);

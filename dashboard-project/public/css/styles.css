@@ -313,11 +313,14 @@
 /* Container dos filtros com melhor espaçamento */
 #painelMetricasVideo .row.mb-4 {
   background: var(--bg-card);
-  padding: 20px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
+  width: 100%;
   box-shadow: var(--shadow);
-  margin-bottom: 24px !important;
+  margin-bottom: 1vh !important;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 
 /* Dropdown customizado para empresas */
@@ -343,6 +346,7 @@
   transition: all 0.3s ease;
   font-weight: 500;
   color: var(--text-primary);
+  height: 3vh;
 }
 
 .dropdown-selected:hover {
@@ -360,6 +364,7 @@
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  height: 3vh;
 }
 
 .dropdown-arrow {
@@ -488,6 +493,7 @@
 .option.hidden {
   display: none;
 }
+
 
 /* Responsividade para o dropdown customizado */
 @media (max-width: 768px) {
@@ -627,7 +633,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 70px;
+  height: 8vh;
   width: 100%;
   box-shadow: var(--shadow);
   position: fixed;
@@ -656,7 +662,7 @@ header {
 }
 
 .logo-name {
-  font-size: 20px;
+  font-size: 2.7vh;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
@@ -664,7 +670,7 @@ header {
 }
 
 .logo-tagline {
-  font-size: 11px;
+  font-size: 1.5vh;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -698,8 +704,8 @@ header {
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 4vh;
+  height: 4vh;
   background: var(--primary);
   border-radius: 8px;
   display: flex;
@@ -713,9 +719,9 @@ main {
   display: flex;
   flex-wrap: nowrap;
   background-color: var(--bg-app);
-  height: calc(100vh - 70px);
+  height: calc(100vh - 8vh);
   width: 100%;
-  margin-top: 70px;
+  margin-top: 8.5vh;
   overflow: hidden;
   position: relative;
 }
@@ -731,6 +737,7 @@ main {
   flex-direction: column;
   position: relative;
   box-shadow: var(--shadow);
+  background-color: #fcfcfc;
 }
 
 #sidebarMain {
@@ -840,15 +847,13 @@ main {
 
 #painelMonitoramento {
   background: var(--bg-app);
-  height: calc(100% - 16px);
+  height: 100%;
   width: calc(100% - 16px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
   animation: fadeInUp 0.8s ease-out;
-  margin: 8px;
-  padding: 24px;
   overflow: hidden;
 }
 
@@ -858,30 +863,30 @@ main {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  margin-bottom: 24px;
+  margin-bottom: 1vh;
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  min-height: 56px;
+  min-height: 8vh;
   min-width: 100%;
   justify-content: space-around;
 }
 
 .filtro-empresa {
-  min-width: 180px;
-  max-width: 220px;
-  height: 40px;
-  padding: 8px 12px;
-  font-size: 13px;
+  min-width: 1vh;
+  max-width: 2vh;
+  height: 1vh;
+  padding: 4px 6px;
+  font-size: 1vh;
 }
 
 .filtro-data {
-  min-width: 140px;
-  max-width: 160px;
-  height: 40px;
-  padding: 8px 12px;
-  font-size: 13px;
+  min-width: 1vh;
+  max-width: 22.2vh;
+  height: 1vh;
+  padding: 4px 6px;
+  font-size: 1vh;
 }
 
 .filtro-presets {
@@ -919,10 +924,10 @@ main {
 }
 
 .btn-aplicar {
-  min-width: 120px;
-  height: 40px;
-  padding: 8px 16px;
-  font-size: 13px;
+  min-width: 1vh;
+  height: 1vh;
+  padding: 4px 8px;
+  font-size: 1vh;
   white-space: nowrap;
 }
 
@@ -1135,13 +1140,10 @@ main {
   border-collapse: collapse;
   background: var(--bg-card);
   box-shadow: var(--shadow-md);
-  margin-bottom: 20px;
-  table-layout: auto;
 }
 
 #subAbaEmpresas .tabela-empresas-container {
   width: 100%;
-  max-height: calc(100vh - 200px);
   overflow-y: auto;
   overflow-x: auto;
   border: 1px solid var(--border);
@@ -1245,10 +1247,6 @@ main {
     padding: 10px;
     min-height: 80px;
   }
-
-  #dropDownEmpresa {
-    height: calc(100vh - 5vh - 220px);
-  }
   
   #dropDownEmpresa .tabela-empresas th {
     padding: 14px 16px;
@@ -1281,10 +1279,6 @@ main {
     gap: 8px;
     min-height: 200px;
   }
-
-  #dropDownEmpresa {
-    height: calc(100vh - 5vh - 280px);
-  }
   
   #dropDownEmpresa .tabela-empresas {
     min-width: 700px;
@@ -1315,8 +1309,8 @@ main {
 .metricsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 1vh;
+  margin-bottom: 1vh;
   padding: 0;
   width: 100%;
 }
@@ -1325,13 +1319,13 @@ main {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 1.5vh;
   display: flex;
   align-items: center;
   gap: 16px;
   transition: all var(--trans);
   cursor: pointer;
-  min-height: 100px;
+  min-height: 3vh;
   box-shadow: var(--shadow-sm);
 }
 
@@ -1367,7 +1361,7 @@ main {
 }
 
 .metric-value {
-  font-size: 32px;
+  font-size: 3.5vh;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1;
@@ -1476,31 +1470,30 @@ main {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   width: 100%;
-  flex: 1;
-  height: calc(100vh - 300px);
-  max-height: 600px;
-  min-height: 300px;
-  padding: 20px;
+  height: calc(100vh - 200px);
   box-shadow: var(--shadow-md);
   animation: fadeInUp 0.8s ease-out 0.2s both;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
+  padding: 0;
+  margin: 0;
 }
 
 /* Container da tabela com scroll garantido */
 #dropDownEmpresa .tabela-empresas-container {
   width: 100%;
   height: 100%;
-  max-height: calc(100vh - 380px);
+  flex: 1;
   overflow-y: auto;
   overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
   background: var(--bg-card);
-  flex: 1;
   position: relative;
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 0;
 }
 
 /* Scrollbar moderna e elegante */
@@ -1535,13 +1528,13 @@ main {
 /* Tabela com design moderno */
 #dropDownEmpresa .tabela-empresas {
   width: 100%;
+  height: 100%;
   border-collapse: separate;
   border-spacing: 0;
   background: var(--bg-card);
   margin: 0;
-  table-layout: auto;
-  min-width: 800px;
-  border-radius: 12px;
+  table-layout: fixed;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -1558,7 +1551,6 @@ main {
   letter-spacing: 0.8px;
   position: sticky;
   top: 0;
-  z-index: 20;
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
@@ -1592,8 +1584,8 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
   background: var(--bg-card);
+  vertical-align: middle;
 }
 
 /* Linhas alternadas com cor sutil */
@@ -2941,18 +2933,511 @@ main {
 
 
 
-/* Painel de notificações */
-#painelNotificacoes {
+/* Painel de Métricas de Vídeo - Design Moderno */
+#painelMetricasVideo {
   color: var(--text-primary);
-  box-shadow: var(--shadow-md);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  height: calc(100% - 16px);
-  width: calc(100% - 16px);
+  background: var(--bg-app);
+  height: 100%;
+  width: 100%;
   display: none;
   flex-direction: column;
-  margin: 8px;
+  overflow: hidden;
+}
+
+#painelMetricasVideo[data-theme="default"] {
+  display: flex;
+}
+
+#headerMetricasVideo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 80px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
+}
+
+#headerMetricasVideo h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#headerMetricasVideo h2 i {
+  font-size: 1.6rem;
+  color: var(--primary);
+}
+
+#totalMetricas {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.total-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+#totalAnuncios {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* Filtros do Painel de Métricas */
+#filtrosMetricasVideo {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-height: 56px;
+}
+
+#filtrosMetricasVideo .filtro-empresa {
+  min-width: 180px;
+  max-width: 220px;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+#filtrosMetricasVideo .filtro-campanha {
+  min-width: 200px;
+  max-width: 250px;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+#filtrosMetricasVideo .filtro-data {
+  min-width: 140px;
+  max-width: 160px;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* Conteúdo do Painel */
+#conteudoMetricasVideo {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+  background: var(--bg-app);
+}
+
+/* Cards de Empresas */
+#cardsEmpresas {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.empresa-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: all var(--trans);
+}
+
+.empresa-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.empresa-card.expandida {
+  box-shadow: var(--shadow-lg);
+}
+
+.empresa-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white !important;
+  cursor: pointer;
+  transition: all var(--trans);
+}
+
+.empresa-header:hover {
+  background: linear-gradient(135deg, #0056b3, #007bff);
+}
+
+.empresa-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white !important;
+}
+
+.empresa-info * {
+  color: white !important;
+}
+
+.empresa-icon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+.empresa-details h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.empresa-stats {
+  font-size: 13px;
+  opacity: 0.9;
+  display: flex;
+  gap: 16px;
+  color: white !important;
+}
+
+.expand-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--trans);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.expand-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.expand-btn i {
+  transition: transform var(--trans);
+}
+
+.empresa-card.expandida .expand-btn i {
+  transform: rotate(180deg);
+}
+
+/* Tabela de Anúncios */
+.anuncios-container {
+  display: none;
+  padding: 0;
+  background: var(--bg-card);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease-out;
+  opacity: 0;
+}
+
+.empresa-card.expandida .anuncios-container {
+  display: block;
+  max-height: 2000px;
+  opacity: 1;
+  animation: slideDownFade 0.4s ease-out forwards;
+}
+
+@keyframes slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+  .tabela-anuncios {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+  }
+
+  /* Estado Vazio */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+  }
+
+  .empty-state h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .empty-state p {
+    margin: 0;
+    font-size: 0.9rem;
+  }
+
+  /* Imagens dos Anúncios */
+  .imagem-container {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .anuncio-imagem {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border: 2px solid transparent;
+  }
+
+  .anuncio-imagem:hover {
+    transform: scale(1.1);
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+
+  /* Container e Botão de Expandir Imagem */
+  .imagem-container {
+    position: relative;
+    display: inline-block;
+  }
+
+  .btn-expandir-imagem {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0, 123, 255, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+    z-index: 2;
+  }
+
+  .imagem-container:hover .btn-expandir-imagem {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .btn-expandir-imagem:hover {
+    background: rgba(0, 123, 255, 1);
+    transform: scale(1.1);
+  }
+
+  .imagem-erro,
+  .sem-imagem {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 10px;
+  }
+
+  .imagem-erro i,
+  .sem-imagem i {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+
+  /* Valores das Métricas */
+  .valor-metrica {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .valor-positivo {
+    color: var(--success-color);
+  }
+
+
+
+  /* Estados de Loading e Erro */
+  .loading-state,
+  .error-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+
+  .loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 1rem;
+    color: var(--primary-color);
+  }
+
+  .error-state {
+    color: var(--danger-color);
+  }
+
+  .error-state i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+  }
+
+  .error-state h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+  }
+
+  .error-state p {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }.tabela-anuncios thead {
+  background: var(--bg-card-secondary);
+}
+
+.tabela-anuncios th {
+  padding: 16px 20px;
+  text-align: left;
+  border: none;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid var(--border);
+}
+
+.tabela-anuncios td {
+  padding: 16px 20px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all var(--trans);
+  vertical-align: middle;
+}
+
+.tabela-anuncios tbody tr {
+  transition: all var(--trans);
+}
+
+.tabela-anuncios tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.tabela-anuncios tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Imagem do Anúncio */
+.anuncio-imagem {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--trans);
+}
+
+.anuncio-imagem:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+
+/* Valores numéricos */
+.valor-metrica {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 15px;
+}
+
+.valor-positivo {
+  color: var(--success);
+}
+
+.valor-negativo {
+  color: var(--danger);
+}
+
+/* Estado vazio */
+.empty-state {
+  text-align: center;
+  padding: 80px 40px;
+  color: var(--text-secondary);
+}
+
+.empty-state i {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Painel de Notificações - Design Moderno */
+#painelNotificacoes {
+  color: var(--text-primary);
+  background: var(--bg-app);
+  height: 100%;
+  width: 100%;
+  display: none;
+  flex-direction: column;
   overflow: hidden;
 }
 
@@ -2966,66 +3451,129 @@ main {
   align-items: center;
   width: 100%;
   height: 80px;
-  background: var(--bg-secondary);
+  background: var(--bg-card);
   border-bottom: 1px solid var(--border);
-  padding: 0 24px;
+  padding: 0 32px;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(10px);
 }
 
 #headerNotificacoes h2 {
   margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-size: 1.8rem;
+  font-weight: 700;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#headerNotificacoes h2 i {
+  font-size: 1.6rem;
+  color: var(--primary);
 }
 
 #conteudoNotificacoes {
   width: 100%;
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 24px 32px;
+  background: var(--bg-app);
 }
 
 #listaNotificacoes {
   width: 100%;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
 }
 
 #listaNotificacoes .tabela-empresas {
   width: 100%;
   border-collapse: collapse;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  box-shadow: var(--shadow);
+  background: transparent;
+  border-radius: 0;
+  overflow: visible;
 }
 
 #listaNotificacoes .tabela-empresas thead {
-  background: var(--bg-secondary);
-}
-
-#listaNotificacoes .tabela-empresas th,
-#listaNotificacoes .tabela-empresas td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
 }
 
 #listaNotificacoes .tabela-empresas th {
-  font-weight: 600;
+  padding: 20px 24px;
+  text-align: left;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+#listaNotificacoes .tabela-empresas td {
+  padding: 18px 24px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-light);
+  font-weight: 500;
   color: var(--text-primary);
+  transition: all var(--trans);
+}
+
+#listaNotificacoes .tabela-empresas tbody tr {
+  transition: all var(--trans);
 }
 
 #listaNotificacoes .tabela-empresas tbody tr:hover {
-  background: var(--bg-hover);
+  background: var(--bg-card-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-#listaNotificacoes .status-ativo {
+#listaNotificacoes .tabela-empresas tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.status-ativo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--success-bg);
   color: var(--success);
+  border-radius: var(--radius);
   font-weight: 600;
+  font-size: 12px;
 }
 
-#listaNotificacoes .status-inativo {
+.status-ativo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+}
+
+.status-inativo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--danger-bg);
   color: var(--danger);
+  border-radius: var(--radius);
   font-weight: 600;
+  font-size: 12px;
+}
+
+.status-inativo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  background: var(--danger);
+  border-radius: 50%;
 }
 
 #listaNotificacoes .btn-acao {
@@ -3295,6 +3843,106 @@ tbody tr:last-child td {
   }
 }
 
+/* Responsividade do Painel de Métricas */
+@media (max-width: 1024px) {
+  #filtrosMetricasVideo {
+    gap: 8px;
+    padding: 10px 24px;
+  }
+  
+  #filtrosMetricasVideo .filtro-empresa,
+  #filtrosMetricasVideo .filtro-campanha {
+    min-width: 160px;
+    max-width: 180px;
+  }
+  
+  #filtrosMetricasVideo .filtro-data {
+    min-width: 120px;
+    max-width: 140px;
+  }
+}
+
+@media (max-width: 768px) {
+  #headerMetricasVideo,
+  #conteudoMetricasVideo {
+    padding: 16px 20px;
+  }
+  
+  #filtrosMetricasVideo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px 20px;
+    min-height: auto;
+  }
+  
+  #filtrosMetricasVideo .form-input {
+    min-width: auto;
+    max-width: none;
+    width: 100%;
+  }
+  
+  #filtrosMetricasVideo .filtro-presets {
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  
+  #filtrosMetricasVideo .btn-filtro-preset {
+    flex: 1;
+    min-width: 70px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  
+  #filtrosMetricasVideo .btn-aplicar {
+    width: 100%;
+    min-width: auto;
+  }
+  
+  .empresa-header {
+    padding: 16px 20px;
+  }
+  
+  .empresa-info {
+    gap: 12px;
+  }
+  
+  .empresa-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .empresa-details h3 {
+    font-size: 1.2rem;
+  }
+  
+  .empresa-stats {
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+  }
+  
+  .tabela-anuncios {
+    font-size: 13px;
+  }
+  
+  .tabela-anuncios th,
+  .tabela-anuncios td {
+    padding: 12px 16px;
+  }
+  
+  .anuncio-imagem {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .valor-metrica {
+    font-size: 14px;
+  }
+}
+
 /* Estilos Globais de Botões - Design Moderno */
 .button, .btn, button {
   display: inline-flex;
@@ -3305,13 +3953,13 @@ tbody tr:last-child td {
   border: none;
   border-radius: var(--radius);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 1vh;
   text-decoration: none;
   cursor: pointer;
   transition: all var(--trans);
   position: relative;
   overflow: hidden;
-  min-height: 44px;
+  min-height: 5.5vh;
   line-height: 1;
 }
 

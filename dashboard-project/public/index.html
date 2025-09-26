@@ -15,7 +15,7 @@
       <div id="logoIcon">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="32" height="32" rx="8" fill="#2563EB"/>
-          <path d="M8 24V8h3l6 12 6-12h3v16h-3v-10l-5 10h-2l-5-10v10H8z" fill="white"/>
+          <path d="m8 24V8h3l6 12 6-12h3v16h-3v-10l-5 10h-2l-5-10v10H8z" fill="white"/>
         </svg>
       </div>
       <div id="logoText">
@@ -181,76 +181,47 @@
         </div>
 
         <div id="painelMetricasVideo" data-theme="default" style="display: none;">
-          <div id="containerPaiDropdown" style="height: 80vh; overflow-y: auto; padding-right: 10px;"></div>
-          <div class="container mt-4">
-            <!-- Filtros -->
-            <div class="row mb-4">
-              <div class="col-md-3">
-                <label for="empresaFiltroVideo" class="form-label">Empresa</label>
-                <div class="custom-dropdown-container">
-                  <div class="custom-dropdown" id="customDropdownEmpresa">
-                    <div class="dropdown-selected" id="dropdownSelected">
-                      <span class="selected-text">Todas as empresas</span>
-                      <i class="fas fa-chevron-down dropdown-arrow"></i>
-                    </div>
-                    <div class="dropdown-options" id="dropdownOptions">
-                      <div class="dropdown-search">
-                        <input type="text" id="searchEmpresa" placeholder="Buscar empresa..." class="search-input">
-                        <i class="fas fa-search search-icon"></i>
-                      </div>
-                      <div class="options-list" id="optionsList">
-                        <div class="option" data-value="todas">Todas as empresas</div>
-                        <!-- Opções serão carregadas dinamicamente -->
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Select oculto para compatibilidade -->
-                  <select id="empresaFiltroVideo" class="form-select" style="display: none;">
-                    <option value="todas">Todas as empresas</option>
-                  </select>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <label for="campanhaFiltroVideo" class="form-label">Campanha</label>
-                <input type="text" id="campanhaFiltroVideo" class="form-control" placeholder="Nome da campanha">
-              </div>
-              <div class="col-md-3">
-                <label for="dataInicioVideo" class="form-label">Data de Início</label>
-                <input type="date" id="dataInicioVideo" class="form-control">
-              </div>
-              <div class="col-md-3">
-                <label for="dataFimVideo" class="form-label">Data de Término</label>
-                <input type="date" id="dataFimVideo" class="form-control">
-              </div>
+          <!-- Header do Painel -->
+          <div id="headerMetricasVideo">
+            <h2><i class="fas fa-play-circle me-2"></i>Métricas de Anúncios</h2>
+            <div id="totalMetricas">
+              <span class="total-info">
+                <i class="fas fa-chart-bar me-1"></i>
+                <span id="totalAnuncios">0</span> anúncios
+              </span>
             </div>
+          </div>
 
-            <!-- Botão de Aplicar Filtros -->
-            <div class="row mb-4">
-              <div class="col text-end">
-                <button id="aplicarFiltroMetricas" class="btn btn-primary">Aplicar Filtros</button>
-              </div>
+          <!-- Filtros Modernos -->
+          <div id="filtrosMetricasVideo">
+            <select id="empresaFiltroVideo" class="form-input filtro-empresa">
+              <option value="todas">Todas as empresas</option>
+            </select>
+            
+            <input type="text" id="campanhaFiltroVideo" class="form-input filtro-campanha" placeholder="Nome da campanha">
+            
+            <input type="date" id="dataInicioVideo" class="form-input filtro-data">
+            <input type="date" id="dataFimVideo" class="form-input filtro-data">
+            
+            <div class="filtro-presets">
+              <button class="btn-filtro-preset active" data-filtro="hoje">Hoje</button>
+              <button class="btn-filtro-preset" data-filtro="ontem">Ontem</button>
+              <button class="btn-filtro-preset" data-filtro="este-mes">Este mês</button>
+              <button class="btn-filtro-preset" data-filtro="periodo-total">Período total</button>
             </div>
+            
+            <button id="aplicarFiltroMetricas" class="btn btn-primary btn-aplicar">
+              <i class="fas fa-filter"></i>Aplicar Filtros
+            </button>
+          </div>
 
-            <!-- Tabela de Métricas -->
-            <div class="table-responsive">
-              <table class="table table-hover table-striped align-middle">
-                <thead class="table-dark">
-                  <tr>
-                    <th scope="col" style="width: 50px;"></th>
-                    <th scope="col">Empresa</th>
-                    <th scope="col">Campanha</th>
-                    <th scope="col">Grupo</th>
-                    <th scope="col">Nome</th>
-                    <th scope="col">Imagem</th>
-                    <th scope="col">Visualizações</th>
-                    <th scope="col">Alcance</th>
-                    <th scope="col">CPL</th>
-                    <th scope="col">Conversões</th>
-                  </tr>
-                </thead>
-                <tbody id="tabelaMetricasVideo">
-                  <!-- Linhas serão carregadas dinamicamente -->
-                </tbody>
+          <!-- Container dos Cards de Empresas -->
+          <div id="conteudoMetricasVideo">
+            <div id="cardsEmpresas">
+              <!-- Cards das empresas serão carregados aqui -->
+            </div>
+          </div>
+        </div>
               </table>
             </div>
           </div>

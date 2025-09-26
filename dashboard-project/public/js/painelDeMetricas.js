@@ -336,11 +336,11 @@ function carregarEmpresasSelect() {
           <td>${parseInt(emp.cliques)}</td>
           <td>${parseInt(emp.impressoes)}</td>
           <td>${parseInt(emp.alcance)}</td>
-          <td class="valor">R$ ${parseFloat(emp.gasto).toFixed(2)}</td>
+          <td class="valor">R$ ${emp.gasto.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</td>
           <td>${parseFloat(emp.ctr).toFixed(2)}%</td>
           <td>R$ ${parseFloat(emp.cpc).toFixed(2)}</td>
           <td>${parseInt(emp.cpr)}</td>
-          <td>R$ ${cpl.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</td>
+          <td>${cpl.toLocaleString("pt-BR", {style: "currency", currency: "BRL"})}</td>
         </tr>
       `;
       somadorCliques += parseInt(emp.cliques) || 0;
