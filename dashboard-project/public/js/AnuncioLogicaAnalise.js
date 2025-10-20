@@ -140,7 +140,7 @@ function organizarDadosSimplificados(dadosAnuncios, nomeEmpresa) {
       visualizacoes: parseInt(anuncio.visualizacoes) || 0,
       alcance: parseInt(anuncio.alcance) || 0,
       cpl: parseFloat(anuncio.cpl) || 0,
-      conversoes: parseFloat(anuncio.conversoes) || parseFloat(anuncio.convs) || parseFloat(anuncio.resultados) || 0,
+      conversoes: parseInt(anuncio.convs) || 0,
       id: anuncio.id || `anuncio_${Date.now()}_${Math.random()}`
     };
 
@@ -366,7 +366,7 @@ function calcularTotaisCampanha(campanha) {
         totalAnuncios++;
       }
       
-      totais.conversoes += parseFloat(anuncio.convs || 0);
+      totais.conversoes += parseInt(anuncio.convs || 0);
     });
   });
 
@@ -400,7 +400,7 @@ function calcularTotaisGrupo(grupo) {
       totalAnuncios++;
     }
     
-    totais.conversoes += parseFloat(anuncio.convs || 0);
+    totais.conversoes += parseInt(anuncio.convs || 0);
   });
 
   totais.alcance = somaAlcance;
@@ -862,7 +862,7 @@ function renderizarAnuncio(tbody, anuncio, empresaId, campanhaId, grupoId) {
     <td>${formatarNumero(anuncio.visualizacoes || 0)}</td>
     <td>${formatarNumero(anuncio.alcance || 0)}</td>
     <td>R$ ${parseFloat(anuncio.cpl || 0).toFixed(2)}</td>
-    <td>${parseFloat(anuncio.convs || 0).toFixed(2)}</td>
+    <td>${parseInt(anuncio.convs || 0)}</td>
   `;
   
   tbody.appendChild(linhaAnuncio);
