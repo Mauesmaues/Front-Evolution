@@ -27,6 +27,11 @@ try {
   console.error('❌ Erro ao carregar rotas da API:', e.message);
 }
 
+// Rota específica para a página de proposta
+app.get('/proposta', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/proposta.html'));
+});
+
 // Inicializar agendamentos de notificações
 try {
   const NotificacaoScheduler = require('./schedulers/NotificacaoScheduler');
@@ -38,7 +43,7 @@ try {
 
 // Middleware de autenticação para páginas protegidas
 app.use((req, res, next) => {
-  const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js', '/favicon.ico'];
+  const publicPaths = ['/login.html', '/login', '/css/login.css', '/js/main.js', '/js/logicaPaineis.js', '/favicon.ico', '/proposta.html', '/proposta'];
   
   if (publicPaths.includes(req.path) || req.path.startsWith('/api') || req.path.startsWith('/css') || req.path.startsWith('/js') || req.path.startsWith('/img')) {
     return next();

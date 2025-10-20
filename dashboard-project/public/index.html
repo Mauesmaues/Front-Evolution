@@ -19,8 +19,8 @@
         </svg>
       </div>
       <div id="logoText">
-        <span class="logo-name">Evolution</span>
-        <span class="logo-tagline">Analytics Dashboard</span>
+        <span class="logo-name">SpacePrime</span>
+        <span class="logo-tagline">Analytics Conceito Prime</span>
       </div>
     </div>
     <div id="headerUser">
@@ -57,6 +57,10 @@
             <i class="nav-icon fas fa-bell"></i>
             <span class="nav-text">Notificações</span>
             <span id="badge" class="notification-badge">Conv</span>
+          </li>
+          <li id="proposta" class="nav-item">
+            <i class="nav-icon fas fa-file-alt"></i>
+            <span class="nav-text">Gerar Proposta</span>
           </li>
         </ul>
       </div>
@@ -222,12 +226,8 @@
             </div>
           </div>
         </div>
-              </table>
-            </div>
-          </div>
-          </div>
-        </div>
-            <!--Painel Administração-->
+
+        <!--Painel Administração-->
       <div id="painelAdministracao" data-theme="default" style="display: none;">
 
         <div id="subAbasAdmin" class="btn-group">
@@ -248,50 +248,10 @@
           </div>
         </div>
 
-        <div id="FormCadastroEmpresa">
-            <h3>Cadastro de Empresa</h3>
-            <div class="form-group">
-              <label for="nomeEmpresa" class="form-label">Nome da empresa</label>
-              <input type="text" id="nomeEmpresa" class="inputFiltro" placeholder="Nome da empresa">
-            </div>
-            <div class="form-group">
-              <label for="idContaAnuncio" class="form-label">ID da conta de anúncio</label>
-              <input type="text" id="idContaAnuncio" class="inputFiltro" placeholder="ID da conta de anúncio">
-            </div>
-            <button id="salvarEmpresa" class="btn btn-primary">
-              <i class="fas fa-save"></i>Salvar
-            </button>
+        <div id="FormCadastroEmpresa" style="display: none;">
         </div>
 
-        <div id="FormCadastroUsuario">
-            <h3>Cadastro Usuário</h3>
-            <div class="form-group">
-              <label for="nomeUsuario" class="form-label">Nome do usuário</label>
-              <input type="text" id="nomeUsuario" class="inputFiltro" placeholder="Nome do usuário">
-            </div>
-            <div class="form-group">
-              <label for="emailUsuario" class="form-label">Email de acesso</label>
-              <input type="email" id="emailUsuario" class="inputFiltro" placeholder="Email de acesso">
-            </div>
-            <div class="form-group">
-              <label for="senhaUsuario" class="form-label">Senha de acesso</label>
-              <input type="password" id="senhaUsuario" class="inputFiltro" placeholder="Senha de acesso">
-            </div>
-            <div class="form-group">
-              <label for="permissaoSelect" class="form-label">Permissão</label>
-              <select id="permissaoSelect" class="inputFiltro">
-                <option value="">Selecione uma permissão</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="empresaSelect" class="form-label">Empresa</label>
-              <select id="empresaSelect" class="inputFiltro">
-                <option value="">Selecione uma empresa</option>
-              </select>
-            </div>
-            <button id="salvarUsuario" class="btn btn-primary">
-              <i class="fas fa-save"></i>Salvar
-            </button>
+        <div id="FormCadastroUsuario" style="display: none;">
         </div>
       </div>
       <!--Painel CRM-->
@@ -381,6 +341,131 @@
 
         <div id="mensagemNotificacao" class="mt-3"></div>
       </div>
+
+      <!--Painel Proposta-->
+      <div id="painelProposta" data-theme="default" style="display: none;">
+        <div class="container-fluid px-4 py-4" style="width: 100%; max-width: none;">
+          <!-- Header do Painel -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <h2 class="mb-1">
+                    <i class="fas fa-file-alt me-2 text-primary"></i>
+                    Gerenciar Propostas
+                  </h2>
+                  <p class="text-muted mb-0">Crie e gerencie suas propostas comerciais</p>
+                </div>
+                <button id="btnCriarProposta" class="btn btn-primary">
+                  <i class="fas fa-plus me-2"></i>
+                  Criar Proposta
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sub-abas -->
+          <div class="row mb-4">
+            <div class="col-12">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="btn-group" role="group" id="subAbasPropostas">
+                  <button type="button" class="btn btn-outline-primary active" id="abaPropostasGeradas">
+                    <i class="fas fa-list me-2"></i>Propostas Geradas
+                  </button>
+                  <button type="button" class="btn btn-outline-primary" id="abaAberturas">
+                    <i class="fas fa-eye me-2"></i>Aberturas
+                  </button>
+                </div>
+                
+                <!-- Filtro de Empresas -->
+                <div class="d-flex align-items-center gap-3">
+                  <label for="empresaFiltroPropostas" class="form-label mb-0 fw-bold">Filtrar por empresa:</label>
+                  <select id="empresaFiltroPropostas" class="form-select" style="width: 200px;">
+                    <option value="todas">Todas as empresas</option>
+                    <!-- Opções serão carregadas dinamicamente -->
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conteúdo das Sub-abas -->
+          <div class="row">
+            <div class="col-12">
+              <!-- Aba Propostas Geradas -->
+              <div id="conteudoPropostasGeradas" class="sub-aba-content">
+                <div class="card shadow-sm">
+                  <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                      <i class="fas fa-list me-2"></i>
+                      Propostas Geradas
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Nome da Proposta</th>
+                            <th>Tipo</th>
+                            <th>Empresas</th>
+                            <th>Data de Criação</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabelaPropostasGeradas">
+                          <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                              <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                              Nenhuma proposta criada ainda. Clique em "Criar Proposta" para começar.
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Aba Aberturas -->
+              <div id="conteudoAberturas" class="sub-aba-content" style="display: none;">
+                <div class="card shadow-sm">
+                  <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                      <i class="fas fa-eye me-2"></i>
+                      Histórico de Aberturas
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-hover">
+                        <thead>
+                          <tr>
+                            <th>Nome da Proposta</th>
+                            <th>Data/Hora da Abertura</th>
+                            <th>Total de Visualizações</th>
+                            <th>Última Visualização</th>
+                          </tr>
+                        </thead>
+                        <tbody id="tabelaAberturas">
+                          <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                              <i class="fas fa-chart-line fa-2x mb-2"></i><br>
+                              Nenhuma abertura registrada ainda.
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -429,6 +514,241 @@
         <button id="salvarNotificacao" class="btn btn-primary">
           <i class="fas fa-save"></i>Salvar Notificação
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Criação de Empresa -->
+  <div id="modalCriarEmpresa" class="modal fade" tabindex="-1" aria-labelledby="modalCriarEmpresaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title" id="modalCriarEmpresaLabel">
+            <i class="fas fa-building me-2"></i>Criar Nova Empresa
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formCriarEmpresa">
+            <!-- Nome da Empresa -->
+            <div class="mb-3">
+              <label for="nomeEmpresaModal" class="form-label fw-bold">
+                Nome da Empresa <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="nomeEmpresaModal" placeholder="Digite o nome da empresa" required>
+              <div class="invalid-feedback">Por favor, insira o nome da empresa.</div>
+            </div>
+
+            <!-- ID da Conta de Anúncio -->
+            <div class="mb-3">
+              <label for="idContaAnuncioModal" class="form-label fw-bold">
+                ID da Conta de Anúncio <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="idContaAnuncioModal" placeholder="Digite o ID da conta de anúncio" required>
+              <div class="form-text">ID da conta de anúncio no Facebook/Instagram Ads</div>
+              <div class="invalid-feedback">Por favor, insira o ID da conta de anúncio.</div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+          <button type="button" class="btn btn-success" id="btnSalvarEmpresa">
+            <i class="fas fa-save me-1"></i>Salvar Empresa
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Criação de Usuário -->
+  <div id="modalCriarUsuario" class="modal fade" tabindex="-1" aria-labelledby="modalCriarUsuarioLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-info text-white">
+          <h5 class="modal-title" id="modalCriarUsuarioLabel">
+            <i class="fas fa-user-plus me-2"></i>Criar Novo Usuário
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formCriarUsuario">
+            <!-- Nome do Usuário -->
+            <div class="mb-3">
+              <label for="nomeUsuarioModal" class="form-label fw-bold">
+                Nome Completo <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="nomeUsuarioModal" placeholder="Digite o nome completo do usuário" required>
+              <div class="invalid-feedback">Por favor, insira o nome do usuário.</div>
+            </div>
+
+            <!-- Email do Usuário -->
+            <div class="mb-3">
+              <label for="emailUsuarioModal" class="form-label fw-bold">
+                Email de Acesso <span class="text-danger">*</span>
+              </label>
+              <input type="email" class="form-control" id="emailUsuarioModal" placeholder="Digite o email de acesso" required>
+              <div class="form-text">Este email será usado para fazer login no sistema</div>
+              <div class="invalid-feedback">Por favor, insira um email válido.</div>
+            </div>
+
+            <!-- Senha do Usuário -->
+            <div class="mb-3">
+              <label for="senhaUsuarioModal" class="form-label fw-bold">
+                Senha de Acesso <span class="text-danger">*</span>
+              </label>
+              <input type="password" class="form-control" id="senhaUsuarioModal" placeholder="Digite a senha" required>
+              <div class="form-text">Mínimo de 6 caracteres</div>
+              <div class="invalid-feedback">Por favor, insira uma senha válida.</div>
+            </div>
+
+            <!-- Permissão do Usuário -->
+            <div class="mb-3">
+              <label for="permissaoUsuarioModal" class="form-label fw-bold">
+                Nível de Permissão <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="permissaoUsuarioModal" required>
+                <option value="">Selecione o nível de permissão...</option>
+                <option value="ADMIN">Administrador</option>
+                <option value="GESTOR">Gestor</option>
+                <option value="USER">Usuário</option>
+              </select>
+              <div class="form-text">
+                <strong>Admin:</strong> Acesso total ao sistema<br>
+                <strong>Gestor:</strong> Gerencia empresas específicas<br>
+                <strong>Usuário:</strong> Acesso limitado à sua empresa
+              </div>
+              <div class="invalid-feedback">Por favor, selecione um nível de permissão.</div>
+            </div>
+
+            <!-- Empresas do Usuário -->
+            <div class="mb-3" id="campoEmpresasUsuario">
+              <label class="form-label fw-bold">
+                <i class="fas fa-building me-1"></i>
+                Empresas Vinculadas
+              </label>
+              <div class="form-text mb-2">Selecione as empresas que este usuário poderá acessar:</div>
+              <div id="empresasUsuarioCheckboxes" class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                <div class="text-center text-muted py-3">
+                  <i class="fas fa-spinner fa-spin"></i> Carregando empresas...
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+          <button type="button" class="btn btn-info" id="btnSalvarUsuario">
+            <i class="fas fa-save me-1"></i>Salvar Usuário
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Criação de Proposta -->
+  <div id="modalCriarProposta" class="modal fade" tabindex="-1" aria-labelledby="modalCriarPropostaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="modalCriarPropostaLabel">
+            <i class="fas fa-plus me-2"></i>Criar Nova Proposta
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formCriarProposta">
+            <!-- Nome da Proposta -->
+            <div class="mb-3">
+              <label for="nomeProposta" class="form-label fw-bold">
+                Nome da Proposta <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="nomeProposta" placeholder="Digite o nome da proposta" required>
+              <div class="invalid-feedback">Por favor, insira o nome da proposta.</div>
+            </div>
+
+            <!-- Pedir WhatsApp -->
+            <div class="mb-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="pedirWhatsapp">
+                <label class="form-check-label fw-bold" for="pedirWhatsapp">
+                  <i class="fab fa-whatsapp text-success me-1"></i>
+                  Solicitar contato via WhatsApp
+                </label>
+                <div class="form-text">Quando marcado, a proposta incluirá um campo para solicitar o WhatsApp do cliente.</div>
+              </div>
+            </div>
+
+            <!-- Tipo da Proposta -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">
+                Tipo da Proposta <span class="text-danger">*</span>
+              </label>
+              <div class="d-flex gap-4 mt-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tipoProposta" id="tipoArquivo" value="arquivo">
+                  <label class="form-check-label" for="tipoArquivo">
+                    <i class="fas fa-file-pdf text-danger me-1"></i>
+                    Arquivo (PDF, DOC, etc.)
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="tipoProposta" id="tipoCanva" value="canva">
+                  <label class="form-check-label" for="tipoCanva">
+                    <i class="fas fa-link text-primary me-1"></i>
+                    Link do Canva
+                  </label>
+                </div>
+              </div>
+              <div class="invalid-feedback d-block" id="tipoPropostaError" style="display: none;">
+                Por favor, selecione o tipo da proposta.
+              </div>
+            </div>
+
+            <!-- Campo para Upload de Arquivo -->
+            <div class="mb-3" id="campoArquivo" style="display: none;">
+              <label for="arquivoProposta" class="form-label fw-bold">
+                Arquivo da Proposta <span class="text-danger">*</span>
+              </label>
+              <input type="file" class="form-control" id="arquivoProposta" accept=".pdf,.doc,.docx,.jpg,.png">
+              <div class="form-text">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG (máx. 10MB)</div>
+              <div class="invalid-feedback">Por favor, selecione um arquivo.</div>
+            </div>
+
+            <!-- Campo para Link do Canva -->
+            <div class="mb-3" id="campoCanva" style="display: none;">
+              <label for="linkCanva" class="form-label fw-bold">
+                Link do Canva <span class="text-danger">*</span>
+              </label>
+              <input type="url" class="form-control" id="linkCanva" placeholder="https://www.canva.com/design/...">
+              <div class="form-text">Cole aqui o link compartilhável do seu design no Canva</div>
+              <div class="invalid-feedback">Por favor, insira um link válido do Canva.</div>
+            </div>
+
+            <!-- Campo para Seleção de Empresa -->
+            <div class="mb-3" id="campoEmpresaProposta">
+              <label class="form-label fw-bold">
+                <i class="fas fa-building me-1"></i>
+                Empresa para a Proposta
+              </label>
+              <div class="form-text mb-2">Selecione a empresa para qual esta proposta será criada:</div>
+              <select id="empresaProposta" class="form-select">
+                <option value="">Carregando empresas...</option>
+              </select>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+          <button type="button" class="btn btn-primary" id="btnSalvarProposta">
+            <i class="fas fa-save me-1"></i>Salvar Proposta
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -483,5 +803,21 @@
   <script src="js/notificacoes.js"></script>
   <script src="js/usuarioView.js"></script>
   <script src="js/AnuncioLogicaAnalise.js"></script>
+  <script src="js/propostas.js"></script>
+  
+  <script>
+    // Debug script para verificar se os elementos existem
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        console.log("=== DEBUG PROPOSTAS ===");
+        console.log("painelProposta existe:", !!document.getElementById('painelProposta'));
+        console.log("btnCriarProposta existe:", !!document.getElementById('btnCriarProposta'));
+        console.log("modalCriarProposta existe:", !!document.getElementById('modalCriarProposta'));
+        console.log("PropostaManager disponível:", typeof PropostaManager !== 'undefined');
+        console.log("propostaManager instanciado:", typeof propostaManager !== 'undefined' && !!propostaManager);
+        console.log("=== FIM DEBUG ===");
+      }, 1000);
+    });
+  </script>
 </body>
 </html>

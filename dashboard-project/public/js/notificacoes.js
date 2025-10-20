@@ -310,7 +310,8 @@ function mostrarMensagem(mensagem, tipo) {
 
 function limparFormulario() {
     document.getElementById('nomeNotificacao').value = '';
-    document.getElementById('numeroDestinatario').value = '';
+    // Número padrão solicitado
+    document.getElementById('numeroDestinatario').value = '41996616801';
     document.getElementById('horarioNotificacao').value = '09:00';
     document.getElementById('notificacaoAtiva').checked = true;
     

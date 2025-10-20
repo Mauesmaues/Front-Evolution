@@ -8,12 +8,14 @@ const painelAdministracao = document.getElementById('painelAdministracao');
 const painelCRM = document.getElementById('crmSection');
 const painelNotificacoes = document.getElementById('painelNotificacoes');
 const painelMetricasVideo = document.getElementById('painelMetricasVideo');
+const painelProposta = document.getElementById('painelProposta');
 
 const btnDashboard = document.getElementById('dashboard');
 const btnAdministracao = document.getElementById('administracao');
 const btnCRM = document.getElementById('crm');
 const btnNotificacoes = document.getElementById('Notificacoes');
 const btnMetricasVideo = document.getElementById('metricasVideo');
+const btnProposta = document.getElementById('proposta');
 
 // Função centralizada para esconder todos os painéis
 function esconderTodosPaineis() {
@@ -33,12 +35,40 @@ function esconderTodosPaineis() {
   painelMetricasVideo.style.setProperty('display', 'none');
   painelMetricasVideo.dataset.theme = "default";
 
-  // Resetar botões
+  //Resetar Proposta
+  if (painelProposta) {
+    painelProposta.style.setProperty('display', 'none');
+    painelProposta.dataset.theme = "default";
+  }
+
+  // Resetar botões - remover background-color E classe active
   btnDashboard.style.setProperty('background-color', 'transparent');
-  btnAdministracao.style.setProperty('background-color', 'transparent');
-  btnCRM.style.setProperty('background-color', 'transparent');
-  btnNotificacoes.style.setProperty('background-color', 'transparent');
-  btnMetricasVideo.style.setProperty('background-color', 'transparent');
+  btnDashboard.classList.remove('active');
+
+  if (btnAdministracao) {
+    btnAdministracao.style.setProperty('background-color', 'transparent');
+    btnAdministracao.classList.remove('active');
+  }
+
+  if (btnCRM) {
+    btnCRM.style.setProperty('background-color', 'transparent');
+    btnCRM.classList.remove('active');
+  }
+
+  if (btnNotificacoes) {
+    btnNotificacoes.style.setProperty('background-color', 'transparent');
+    btnNotificacoes.classList.remove('active');
+  }
+
+  if (btnMetricasVideo) {
+    btnMetricasVideo.style.setProperty('background-color', 'transparent');
+    btnMetricasVideo.classList.remove('active');
+  }
+
+  if (btnProposta) {
+    btnProposta.style.setProperty('background-color', 'transparent');
+    btnProposta.classList.remove('active');
+  }
 
   // Esconder formulários
   const formEmpresa = document.getElementById('FormCadastroEmpresa');
@@ -57,9 +87,20 @@ document.getElementById('administracao').addEventListener('click', function(ev) 
     painelAdministracao.dataset.theme = "ativo";
     painelAdministracao.style.setProperty('display', 'flex');
     btnAdministracao.style.setProperty('background-color', '#dde9f5ff');
+    btnAdministracao.classList.add('active');
 
+    // Inicializar com aba de empresas ativa
     document.getElementById('subAbaUsuario').style.display = 'none';
     document.getElementById('subAbaEmpresas').style.display = 'flex';
+    
+    // Configurar botão para modo empresa
+    const btnAdicionarSubAbaAdmin = document.getElementById('btnAdicionarSubAbaAdmin');
+    btnAdicionarSubAbaAdmin.innerHTML = '<i class="fas fa-plus"></i>Adicionar Empresa';
+    btnAdicionarSubAbaAdmin.dataset.theme = "empresa";
+    
+    // Ativar visualmente a aba empresa
+    document.getElementById('abaEmpresas').classList.add('active');
+    document.getElementById('abaUsuario').classList.remove('active');
 
     carregarEmpresasCadastradas();
     refreshDados("cadastradas");
@@ -77,6 +118,7 @@ document.getElementById('dashboard').addEventListener('click', function(ev) {
     painelMonitoramento.dataset.theme = "ativo";
     painelMonitoramento.style.setProperty('display', 'flex');
     btnDashboard.style.setProperty('background-color', '#dde9f5ff');
+    btnDashboard.classList.add('active');
   }
 });
 
@@ -89,6 +131,39 @@ this.document.getElementById('metricasVideo').addEventListener('click', function
     painelMetricasVideo.dataset.theme = "ativo";
     painelMetricasVideo.style.setProperty('display', 'flex');
     btnMetricasVideo.style.setProperty('background-color', '#dde9f5ff');
+    btnMetricasVideo.classList.add('active');
+  }
+});
+
+document.getElementById('proposta').addEventListener('click', function(ev){
+  ev.preventDefault();
+  console.log("Botão Proposta clicado - função ativa");
+
+  if(painelProposta && painelProposta.dataset.theme === "default") {
+    esconderTodosPaineis();
+
+    painelProposta.dataset.theme = "ativo";
+    painelProposta.style.setProperty('display', 'flex');
+    if (btnProposta) {
+      btnProposta.style.setProperty('background-color', '#dde9f5ff');
+      btnProposta.classList.add('active');
+    }
+    
+    // Inicializar sistema de propostas se não estiver inicializado
+    setTimeout(() => {
+      if (typeof propostaManager === 'undefined' || !propostaManager) {
+        if (typeof PropostaManager !== 'undefined') {
+          propostaManager = new PropostaManager();
+          console.log("Sistema de propostas inicializado");
+        } else {
+          console.error("Classe PropostaManager não encontrada");
+        }
+      }
+    }, 100);
+    
+    console.log("Painel Proposta ativado");
+  } else {
+    console.log("Painel Proposta já está ativo ou elemento não encontrado");
   }
 });
 
@@ -104,6 +179,7 @@ document.getElementById('crm').addEventListener('click', function(ev) {
     painelCRM.dataset.theme = "ativo";
     painelCRM.style.setProperty('display', 'flex');
     btnCRM.style.setProperty('background-color', '#dde9f5ff');
+    btnCRM.classList.add('active');
     
     // Adicionar header do CRM se não existir
     adicionarHeaderCRM();
@@ -128,6 +204,7 @@ document.getElementById('Notificacoes').addEventListener('click', function(ev) {
     painelNotificacoes.dataset.theme = "ativo";
     painelNotificacoes.style.setProperty('display', 'flex');
     btnNotificacoes.style.setProperty('background-color', '#dde9f5ff');
+    btnNotificacoes.classList.add('active');
   }
 });
 
@@ -137,16 +214,20 @@ document.getElementById('abaUsuario').addEventListener('click', function(ev){
     let subAbaEmpresas = document.getElementById('subAbaEmpresas');
     let subAbaUsuario = document.getElementById('subAbaUsuario');
     
-    if(btnAdicionarSubAbaAdmin.dataset.theme === "empresa"){
-        btnAdicionarSubAbaAdmin.textContent = "Adicionar Usuario";
-        btnAdicionarSubAbaAdmin.dataset.theme = "usuario";
+    // Sempre alterar para mode usuário, independente do estado atual
+    btnAdicionarSubAbaAdmin.innerHTML = '<i class="fas fa-plus"></i>Adicionar Usuario';
+    btnAdicionarSubAbaAdmin.dataset.theme = "usuario";
 
-        subAbaEmpresas.style.setProperty('display', 'none');
-        subAbaUsuario.style.setProperty('display', 'flex');
-        
-        // Carregar lista de usuários quando a aba for ativada
-        carregarUsuariosCadastrados();
-    }
+    // Esconder aba de empresas e mostrar aba de usuários
+    subAbaEmpresas.style.setProperty('display', 'none');
+    subAbaUsuario.style.setProperty('display', 'flex');
+    
+    // Ativar estilo do botão usuário
+    document.getElementById('abaUsuario').classList.add('active');
+    document.getElementById('abaEmpresas').classList.remove('active');
+    
+    // Carregar lista de usuários quando a aba for ativada
+    carregarUsuariosCadastrados();
 })
 
 document.getElementById('abaEmpresas').addEventListener('click', function(ev){
@@ -155,12 +236,21 @@ document.getElementById('abaEmpresas').addEventListener('click', function(ev){
     let subAbaUsuario = document.getElementById('subAbaUsuario');
     let subAbaEmpresas = document.getElementById('subAbaEmpresas');
 
-    if(btnAdicionarSubAbaAdmin.dataset.theme === "usuario"){
-        btnAdicionarSubAbaAdmin.textContent = "Adicionar Empresa";
-        btnAdicionarSubAbaAdmin.dataset.theme = "empresa";
-        subAbaUsuario.style.setProperty('display', 'none');
-        subAbaEmpresas.style.setProperty('display', 'flex');
-    }
+    // Sempre alterar para mode empresa, independente do estado atual
+    btnAdicionarSubAbaAdmin.innerHTML = '<i class="fas fa-plus"></i>Adicionar Empresa';
+    btnAdicionarSubAbaAdmin.dataset.theme = "empresa";
+    
+    // Esconder aba de usuários e mostrar aba de empresas
+    subAbaUsuario.style.setProperty('display', 'none');
+    subAbaEmpresas.style.setProperty('display', 'flex');
+    
+    // Ativar estilo do botão empresa
+    document.getElementById('abaEmpresas').classList.add('active');
+    document.getElementById('abaUsuario').classList.remove('active');
+    
+    // Carregar lista de empresas
+    carregarEmpresasCadastradas();
+    refreshDados("cadastradas");
 })
 
 async function carregarEmpresasSelect() {
@@ -220,7 +310,7 @@ async function verificarPermissoesEConfigurarInterface() {
     
   } catch (error) {
     console.error('Erro ao verificar permissões:', error);
-    window.location.href = '/login.html';
+    // Em caso de erro de rede, não redireciona automaticamente
   }
 }
 
@@ -230,22 +320,29 @@ function configurarInterfacePorPermissao(permissao) {
   const subAbasAdmin = document.getElementById('subAbasAdmin');
   const btnAdicionarSubAbaAdmin = document.getElementById('btnAdicionarSubAbaAdmin');
   const notificacoesLi = document.getElementById('Notificacoes');
+  const propostaLi = document.getElementById('proposta');
   
   if (permissao === 'USER') {
-    // USER: Ocultar painel de administração e notificações
+    // USER: Ocultar painel de administração, notificações e proposta
     if (administracaoLi) {
       administracaoLi.style.display = 'none';
     }
     if (notificacoesLi) {
       notificacoesLi.style.display = 'none';
     }
+    if (propostaLi) {
+      propostaLi.style.display = 'none';
+    }
   } else if (permissao === 'GESTOR') {
-    // GESTOR: Mostrar administração e notificações, mas ocultar criação de usuários
+    // GESTOR: Mostrar administração, notificações e proposta, mas ocultar criação de usuários
     if (administracaoLi) {
       administracaoLi.style.display = 'block';
     }
     if (notificacoesLi) {
       notificacoesLi.style.display = 'block';
+    }
+    if (propostaLi) {
+      propostaLi.style.display = 'block';
     }
     // Ocultar aba de usuários para gestores
     const abaUsuario = document.getElementById('abaUsuario');
@@ -259,6 +356,9 @@ function configurarInterfacePorPermissao(permissao) {
     }
     if (notificacoesLi) {
       notificacoesLi.style.display = 'block';
+    }
+    if (propostaLi) {
+      propostaLi.style.display = 'block';
     }
   }
 }
@@ -276,17 +376,191 @@ function configurarInterfacePorPermissao(permissao) {
 
 document.getElementById('btnAdicionarSubAbaAdmin').addEventListener('click', function(ev) {
     console.log("botão adicionar em sub aba admin foi ativo");
+    console.log("Theme:", ev.currentTarget.dataset.theme);
+    
     if(ev.currentTarget.dataset.theme === "empresa"){
-        let FormCadastroEmpresa = document.getElementById('FormCadastroEmpresa');
-        FormCadastroEmpresa.style.setProperty('display', 'block');
+        // Abrir modal de criar empresa
+        console.log("Abrindo modal de empresa");
+        const modalElement = document.getElementById('modalCriarEmpresa');
+        if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        } else {
+            console.error("Modal de empresa não encontrado");
+        }
     }else{
-        let FormCadastroUsuario = document.getElementById('FormCadastroUsuario');
-        FormCadastroUsuario.style.setProperty('display', 'block');
-        carregarEmpresasSelect();
-        carregarPermissoes();
+        // Abrir modal de criar usuário
+        console.log("Abrindo modal de usuário");
+        const modalElement = document.getElementById('modalCriarUsuario');
+        if (modalElement) {
+            try {
+                carregarEmpresasUsuarioModal();
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            } catch (error) {
+                console.error("Erro ao abrir modal de usuário:", error);
+            }
+        } else {
+            console.error("Modal de usuário não encontrado");
+        }
     }
-
 });
+
+// Event listeners para os novos modais
+document.getElementById('btnSalvarEmpresa').addEventListener('click', async function(ev) {
+    try {
+        ev.preventDefault();
+        console.log("função de salvar empresa ativa");
+
+        // Mostrar loading no botão
+        const btnOriginal = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Salvando...';
+        this.disabled = true;
+
+        let nome = document.getElementById('nomeEmpresaModal').value;
+        let contaDeAnuncio = document.getElementById('idContaAnuncioModal').value;
+
+        if (!nome || !contaDeAnuncio) {
+            alert('Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        let empresa = {
+            nome: nome,
+            contaDeAnuncio: contaDeAnuncio
+        };
+
+        const response = await fetch('/api/criarEmpresa', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(empresa)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            toastUtils.showToast('Empresa criada com sucesso!', 'success');
+            // Limpar formulário
+            document.getElementById('formCriarEmpresa').reset();
+            // Fechar modal
+            bootstrap.Modal.getInstance(document.getElementById('modalCriarEmpresa')).hide();
+            // Recarregar lista
+            carregarEmpresas();
+        } else {
+            throw new Error(data.erro || 'Erro ao criar empresa');
+        }
+
+    } catch (error) {
+        console.error('Erro ao salvar empresa:', error);
+        toastUtils.showToast(error.message || 'Erro ao salvar empresa', 'error');
+    } finally {
+        // Restaurar botão
+        this.innerHTML = btnOriginal;
+        this.disabled = false;
+    }
+});
+
+document.getElementById('btnSalvarUsuario').addEventListener('click', async function(ev) {
+    try {
+        ev.preventDefault();
+        console.log("função de salvar usuário ativa");
+
+        // Mostrar loading no botão
+        const btnOriginal = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Salvando...';
+        this.disabled = true;
+
+        let nome = document.getElementById('nomeUsuarioModal').value;
+        let email = document.getElementById('emailUsuarioModal').value;
+        let senha = document.getElementById('senhaUsuarioModal').value;
+        let permissao = document.getElementById('permissaoUsuarioModal').value;
+
+        if (!nome || !email || !senha || !permissao) {
+            alert('Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        // Coletar empresas selecionadas
+        const empresasCheckboxes = document.querySelectorAll('#empresasUsuarioCheckboxes input[type="checkbox"]:checked');
+        const empresas = Array.from(empresasCheckboxes).map(cb => parseInt(cb.value));
+
+        if (permissao !== 'ADMIN' && empresas.length === 0) {
+            alert('Usuários não administradores devem ter pelo menos uma empresa vinculada');
+            return;
+        }
+
+        let usuario = {
+            nome: nome,
+            email: email,
+            senha: senha,
+            permissao: permissao,
+            empresas: empresas
+        };
+
+        const response = await fetch('/api/criarUsuario', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(usuario)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            toastUtils.showToast('Usuário criado com sucesso!', 'success');
+            // Limpar formulário
+            document.getElementById('formCriarUsuario').reset();
+            // Fechar modal
+            bootstrap.Modal.getInstance(document.getElementById('modalCriarUsuario')).hide();
+            // Recarregar lista (se houver)
+            // carregarUsuarios(); // Implementar se necessário
+        } else {
+            throw new Error(data.erro || 'Erro ao criar usuário');
+        }
+
+    } catch (error) {
+        console.error('Erro ao salvar usuário:', error);
+        toastUtils.showToast(error.message || 'Erro ao salvar usuário', 'error');
+    } finally {
+        // Restaurar botão
+        this.innerHTML = btnOriginal;
+        this.disabled = false;
+    }
+});
+
+// Função para carregar empresas no modal de usuário
+function carregarEmpresasUsuarioModal() {
+    const container = document.getElementById('empresasUsuarioCheckboxes');
+    
+    fetch('/api/buscarEmpresas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data) {
+                let html = '';
+                data.data.forEach(empresa => {
+                    html += `
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" value="${empresa.id}" id="empresa_user_${empresa.id}">
+                            <label class="form-check-label" for="empresa_user_${empresa.id}">
+                                <i class="fas fa-building me-1"></i>
+                                ${empresa.nome}
+                            </label>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html || '<div class="text-muted">Nenhuma empresa encontrada</div>';
+            } else {
+                container.innerHTML = '<div class="text-danger">Erro ao carregar empresas</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar empresas:', error);
+            container.innerHTML = '<div class="text-danger">Erro ao carregar empresas</div>';
+        });
+}
 
 document.getElementById('salvarEmpresa').addEventListener('click', async function(ev) {
   try {
@@ -419,7 +693,8 @@ function renderTabelaEmpresas(dados) {
           <tr>
             <th>Empresa</th>
             <th>Conta de Anúncio</th>
-            <th>Saldo</th>
+            <th>Saldo [META]</th>
+            <th>Saldo [GOOGLE]</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -432,6 +707,7 @@ function renderTabelaEmpresas(dados) {
         <td>${emp.empresa}</td>
         <td>${emp.contaDeAnuncio || 'Não informado'}</td>
         <td class="valor">${emp.saldo}</td>
+        <td class="valor">SaldoGoogle</td>
         <td>
           <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}', '${emp.contaDeAnuncio}')">
             <i class="fas fa-edit"></i> Editar
@@ -959,9 +1235,14 @@ function inicializarPaineis() {
   esconderTodosPaineis();
   
   // Mostrar apenas o painel Dashboard no carregamento
-  painelMonitoramento.style.setProperty('display', 'flex');
-  painelMonitoramento.dataset.theme = "ativo";
-  btnDashboard.style.setProperty('background-color', '#dde9f5ff');
+  if (painelMonitoramento) {
+    painelMonitoramento.style.setProperty('display', 'flex');
+    painelMonitoramento.dataset.theme = "ativo";
+  }
+  if (btnDashboard) {
+    btnDashboard.style.setProperty('background-color', '#dde9f5ff');
+    btnDashboard.classList.add('active');
+  }
 }
 
 // Executa quando a página carrega

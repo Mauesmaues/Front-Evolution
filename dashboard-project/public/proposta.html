@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liberar Proposta - BulBox</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', 'Arial', sans-serif;
+            background: #070707;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            max-width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        .left-section {
+            flex: 1;
+            background: #070707;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-container {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: auto;
+            
+            animation: logoFloat 4s ease-in-out infinite;
+            /* Remove fundo branco se a imagem tiver */
+            mix-blend-mode: screen;
+            /* Ou use este filtro para tentar remover fundo branco automaticamente */
+            /* filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.1)) contrast(1.2) brightness(1.1); */
+        }
+
+        @keyframes logoFloat {
+            0%, 100% {
+                transform: translateY(0px) scale(1);
+            }
+            50% {
+                transform: translateY(-10px) scale(1.02);
+            }
+        }
+
+        .geometric-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            background: #00bcd4;
+            opacity: 0.8;
+        }
+
+        .shape1 {
+            width: 150px;
+            height: 150px;
+            top: 15%;
+            right: 10%;
+            transform: rotate(45deg);
+            border-radius: 20px;
+        }
+
+        .shape2 {
+            width: 80px;
+            height: 80px;
+            top: 25%;
+            right: 25%;
+            border-radius: 50%;
+        }
+
+        .shape3 {
+            width: 120px;
+            height: 120px;
+            bottom: 20%;
+            left: 15%;
+            transform: rotate(30deg);
+            border-radius: 15px;
+        }
+
+        .shape4 {
+            width: 60px;
+            height: 60px;
+            bottom: 35%;
+            right: 15%;
+            border-radius: 50%;
+        }
+
+        .right-section {
+            flex: 1;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .form-container {
+            background: white;
+            padding: 50px 40px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border: 1px solid rgba(0, 188, 212, 0.1);
+        }
+
+        .form-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 35px;
+            font-size: 1.6rem;
+            color: #1e3a5f;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .rocket-icon {
+            font-size: 1.8rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid #e8f4f8;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+            font-weight: 500;
+            color: #2d3748;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #00bcd4;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 188, 212, 0.15);
+        }
+
+        .form-input::placeholder {
+            color: #a0aec0;
+            font-weight: 400;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #00bcd4 0%, #0891b2 100%);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 188, 212, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .left-section {
+                height: 40vh;
+                min-height: 300px;
+            }
+
+            .logo-svg {
+                width: 280px;
+                max-width: 80%;
+            }
+
+            .right-section {
+                padding: 20px;
+            }
+
+            .form-container {
+                padding: 30px 20px;
+                max-width: 350px;
+            }
+        }
+
+        /* Animações */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-container {
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(45deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(45deg);
+            }
+        }
+
+        .shape1 {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .shape2, .shape4 {
+            animation: pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <div class="geometric-shapes">
+                <div class="shape shape1"></div>
+                <div class="shape shape2"></div>
+                <div class="shape shape3"></div>
+                <div class="shape shape4"></div>
+            </div>
+            <div class="logo-container">
+                <!-- Use class="logo-svg" para fundo transparente -->
+                <!-- Use class="logo-svg logo-no-bg" se a imagem tiver fundo branco -->
+                <img src="./img/BULBOX.png" alt="Bulbox - Novas realidades, novas ideias!" class="logo-svg">
+            </div>
+        </div>
+
+        <div class="right-section">
+            <div class="form-container">
+                <h2 class="form-title">
+                    <span class="rocket-icon">🚀</span>
+                    Liberar Proposta
+                </h2>
+                
+                <form id="proposalForm">
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            class="form-input" 
+                            placeholder="Seu nome completo"
+                            required
+                            id="fullName"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <input 
+                            type="tel" 
+                            class="form-input" 
+                            placeholder="Seu WhatsApp"
+                            required
+                            id="whatsapp"
+                        >
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        Quero ver!
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais para dados da proposta
+        let propostaData = null;
+
+        // Função para extrair ID da proposta da URL
+        function getPropostaId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        // Carregar dados da proposta do banco de dados
+        async function carregarProposta() {
+            const propostaId = getPropostaId();
+
+            console.log('🔍 ID da proposta na URL:', propostaId);
+
+            if (!propostaId) {
+                alert('ID da proposta não encontrado na URL');
+                return;
+            }
+
+            try {
+                console.log('📡 Buscando proposta com ID:', propostaId);
+                const response = await fetch(`/api/proposta/${propostaId}`);
+
+                console.log('📊 Status da resposta:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                console.log('📦 Resposta completa da API:', result);
+
+                if (result && result.success && result.data) {
+                    propostaData = result.data;
+                    console.log('✅ PropostaData carregado:', {
+                        id: propostaData.id,
+                        nome: propostaData.nome,
+                        tipo: propostaData.tipo,
+                        pedir_whatsapp: propostaData.pedir_whatsapp,
+                        tem_arquivo: !!propostaData.arquivo,
+                        tem_link_canva: !!propostaData.link_canva
+                    });
+
+                    // Atualizar título e formulário
+                    document.title = `${propostaData.nome || 'Proposta'} - BulBox`;
+                    atualizarFormulario();
+                } else {
+                    throw new Error('Dados da proposta não encontrados na resposta');
+                }
+
+            } catch (error) {
+                console.error('❌ Erro ao carregar proposta:', error);
+                alert(`Erro ao carregar proposta: ${error.message}\n\nVerifique se o ID está correto e se o servidor está rodando.`);
+            }
+        }
+
+        // Atualizar formulário baseado nos dados da proposta
+        function atualizarFormulario() {
+            if (!propostaData) {
+                console.error('❌ atualizarFormulario chamado sem propostaData');
+                return;
+            }
+
+            console.log('🔧 Atualizando formulário com dados:', {
+                nome: propostaData.nome,
+                tipo: propostaData.tipo,
+                pedir_whatsapp: propostaData.pedir_whatsapp,
+                pedirWhatsapp: propostaData.pedirWhatsapp,
+                arquivo: propostaData.arquivo,
+                link_canva: propostaData.link_canva
+            });
+
+            // Atualizar título do formulário
+            document.querySelector('.form-title').innerHTML = `
+                <span class="rocket-icon">🚀</span>
+                ${propostaData.nome || 'Proposta'}
+            `;
+
+            // Configurar campo WhatsApp baseado na configuração
+            const whatsappField = document.getElementById('whatsapp').closest('.form-group');
+            const precisaWhatsApp = propostaData.pedir_whatsapp === true || propostaData.pedirWhatsapp === true;
+            
+            console.log('📱 Campo WhatsApp:', {
+                pedir_whatsapp: propostaData.pedir_whatsapp,
+                pedirWhatsapp: propostaData.pedirWhatsapp,
+                typeOfPedirWhatsapp: typeof propostaData.pedir_whatsapp,
+                precisaWhatsApp: precisaWhatsApp
+            });
+            
+            if (precisaWhatsApp) {
+                whatsappField.style.display = 'block';
+                document.getElementById('whatsapp').required = true;
+                console.log('✅ Campo WhatsApp VISÍVEL e OBRIGATÓRIO');
+            } else {
+                whatsappField.style.display = 'none';
+                document.getElementById('whatsapp').required = false;
+                console.log('❌ Campo WhatsApp OCULTO e OPCIONAL');
+            }
+
+            // Configurar botão baseado no tipo de proposta
+            const submitBtn = document.querySelector('.submit-btn, .download-btn');
+            if (!submitBtn) {
+                console.error('❌ Botão submit não encontrado!');
+                return;
+            }
+            
+            console.log('🔘 Tipo da proposta:', {
+                tipo: propostaData.tipo,
+                tipoString: String(propostaData.tipo),
+                tipoLowerCase: String(propostaData.tipo).toLowerCase()
+            });
+            
+            // Resetar todas as classes do botão
+            submitBtn.className = '';
+            
+            const tipoLower = String(propostaData.tipo).toLowerCase();
+            
+            if (tipoLower === 'arquivo') {
+                submitBtn.innerHTML = '<i class="fas fa-download"></i> Download Proposta';
+                submitBtn.classList.add('download-btn');
+                console.log('✅ Botão configurado para DOWNLOAD (tipo: arquivo)');
+            } else if (tipoLower === 'canva') {
+                submitBtn.innerHTML = '<i class="fas fa-eye"></i> Quero ver!';
+                submitBtn.classList.add('submit-btn');
+                console.log('✅ Botão configurado para VISUALIZAR (tipo: canva)');
+            } else {
+                submitBtn.innerHTML = 'Quero ver!';
+                submitBtn.classList.add('submit-btn');
+                console.log('⚠️ Botão configurado para PADRÃO (tipo desconhecido:', propostaData.tipo, ')');
+            }
+
+            console.log('🎨 Classes finais do botão:', submitBtn.className);
+            console.log('📝 Texto final do botão:', submitBtn.innerHTML);
+        }
+
+        // Enviar formulário
+        document.getElementById('proposalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!propostaData) {
+                alert('Dados da proposta não carregados');
+                return;
+            }
+            
+            const fullName = document.getElementById('fullName').value;
+            const whatsapp = document.getElementById('whatsapp').value;
+            const submitBtn = document.querySelector('button[type="submit"]');
+            
+            console.log('📤 Enviando formulário:', {
+                fullName,
+                whatsapp,
+                propostaId: propostaData.id,
+                propostaTipo: propostaData.tipo
+            });
+            
+            // Validação
+            if (!fullName) {
+                alert('Por favor, informe seu nome');
+                return;
+            }
+
+            const precisaWhatsApp = propostaData.pedir_whatsapp || propostaData.pedirWhatsapp;
+            console.log('✅ Validação WhatsApp:', { precisaWhatsApp, whatsapp });
+            
+            if (precisaWhatsApp && !whatsapp) {
+                alert('Por favor, informe seu WhatsApp');
+                return;
+            }
+            
+            // Mostrar loading no botão
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Enviar dados para a API
+                const response = await fetch(`/api/proposta/${propostaData.id}/visualizar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        fullName, 
+                        whatsapp: precisaWhatsApp ? whatsapp : null 
+                    })
+                });
+                
+                const result = await response.json();
+                
+                console.log('📥 Resposta da API visualizar:', result);
+                
+                if (result.success) {
+                    // Processar baseado no tipo de proposta
+                    const tipoLower = String(propostaData.tipo).toLowerCase();
+                    console.log('🎯 Processando tipo:', tipoLower);
+                    
+                    if (tipoLower === 'arquivo') {
+                        console.log('📥 Iniciando download do arquivo');
+                        await processarDownloadArquivo();
+                    } else if (tipoLower === 'canva') {
+                        console.log('🎨 Iniciando redirecionamento Canva');
+                        await processarRedirecionamentoCanva();
+                    }
+                    
+                } else {
+                    alert(result.message || 'Erro ao processar solicitação. Tente novamente.');
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao enviar proposta:', error);
+                alert('Erro de conexão. Tente novamente.');
+            } finally {
+                // Restaurar botão
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Processar download de arquivo
+        async function processarDownloadArquivo() {
+            // Esconder formulário
+            document.querySelector('.right-section').style.display = 'none';
+            
+            // Mostrar tela de download
+            const downloadContainer = document.createElement('div');
+            downloadContainer.className = 'download-viewer';
+            downloadContainer.innerHTML = `
+                <div class="download-content">
+                    <div class="download-icon">
+                        <i class="fas fa-file-download fa-4x text-primary"></i>
+                    </div>
+                    <h2>${propostaData.nome}</h2>
+                    <p class="download-message">Obrigado! Seu download começará automaticamente.</p>
+                    <div class="download-actions mt-4">
+                        <button onclick="forcarDownload()" class="btn-download-manual">
+                            <i class="fas fa-download"></i>
+                            Download Manual
+                        </button>
+                        <button onclick="voltarFormulario()" class="btn-voltar">
+                            <i class="fas fa-arrow-left"></i>
+                            Voltar
+                        </button>
+                    </div>
+                    <div class="download-info mt-3">
+                        <small class="text-muted">
+                            Se o download não iniciar automaticamente, clique em "Download Manual"
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(downloadContainer);
+            
+            // Iniciar download automaticamente
+            setTimeout(() => {
+                forcarDownload();
+            }, 2000);
+        }
+
+        // Processar redirecionamento para Canva
+        async function processarRedirecionamentoCanva() {
+            // Esconder formulário
+            document.querySelector('.right-section').style.display = 'none';
+            
+            // Mostrar tela de redirecionamento
+            const canvaContainer = document.createElement('div');
+            canvaContainer.className = 'canva-viewer';
+            canvaContainer.innerHTML = `
+                <div class="canva-content">
+                    <div class="canva-icon">
+                        <i class="fas fa-external-link-alt fa-4x text-success"></i>
+                    </div>
+                    <h2>${propostaData.nome}</h2>
+                    <p class="canva-message">Obrigado! Você será redirecionado para visualizar sua proposta no Canva.</p>
+                    <div class="canva-actions mt-4">
+                        <a href="${propostaData.link_canva || propostaData.linkCanva}" target="_blank" class="btn-canva-redirect">
+                            <i class="fab fa-canva"></i>
+                            Abrir no Canva
+                        </a>
+                        <button onclick="voltarFormulario()" class="btn-voltar">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar
+                        </button>
+                    </div>
+                    <div class="redirect-info mt-3">
+                        <small class="text-muted">
+                            O redirecionamento acontecerá automaticamente em <span id="countdown">5</span> segundos
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(canvaContainer);
+            
+            // Countdown e redirecionamento automático
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            const interval = setInterval(() => {
+                countdown--;
+                if (countdownElement) {
+                    countdownElement.textContent = countdown;
+                }
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    const canvaUrl = propostaData.link_canva || propostaData.linkCanva;
+                    console.log('Redirecionando para Canva:', canvaUrl); // Debug
+                    if (canvaUrl) {
+                        window.open(canvaUrl, '_blank');
+                    } else {
+                        alert('Link do Canva não disponível');
+                    }
+                }
+            }, 1000);
+        }
+
+        // Forçar download do arquivo
+        function forcarDownload() {
+            console.log('Tentando download com dados:', propostaData); // Debug
+            
+            if (propostaData.arquivo) {
+                let downloadUrl;
+                
+                if (typeof propostaData.arquivo === 'string') {
+                    downloadUrl = propostaData.arquivo;
+                } else if (propostaData.arquivo.url) {
+                    downloadUrl = propostaData.arquivo.url;
+                } else if (propostaData.arquivo.downloadUrl) {
+                    downloadUrl = propostaData.arquivo.downloadUrl;
+                } else {
+                    console.error('Estrutura do arquivo não reconhecida:', propostaData.arquivo);
+                    alert('Arquivo não disponível para download');
+                    return;
+                }
+                
+                console.log('URL de download:', downloadUrl); // Debug
+                
+                // Criar link temporário para download
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = propostaData.nome || 'proposta';
+                link.target = '_blank';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                console.error('Nenhum arquivo encontrado na proposta');
+                alert('Arquivo não disponível');
+            }
+        }
+
+        // Voltar ao formulário
+        function voltarFormulario() {
+            // Remover viewers
+            const viewers = document.querySelectorAll('.download-viewer, .canva-viewer');
+            viewers.forEach(viewer => viewer.remove());
+            
+            // Mostrar formulário novamente
+            document.querySelector('.right-section').style.display = 'flex';
+        }
+
+        // Formatação automática do WhatsApp
+        document.getElementById('whatsapp').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.length <= 11) {
+                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+                if (value.length < 14) {
+                    value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+                }
+            }
+            
+            e.target.value = value;
+        });
+
+        // Carregar proposta quando a página carregar
+        window.addEventListener('DOMContentLoaded', carregarProposta);
+    </script>
+
+    <style>
+        /* Estilos para a tela de download */
+        .download-viewer, .canva-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .download-content, .canva-content {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .download-icon, .canva-icon {
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        .download-content h2, .canva-content h2 {
+            margin-bottom: 20px;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .download-message, .canva-message {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .download-actions, .canva-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-download-manual, .btn-canva-redirect {
+            background: #00bcd4;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .btn-download-manual:hover, .btn-canva-redirect:hover {
+            background: #0891b2;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 188, 212, 0.3);
+        }
+
+        .btn-voltar {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-voltar:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .download-info, .redirect-info {
+            margin-top: 20px;
+        }
+
+        /* Animação de pulse */
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        /* Estilo para botão de download no formulário */
+        .download-btn {
+            width: 100%;
+            padding: 18px 20px;
+            background: linear-gradient(135deg, #00bcd4 0%, #0891b2 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .download-btn:hover {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 188, 212, 0.4);
+        }
+
+        .download-btn:disabled {
+            opacity: 0.7;
+            transform: none !important;
+            cursor: not-allowed;
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            .download-content, .canva-content {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+
+            .download-actions, .canva-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-download-manual, .btn-canva-redirect, .btn-voltar {
+                width: 100%;
+                max-width: 250px;
+            }
+        }
+    </style>
+</body>
+</html>

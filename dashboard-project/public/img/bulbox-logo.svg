@@ -1,0 +1,45 @@
+<!-- SVG do logo Bulbox sem fundo -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 150" width="700" height="150">
+  <!-- Logo Bulbox -->
+  <g>
+    <!-- Elemento cúbico (logo icon) - posicionado antes do texto -->
+    <g transform="translate(20, 20)">
+      <!-- Face superior do cubo -->
+      <path d="M25 15 L45 5 L65 15 L65 35 L45 45 L25 35 Z" fill="#00bcd4" opacity="0.9"/>
+      <!-- Face direita do cubo -->
+      <path d="M45 5 L65 15 L65 55 L45 65 L45 25 Z" fill="#1e3a5f"/>
+      <!-- Face esquerda do cubo -->
+      <path d="M25 15 L45 25 L45 65 L25 55 Z" fill="#2c5282"/>
+      <!-- Face inferior -->
+      <path d="M25 55 L45 65 L65 55 L65 75 L45 85 L25 75 Z" fill="#0891b2"/>
+      <!-- Highlight interno -->
+      <path d="M35 25 L45 20 L55 25 L55 40 L45 45 L35 40 Z" fill="#ffffff" opacity="0.3"/>
+    </g>
+    
+    <!-- Texto Bulbox -->
+    <g transform="translate(100, 30)">
+      <!-- B -->
+      <path d="M0 10 L0 90 L35 90 Q50 90 50 75 L50 65 Q50 50 42.5 50 Q50 50 50 35 L50 25 Q50 10 35 10 Z M15 25 L32 25 Q37 25 37 30 L37 35 Q37 40 32 40 L15 40 Z M15 55 L35 55 Q40 55 40 60 L40 70 Q40 75 35 75 L15 75 Z" fill="#ffffff"/>
+      
+      <!-- u -->
+      <path d="M70 35 L70 70 Q70 85 85 85 L95 85 Q110 85 110 70 L110 35 L95 35 L95 65 Q95 70 90 70 Q85 70 85 65 L85 35 Z" fill="#ffffff"/>
+      
+      <!-- l -->
+      <path d="M130 10 L130 90 L145 90 L145 25 L165 25 L165 10 Z" fill="#ffffff"/>
+      
+      <!-- b -->
+      <path d="M185 10 L185 90 L200 90 L200 55 L215 55 Q230 55 230 70 L230 80 Q230 90 215 90 L200 90 L200 100 L215 100 Q245 100 245 80 L245 70 Q245 40 215 40 L200 40 L200 10 Z" fill="#ffffff"/>
+      
+      <!-- o -->
+      <path d="M265 35 Q250 35 250 50 L250 70 Q250 85 265 85 L275 85 Q290 85 290 70 L290 50 Q290 35 275 35 Z M265 50 L275 50 Q275 50 275 55 L275 65 Q275 70 275 70 L265 70 Q265 70 265 65 L265 55 Q265 50 265 50 Z" fill="#ffffff"/>
+      
+      <!-- x -->
+      <path d="M310 35 L330 55 L350 35 L365 35 L340 60 L365 85 L350 85 L330 67 L310 85 L295 85 L320 60 L295 35 Z" fill="#ffffff"/>
+    </g>
+    
+    <!-- Slogan -->
+    <text x="100" y="130" font-family="Inter, sans-serif" font-size="16" font-weight="400" fill="#00bcd4" opacity="0.9">
+      Novas realidades, novas ideias!
+    </text>
+  </g>
+</svg>

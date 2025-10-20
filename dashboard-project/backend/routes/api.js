@@ -5,6 +5,8 @@ const router = express.Router();
 const EmpresaController = require('../controllers/EmpresaController');
 const usuarioController = require('../controllers/UsuarioController');
 const NotificacaoController = require('../controllers/NotificacaoController');
+const PropostaController = require('../controllers/PropostaController');
+const { UploadController, uploadMiddleware } = require('../controllers/UploadController');
 const { carregarEmpresasPermitidas } = require('../controllers/PermissaoController');
 const NotificacaoScheduler = require('../schedulers/NotificacaoScheduler');
 
@@ -51,6 +53,60 @@ router.get('/statusAgendamentos', (req, res) => {
         });
     } catch (error) {
         res.status(500).json({ success: false, message: 'Erro ao listar agendamentos', error: error.message });
+    }
+});
+
+// Rotas de propostas
+router.post('/criarProposta', PropostaController.criarProposta);
+router.get('/listarPropostas', PropostaController.listarPropostas);
+router.put('/atualizarProposta/:id', PropostaController.atualizarProposta);
+router.delete('/excluirProposta/:id', PropostaController.excluirProposta);
+router.post('/registrarAberturaProposta', PropostaController.registrarAbertura);
+router.get('/empresasDisponiveis', PropostaController.buscarEmpresasDisponiveis);
+router.get('/proposta/:id/aberturas', PropostaController.listarAberturas);
+
+// Rotas de upload de arquivos
+router.post('/upload-arquivo', uploadMiddleware, UploadController.uploadArquivo);
+router.delete('/excluir-arquivo', UploadController.excluirArquivo);
+
+// Rotas para proposta pública
+router.get('/proposta/:id', PropostaController.buscarPropostaPorId);
+router.post('/proposta/:id/visualizar', PropostaController.registrarVisualizacao);
+
+// Rota para processar proposta
+router.post('/enviarProposta', (req, res) => {
+    try {
+        const { fullName, whatsapp } = req.body;
+        
+        // Validação básica
+        if (!fullName || !whatsapp) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Nome e WhatsApp são obrigatórios' 
+            });
+        }
+        
+        // Aqui você pode integrar com:
+        // - Banco de dados para salvar o lead
+        // - API de WhatsApp para envio automático
+        // - Sistema de CRM
+        // - Email marketing
+        
+        console.log('Nova proposta recebida:', { fullName, whatsapp });
+        
+        res.json({ 
+            success: true, 
+            message: `Obrigado, ${fullName}! Sua proposta será liberada em breve.`,
+            data: { fullName, whatsapp }
+        });
+        
+    } catch (error) {
+        console.error('Erro ao processar proposta:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erro interno do servidor', 
+            error: error.message 
+        });
     }
 });
 

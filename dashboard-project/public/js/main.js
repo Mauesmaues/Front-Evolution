@@ -18,8 +18,7 @@ async function usuarioSession() {
     }
   } catch (error) {
     console.error('Erro ao verificar sessão:', error);
-    // Em caso de erro, redireciona para login
-    window.location.href = '/login.html';
+    // Em caso de erro de rede, não redireciona automaticamente
     return null;
   }
 }
