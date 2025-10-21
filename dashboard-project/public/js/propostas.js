@@ -72,10 +72,20 @@ class PropostaManager {
             this.mostrarAba('aberturas');
         });
 
-        // Filtro de empresas
-        document.getElementById('empresaFiltroPropostas').addEventListener('change', () => {
-            this.filtrarPropostas();
+        document.getElementById('abaVisuais').addEventListener('click', () => {
+            this.mostrarAba('visuais');
         });
+
+        // Filtro de empresas
+        const filtroEmpresas = document.getElementById('empresaFiltroPropostas');
+        if (filtroEmpresas) {
+            filtroEmpresas.addEventListener('change', () => {
+                console.log('Filtro de empresas mudou:', filtroEmpresas.value);
+                this.filtrarPropostas();
+            });
+        } else {
+            console.warn('Elemento empresaFiltroPropostas não encontrado');
+        }
 
         // Botão salvar proposta
         document.getElementById('btnSalvarProposta').addEventListener('click', () => {
@@ -367,6 +377,9 @@ class PropostaManager {
         } else if (aba === 'aberturas') {
             document.getElementById('abaAberturas').classList.add('active');
             document.getElementById('conteudoAberturas').style.display = 'block';
+        } else if (aba === 'visuais') {
+            document.getElementById('abaVisuais').classList.add('active');
+            document.getElementById('conteudoVisuais').style.display = 'block';
         }
     }
 
@@ -401,16 +414,18 @@ class PropostaManager {
         }
 
         tbody.innerHTML = this.propostas.map(proposta => {
-            // Extrair empresas vinculadas
-            let empresasVinculadas = '';
-            if (proposta.propostaempresa && proposta.propostaempresa.length > 0) {
-                const nomes = proposta.propostaempresa
-                    .map(pe => pe.empresas?.nome)
-                    .filter(nome => nome)
-                    .join(', ');
-                empresasVinculadas = nomes || 'Não especificado';
+            // Extrair empresa vinculada (backend retorna como 'empresas' devido ao alias no select)
+            let empresaNome = '';
+            if (proposta.empresas && proposta.empresas.nome) {
+                empresaNome = proposta.empresas.nome;
+            } else if (proposta.empresa && proposta.empresa.nome) {
+                empresaNome = proposta.empresa.nome;
+            } else if (proposta.empresa_id) {
+                // Buscar nome da empresa pelo ID se disponível
+                const empresaEncontrada = this.empresasDisponiveis.find(e => e.id === proposta.empresa_id);
+                empresaNome = empresaEncontrada ? empresaEncontrada.nome : 'Empresa não encontrada';
             } else {
-                empresasVinculadas = '<span class="text-muted">Todas as empresas</span>';
+                empresaNome = '<span class="text-muted">Não vinculada</span>';
             }
 
             return `
@@ -426,17 +441,9 @@ class PropostaManager {
                         </span>
                     </td>
                     <td>
-                        <small>${empresasVinculadas}</small>
+                        <small>${empresaNome}</small>
                     </td>
-                    <td>${this.formatarData(proposta.dataCriacao || proposta.data_criacao)}</td>
-                    <td>
-                        <span class="badge ${proposta.status === 'Aberta' ? 'bg-success' : 'bg-secondary'}">
-                            <i class="fas ${proposta.status === 'Aberta' ? 'fa-eye' : 'fa-eye-slash'}"></i>
-                            ${proposta.status}
-                        </span>
-                        ${proposta.visualizacoes > 0 ? `<br><small class="text-muted">${proposta.visualizacoes} visualizações</small>` : ''}
-                    </td>
-                    <td>${this.formatarData(proposta.dataCriacao || proposta.dataCriacao)}</td>
+                    <td>${this.formatarData(proposta.dataCriacao || proposta.data_criacao || proposta.created_at)}</td>
                     <td>
                         <span class="badge ${proposta.status === 'Aberta' ? 'bg-success' : 'bg-secondary'}">
                             <i class="fas ${proposta.status === 'Aberta' ? 'fa-eye' : 'fa-eye-slash'}"></i>
@@ -502,13 +509,14 @@ class PropostaManager {
     carregarPropostasNaTabelaFiltradas(empresaId) {
         const tbody = document.getElementById('tabelaPropostasGeradas');
         
-        // Filtrar propostas pela empresa
+        console.log('🔍 Filtrando propostas pela empresa ID:', empresaId);
+        
+        // Filtrar propostas pela empresa usando empresa_id
         const propostasFiltradas = this.propostas.filter(proposta => {
-            if (!proposta.propostaempresa || proposta.propostaempresa.length === 0) {
-                return false; // Propostas sem empresa vinculada não aparecem no filtro
-            }
-            return proposta.propostaempresa.some(pe => pe.id_empresas === empresaId);
+            return proposta.empresa_id === empresaId;
         });
+        
+        console.log(`✅ ${propostasFiltradas.length} propostas encontradas para a empresa ${empresaId}`);
 
         if (propostasFiltradas.length === 0) {
             tbody.innerHTML = `
@@ -523,16 +531,18 @@ class PropostaManager {
         }
 
         tbody.innerHTML = propostasFiltradas.map(proposta => {
-            // Extrair empresas vinculadas
-            let empresasVinculadas = '';
-            if (proposta.propostaempresa && proposta.propostaempresa.length > 0) {
-                const nomes = proposta.propostaempresa
-                    .map(pe => pe.empresas?.nome)
-                    .filter(nome => nome)
-                    .join(', ');
-                empresasVinculadas = nomes || 'Não especificado';
+            // Extrair empresa vinculada (backend retorna como 'empresas' devido ao alias no select)
+            let empresaNome = '';
+            if (proposta.empresas && proposta.empresas.nome) {
+                empresaNome = proposta.empresas.nome;
+            } else if (proposta.empresa && proposta.empresa.nome) {
+                empresaNome = proposta.empresa.nome;
+            } else if (proposta.empresa_id) {
+                // Buscar nome da empresa pelo ID se disponível
+                const empresaEncontrada = this.empresasDisponiveis.find(e => e.id === proposta.empresa_id);
+                empresaNome = empresaEncontrada ? empresaEncontrada.nome : 'Empresa não encontrada';
             } else {
-                empresasVinculadas = '<span class="text-muted">Todas as empresas</span>';
+                empresaNome = '<span class="text-muted">Não vinculada</span>';
             }
 
             return `
@@ -547,7 +557,8 @@ class PropostaManager {
                             ${proposta.tipo === 'arquivo' ? 'Arquivo' : 'Link Canva'}
                         </span>
                     </td>
-                    <td>${this.formatarData(proposta.dataCriacao || proposta.created_at)}</td>
+                    <td><small>${empresaNome}</small></td>
+                    <td>${this.formatarData(proposta.dataCriacao || proposta.data_criacao || proposta.created_at)}</td>
                     <td>
                         <span class="badge ${proposta.status === 'Aberta' ? 'bg-success' : 'bg-secondary'}">
                             <i class="fas ${proposta.status === 'Aberta' ? 'fa-eye' : 'fa-eye-slash'}"></i>
@@ -555,16 +566,15 @@ class PropostaManager {
                         </span>
                         ${proposta.visualizacoes > 0 ? `<br><small class="text-muted">${proposta.visualizacoes} visualizações</small>` : ''}
                     </td>
-                    <td><small>${empresasVinculadas}</small></td>
                     <td>
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary" onclick="propostaManager.visualizarProposta(${proposta.id})" title="Visualizar">
+                            <button class="btn btn-sm btn-outline-primary" onclick="propostaManager.visualizarProposta('${proposta.id}')" title="Visualizar">
                                 <i class="fas fa-eye"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="propostaManager.copiarLink(${proposta.id})" title="Copiar Link">
+                            <button class="btn btn-sm btn-outline-success" onclick="propostaManager.copiarLink('${proposta.id}')" title="Copiar Link">
                                 <i class="fas fa-copy"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="propostaManager.excluirProposta(${proposta.id})" title="Excluir">
+                            <button class="btn btn-sm btn-outline-danger" onclick="propostaManager.excluirProposta('${proposta.id}')" title="Excluir">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -578,12 +588,9 @@ class PropostaManager {
     carregarAberturasNaTabelaFiltradas(empresaId) {
         const tbody = document.getElementById('tabelaAberturas');
         
-        // Filtrar propostas pela empresa primeiro
+        // Filtrar propostas pela empresa primeiro usando empresa_id
         const propostasFiltradas = this.propostas.filter(proposta => {
-            if (!proposta.propostaempresa || proposta.propostaempresa.length === 0) {
-                return false;
-            }
-            return proposta.propostaempresa.some(pe => pe.id_empresas === empresaId);
+            return proposta.empresa_id === empresaId;
         });
 
         // Filtrar apenas propostas que foram abertas
@@ -639,25 +646,69 @@ class PropostaManager {
         // A página proposta.html buscará todas as informações do banco de dados
         const link = `${window.location.origin}/proposta.html?id=${id}`;
         
-        navigator.clipboard.writeText(link).then(() => {
-            this.mostrarToast('✅ Link copiado! Compartilhe com seus clientes: ' + link, 'success');
-            console.log('🔗 Link da proposta copiado:', link);
-        }).catch(() => {
-            // Fallback para navegadores mais antigos
-            const textArea = document.createElement('textarea');
-            textArea.value = link;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                this.mostrarToast('✅ Link copiado! ' + link, 'success');
-                console.log('🔗 Link da proposta copiado:', link);
-            } catch (err) {
-                this.mostrarToast('❌ Erro ao copiar. Link: ' + link, 'error');
-                console.error('Erro ao copiar link:', err);
-            }
-            document.body.removeChild(textArea);
+        console.log('🔍 Tentando copiar link:', {
+            link,
+            temClipboard: !!navigator.clipboard,
+            isSecureContext: window.isSecureContext,
+            protocolo: window.location.protocol
         });
+        
+        // Verificar se a API Clipboard está disponível (requer HTTPS em produção)
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(link).then(() => {
+                this.mostrarToast('✅ Link copiado! Compartilhe com seus clientes: ' + link, 'success');
+                console.log('🔗 Link da proposta copiado:', link);
+            }).catch((err) => {
+                console.error('Erro ao copiar via Clipboard API:', err);
+                this.copiarLinkFallback(link);
+            });
+        } else {
+            console.log('⚠️ Clipboard API não disponível, usando fallback');
+            // Usar método alternativo para ambientes sem HTTPS ou navegadores antigos
+            this.copiarLinkFallback(link);
+        }
+    }
+
+    copiarLinkFallback(link) {
+        // Método alternativo que funciona em qualquer contexto
+        const textArea = document.createElement('textarea');
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                this.mostrarToast('✅ Link copiado! Compartilhe com seus clientes: ' + link, 'success');
+                console.log('🔗 Link da proposta copiado (fallback):', link);
+            } else {
+                throw new Error('Comando copy falhou');
+            }
+        } catch (err) {
+            console.error('Erro ao copiar link:', err);
+            // Última alternativa: mostrar um prompt para copiar manualmente
+            this.mostrarLinkParaCopiaManual(link);
+        } finally {
+            document.body.removeChild(textArea);
+        }
+    }
+
+    mostrarLinkParaCopiaManual(link) {
+        // Criar modal/alert para usuário copiar manualmente
+        const mensagem = `Não foi possível copiar automaticamente. Por favor, copie o link abaixo:\n\n${link}`;
+        
+        // Tentar usar prompt para facilitar a cópia
+        if (window.prompt) {
+            window.prompt('Copie o link da proposta:', link);
+        } else {
+            alert(mensagem);
+        }
+        
+        console.log('🔗 Link para cópia manual:', link);
     }
 
     async excluirProposta(id) {
@@ -871,7 +922,10 @@ class PropostaManager {
     // Popular o select de filtro de empresas
     popularSelectFiltroEmpresas() {
         const select = document.getElementById('empresaFiltroPropostas');
-        if (!select) return;
+        if (!select) {
+            console.warn('Select de filtro de empresas não encontrado');
+            return;
+        }
 
         // Limpar opções existentes (exceto "Todas as empresas")
         select.innerHTML = '<option value="">Todas as empresas</option>';
@@ -884,10 +938,7 @@ class PropostaManager {
             select.appendChild(option);
         });
 
-        // Adicionar event listener para filtrar quando mudar a seleção
-        select.addEventListener('change', () => {
-            this.filtrarPropostas();
-        });
+        console.log(`✅ ${this.empresasDisponiveis.length} empresas adicionadas ao filtro`);
     }
 
     // Carregar empresas no modal de criação
@@ -903,11 +954,35 @@ class PropostaManager {
     }
 
     formatarData(dataISO) {
-        return new Date(dataISO).toLocaleDateString('pt-BR');
+        if (!dataISO) return '-';
+        
+        try {
+            const data = new Date(dataISO);
+            if (isNaN(data.getTime())) {
+                console.warn('Data inválida:', dataISO);
+                return '-';
+            }
+            return data.toLocaleDateString('pt-BR');
+        } catch (error) {
+            console.error('Erro ao formatar data:', error, dataISO);
+            return '-';
+        }
     }
 
     formatarDataHora(dataISO) {
-        return new Date(dataISO).toLocaleString('pt-BR');
+        if (!dataISO) return '-';
+        
+        try {
+            const data = new Date(dataISO);
+            if (isNaN(data.getTime())) {
+                console.warn('Data/hora inválida:', dataISO);
+                return '-';
+            }
+            return data.toLocaleString('pt-BR');
+        } catch (error) {
+            console.error('Erro ao formatar data/hora:', error, dataISO);
+            return '-';
+        }
     }
 
     mostrarToast(mensagem, tipo = 'success') {
@@ -1001,5 +1076,321 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             console.log("Elemento btnCriarProposta não encontrado no carregamento inicial");
         }
+        
+        // Inicializar gerenciador de visuais
+        inicializarGerenciadorVisuais();
     }, 1000); // Aumentar o tempo para 1 segundo
 });
+
+// ===== GERENCIADOR DE VISUAIS =====
+function inicializarGerenciadorVisuais() {
+    const logoUpload = document.getElementById('logoUpload');
+    const btnRemoverLogo = document.getElementById('btnRemoverLogo');
+    const corObjetosFlutuantes = document.getElementById('corObjetosFlutuantes');
+    const corObjetosFlutuantesHex = document.getElementById('corObjetosFlutuantesHex');
+    const corFundoPainelEsquerdo = document.getElementById('corFundoPainelEsquerdo');
+    const corFundoPainelEsquerdoHex = document.getElementById('corFundoPainelEsquerdoHex');
+    const btnSalvarVisuais = document.getElementById('btnSalvarVisuais');
+    const btnResetarVisuais = document.getElementById('btnResetarVisuais');
+    const abaVisuais = document.getElementById('abaVisuais');
+    const empresaFiltroVisuais = document.getElementById('empresaFiltroVisuais');
+    const containerFormularioVisuais = document.getElementById('containerFormularioVisuais');
+
+    if (!logoUpload) return;
+
+    // Variável global para armazenar empresa selecionada
+    let empresaSelecionadaVisuais = null;
+
+    // Popular select de empresas
+    popularSelectEmpresasVisuais();
+
+    // Listener para mudança de empresa
+    if (empresaFiltroVisuais) {
+        empresaFiltroVisuais.addEventListener('change', function(e) {
+            const empresaId = e.target.value;
+            
+            if (!empresaId || empresaId === '') {
+                // Nenhuma empresa selecionada - esconder formulário
+                containerFormularioVisuais.style.display = 'none';
+                empresaSelecionadaVisuais = null;
+            } else {
+                // Empresa selecionada - mostrar formulário e carregar dados
+                empresaSelecionadaVisuais = parseInt(empresaId);
+                containerFormularioVisuais.style.display = 'block';
+                carregarConfiguracoesVisuaisPorEmpresa(empresaSelecionadaVisuais);
+            }
+        });
+    }
+
+    // Upload de Logo
+    logoUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Validar tamanho (2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Arquivo muito grande! Tamanho máximo: 2MB');
+                logoUpload.value = '';
+                return;
+            }
+
+            // Validar tipo
+            if (!file.type.match('image.*')) {
+                alert('Apenas imagens são permitidas!');
+                logoUpload.value = '';
+                return;
+            }
+
+            // Mostrar preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoPreview = document.getElementById('logoPreview');
+                const logoPreviewImg = document.getElementById('logoPreviewImg');
+                const previewLogoImg = document.getElementById('previewLogoImg');
+                
+                logoPreviewImg.src = e.target.result;
+                previewLogoImg.src = e.target.result;
+                logoPreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Remover Logo
+    if (btnRemoverLogo) {
+        btnRemoverLogo.addEventListener('click', function() {
+            logoUpload.value = '';
+            document.getElementById('logoPreview').style.display = 'none';
+            document.getElementById('previewLogoImg').src = './img/BULBOX.png';
+        });
+    }
+
+    // Sincronizar cor dos objetos flutuantes
+    if (corObjetosFlutuantes && corObjetosFlutuantesHex) {
+        corObjetosFlutuantes.addEventListener('input', function(e) {
+            const cor = e.target.value;
+            corObjetosFlutuantesHex.value = cor;
+            atualizarPreviewCoresObjetos(cor);
+        });
+
+        corObjetosFlutuantesHex.addEventListener('input', function(e) {
+            const cor = e.target.value;
+            if (/^#[0-9A-F]{6}$/i.test(cor)) {
+                corObjetosFlutuantes.value = cor;
+                atualizarPreviewCoresObjetos(cor);
+            }
+        });
+    }
+
+    // Sincronizar cor de fundo
+    if (corFundoPainelEsquerdo && corFundoPainelEsquerdoHex) {
+        corFundoPainelEsquerdo.addEventListener('input', function(e) {
+            const cor = e.target.value;
+            corFundoPainelEsquerdoHex.value = cor;
+            atualizarPreviewCorFundo(cor);
+        });
+
+        corFundoPainelEsquerdoHex.addEventListener('input', function(e) {
+            const cor = e.target.value;
+            if (/^#[0-9A-F]{6}$/i.test(cor)) {
+                corFundoPainelEsquerdo.value = cor;
+                atualizarPreviewCorFundo(cor);
+            }
+        });
+    }
+
+    // Salvar configurações
+    if (btnSalvarVisuais) {
+        btnSalvarVisuais.addEventListener('click', async function() {
+            if (!empresaSelecionadaVisuais) {
+                alert('❌ Por favor, selecione uma empresa primeiro');
+                return;
+            }
+            await salvarConfiguracoesVisuais(empresaSelecionadaVisuais);
+        });
+    }
+
+    // Resetar para padrão
+    if (btnResetarVisuais) {
+        btnResetarVisuais.addEventListener('click', function() {
+            if (!empresaSelecionadaVisuais) {
+                alert('❌ Por favor, selecione uma empresa primeiro');
+                return;
+            }
+            if (confirm('Deseja resetar para as configurações padrão?')) {
+                resetarConfiguracoesVisuais();
+            }
+        });
+    }
+
+    // Gerenciar mudança de abas
+    if (abaVisuais) {
+        abaVisuais.addEventListener('click', function() {
+            popularSelectEmpresasVisuais();
+        });
+    }
+}
+
+// Popular select de empresas para visuais
+function popularSelectEmpresasVisuais() {
+    const select = document.getElementById('empresaFiltroVisuais');
+    if (!select) return;
+
+    // Limpar select
+    select.innerHTML = '<option value="">Selecione uma empresa...</option>';
+
+    // Usar a lista de empresas disponíveis do PropostaManager
+    if (window.propostaManager && window.propostaManager.empresasDisponiveis) {
+        const empresas = window.propostaManager.empresasDisponiveis;
+        
+        empresas.forEach(empresa => {
+            const option = document.createElement('option');
+            option.value = empresa.id;
+            option.textContent = empresa.nome;
+            select.appendChild(option);
+        });
+
+        console.log(`✅ ${empresas.length} empresas adicionadas ao seletor de visuais`);
+    } else {
+        console.warn('⚠️ PropostaManager ou empresas não disponíveis ainda');
+    }
+}
+
+function atualizarPreviewCoresObjetos(cor) {
+    const shapes = document.querySelectorAll('.preview-shape');
+    shapes.forEach(shape => {
+        shape.style.background = cor;
+    });
+}
+
+function atualizarPreviewCorFundo(cor) {
+    const painelEsquerdo = document.getElementById('previewPainelEsquerdo');
+    if (painelEsquerdo) {
+        painelEsquerdo.style.background = cor;
+    }
+}
+
+async function carregarConfiguracoesVisuais() {
+    // Função mantida para compatibilidade - agora usa carregarConfiguracoesVisuaisPorEmpresa
+    console.log('⚠️ carregarConfiguracoesVisuais() chamada - use carregarConfiguracoesVisuaisPorEmpresa()');
+}
+
+async function carregarConfiguracoesVisuaisPorEmpresa(empresaId) {
+    try {
+        console.log('🎨 Carregando visual da empresa ID:', empresaId);
+        
+        const response = await fetch(`/api/configuracoes/visuais/${empresaId}`);
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.data) {
+                aplicarConfiguracoesVisuais(data.data);
+            } else {
+                // Aplicar padrão se não encontrado
+                resetarConfiguracoesVisuais();
+            }
+        } else {
+            console.log('⚠️ Visual não encontrado, usando padrão');
+            resetarConfiguracoesVisuais();
+        }
+    } catch (error) {
+        console.error('❌ Erro ao carregar visual:', error);
+        resetarConfiguracoesVisuais();
+    }
+}
+
+function aplicarConfiguracoesVisuais(config) {
+    // Aplicar logo
+    if (config.logoUrl) {
+        document.getElementById('previewLogoImg').src = config.logoUrl;
+        document.getElementById('logoPreviewImg').src = config.logoUrl;
+        document.getElementById('logoPreview').style.display = 'block';
+    }
+
+    // Aplicar cores
+    if (config.corObjetosFlutuantes) {
+        document.getElementById('corObjetosFlutuantes').value = config.corObjetosFlutuantes;
+        document.getElementById('corObjetosFlutuantesHex').value = config.corObjetosFlutuantes;
+        atualizarPreviewCoresObjetos(config.corObjetosFlutuantes);
+    }
+
+    if (config.corFundoPainelEsquerdo) {
+        document.getElementById('corFundoPainelEsquerdo').value = config.corFundoPainelEsquerdo;
+        document.getElementById('corFundoPainelEsquerdoHex').value = config.corFundoPainelEsquerdo;
+        atualizarPreviewCorFundo(config.corFundoPainelEsquerdo);
+    }
+}
+
+async function salvarConfiguracoesVisuais(empresaId) {
+    const btnSalvar = document.getElementById('btnSalvarVisuais');
+    const textoOriginal = btnSalvar.innerHTML;
+
+    try {
+        btnSalvar.disabled = true;
+        btnSalvar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+
+        if (!empresaId) {
+            throw new Error('ID da empresa não informado');
+        }
+
+        const logoUpload = document.getElementById('logoUpload');
+        const formData = new FormData();
+
+        // Adicionar empresa_id ao FormData
+        formData.append('empresaId', empresaId);
+
+        // Adicionar logo se houver
+        if (logoUpload.files[0]) {
+            formData.append('logo', logoUpload.files[0]);
+        }
+
+        // Adicionar cores
+        formData.append('corObjetosFlutuantes', document.getElementById('corObjetosFlutuantes').value);
+        formData.append('corFundoPainelEsquerdo', document.getElementById('corFundoPainelEsquerdo').value);
+
+        const response = await fetch('/api/configuracoes/visuais', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            if (typeof propostaManager !== 'undefined' && propostaManager.mostrarToast) {
+                propostaManager.mostrarToast('✅ Configurações salvas com sucesso!', 'success');
+            } else {
+                alert('✅ Configurações salvas com sucesso!');
+            }
+            
+            // Recarregar configurações para mostrar dados salvos
+            await carregarConfiguracoesVisuaisPorEmpresa(empresaId);
+        } else {
+            throw new Error(data.error?.message || data.message || 'Erro ao salvar');
+        }
+
+    } catch (error) {
+        console.error('Erro ao salvar configurações:', error);
+        if (typeof propostaManager !== 'undefined' && propostaManager.mostrarToast) {
+            propostaManager.mostrarToast('❌ Erro ao salvar configurações: ' + error.message, 'error');
+        } else {
+            alert('❌ Erro ao salvar configurações: ' + error.message);
+        }
+    } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.innerHTML = textoOriginal;
+    }
+}
+
+function resetarConfiguracoesVisuais() {
+    // Resetar logo
+    document.getElementById('logoUpload').value = '';
+    document.getElementById('logoPreview').style.display = 'none';
+    document.getElementById('previewLogoImg').src = './img/BULBOX.png';
+
+    // Resetar cores
+    document.getElementById('corObjetosFlutuantes').value = '#00bcd4';
+    document.getElementById('corObjetosFlutuantesHex').value = '#00bcd4';
+    atualizarPreviewCoresObjetos('#00bcd4');
+
+    document.getElementById('corFundoPainelEsquerdo').value = '#070707';
+    document.getElementById('corFundoPainelEsquerdoHex').value = '#070707';
+    atualizarPreviewCorFundo('#070707');
+}

@@ -290,6 +290,9 @@ const PermissaoEnum = {
     USER: 'USER'
   };
 
+// Variável global para armazenar a permissão do usuário logado
+let permissaoUsuarioLogado = null;
+
 // Função para verificar permissões e configurar interface
 async function verificarPermissoesEConfigurarInterface() {
   try {
@@ -304,6 +307,9 @@ async function verificarPermissoesEConfigurarInterface() {
       window.location.href = '/login.html';
       return;
     }
+
+    // Armazenar permissão globalmente
+    permissaoUsuarioLogado = usuario.permissao;
 
     // Configurar interface baseado na permissão
     configurarInterfacePorPermissao(usuario.permissao);
@@ -323,15 +329,24 @@ function configurarInterfacePorPermissao(permissao) {
   const propostaLi = document.getElementById('proposta');
   
   if (permissao === 'USER') {
-    // USER: Ocultar painel de administração, notificações e proposta
+    // USER: Agora pode ver todas as abas
     if (administracaoLi) {
-      administracaoLi.style.display = 'none';
+      administracaoLi.style.display = 'block';
     }
     if (notificacoesLi) {
-      notificacoesLi.style.display = 'none';
+      notificacoesLi.style.display = 'block';
     }
     if (propostaLi) {
-      propostaLi.style.display = 'none';
+      propostaLi.style.display = 'block';
+    }
+    // Ocultar apenas a aba de criação de usuários para USER
+    const abaUsuario = document.getElementById('abaUsuario');
+    if (abaUsuario) {
+      abaUsuario.style.display = 'none';
+    }
+    // Ocultar botão de adicionar empresa para USER
+    if (btnAdicionarSubAbaAdmin) {
+      btnAdicionarSubAbaAdmin.style.display = 'none';
     }
   } else if (permissao === 'GESTOR') {
     // GESTOR: Mostrar administração, notificações e proposta, mas ocultar criação de usuários
@@ -686,6 +701,9 @@ function renderTabelaEmpresas(dados) {
     return;
   }
 
+  // Verificar se deve mostrar botões de ação (somente para GESTOR e ADMIN)
+  const mostrarBotoesAcao = permissaoUsuarioLogado !== 'USER';
+
   let tabela = `
     <div class="tabela-empresas-container">
       <table class="tabela-empresas table table-striped">
@@ -695,7 +713,7 @@ function renderTabelaEmpresas(dados) {
             <th>Conta de Anúncio</th>
             <th>Saldo [META]</th>
             <th>Saldo [GOOGLE]</th>
-            <th>Ações</th>
+            ${mostrarBotoesAcao ? '<th>Ações</th>' : ''}
           </tr>
         </thead>
         <tbody>
@@ -708,6 +726,7 @@ function renderTabelaEmpresas(dados) {
         <td>${emp.contaDeAnuncio || 'Não informado'}</td>
         <td class="valor">${emp.saldo}</td>
         <td class="valor">SaldoGoogle</td>
+        ${mostrarBotoesAcao ? `
         <td>
           <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}', '${emp.contaDeAnuncio}')">
             <i class="fas fa-edit"></i> Editar
@@ -716,6 +735,7 @@ function renderTabelaEmpresas(dados) {
             <i class="fas fa-trash"></i> Excluir
           </button>
         </td>
+        ` : ''}
       </tr>
     `;
   });

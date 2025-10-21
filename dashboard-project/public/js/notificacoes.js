@@ -1,398 +1,495 @@
-window.addEventListener('DOMContentLoaded', function() {
+// Sistema de Gerenciamento de Notificações
 
-// Elementos do modal
-const modal = document.getElementById('modalCadastroNotificacao');
-const btnCadastrar = document.getElementById('btnCadastrarNotificacao');
-const btnFechar = document.getElementById('btnFecharModal');
-const btnCancelar = document.getElementById('btnCancelarCadastro');
+class NotificacaoManager {
+    constructor() {
+        this.notificacoes = [];
+        this.empresasDisponiveis = [];
+        this.usuarioAtual = null;
+        this.eventListenersConfigurados = false;
+        this.inicializar();
+    }
 
-// Gerenciamento do modal de cadastro
-if (btnCadastrar) {
-    btnCadastrar.addEventListener('click', function(ev) {
-        ev.preventDefault();
-        abrirModalCadastro();
-    });
-}
-
-if (btnFechar) {
-    btnFechar.addEventListener('click', function(ev) {
-        ev.preventDefault();
-        fecharModalCadastro();
-    });
-}
-
-if (btnCancelar) {
-    btnCancelar.addEventListener('click', function(ev) {
-        ev.preventDefault();
-        fecharModalCadastro();
-    });
-}
-
-// Fechar modal ao clicar no overlay
-if (modal) {
-    modal.addEventListener('click', function(ev) {
-        if (ev.target === modal) {
-            fecharModalCadastro();
+    async inicializar() {
+        try {
+            // Carregar dados do usuário atual primeiro
+            await this.carregarUsuarioAtual();
+            
+            // Depois carregar empresas disponíveis
+            await this.carregarEmpresasDisponiveis();
+            
+            // Carregar notificações
+            await this.carregarNotificacoes();
+            
+            // Configurar event listeners apenas uma vez
+            if (!this.eventListenersConfigurados) {
+                this.configurarEventListeners();
+                this.eventListenersConfigurados = true;
+            }
+            
+            console.log('Sistema de notificações inicializado com sucesso');
+        } catch (erro) {
+            console.error('Erro ao inicializar sistema de notificações:', erro);
+            this.exibirMensagemErro('Erro ao inicializar sistema de notificações');
         }
-    });
-}
-
-// Fechar modal com tecla ESC
-document.addEventListener('keydown', function(ev) {
-    if (ev.key === 'Escape' && modal && modal.style.display === 'flex') {
-        fecharModalCadastro();
     }
-});
 
-function abrirModalCadastro() {
-    if (modal) {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden'; // Impede scroll da página
-        carregarEmpresasCheckbox(); // Carregar empresas quando abrir o modal
-        limparFormulario(); // Limpar campos do formulário
-    }
-}
-
-function fecharModalCadastro() {
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto'; // Restaura scroll da página
-    }
-}
-
-function limparFormulario() {
-    document.getElementById('nomeNotificacao').value = '';
-    document.getElementById('numeroDestinatario').value = '';
-    document.getElementById('horarioNotificacao').value = '09:00';
-    document.getElementById('notificacaoAtiva').checked = true;
-    
-    // Limpar checkboxes das empresas
-    const checkboxes = document.querySelectorAll('#checkboxEmpresas input[type="checkbox"]');
-    checkboxes.forEach(checkbox => checkbox.checked = false);
-}
-
-// Carregar empresas para checkboxes
-async function carregarEmpresasCheckbox() {
-    try {
-        LoadingUtils.showContainer('checkboxEmpresas', 'Carregando empresas...');
-        
-        const response = await fetch('/api/buscarEmpresas');
-        const resultado = await response.json();
-        const empresas = Array.isArray(resultado.data) ? resultado.data : [];
-        
-        const container = document.getElementById('checkboxEmpresas');
-        container.innerHTML = '';
-        
-        if (empresas.length === 0) {
-            container.innerHTML = '<p class="text-muted">Nenhuma empresa encontrada.</p>';
-            return;
+    async carregarUsuarioAtual() {
+        try {
+            const response = await fetch('/api/session-user');
+            if (response.ok) {
+                const data = await response.json();
+                this.usuarioAtual = data.usuario;
+                console.log('Usuário atual carregado:', this.usuarioAtual);
+            } else if (response.status === 401) {
+                console.error('Usuário não autenticado - redirecionando para login');
+                window.location.href = '/login.html';
+            } else {
+                console.error('Erro ao carregar usuário:', response.status);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar usuário atual:', error);
         }
+    }
+
+    async carregarEmpresasDisponiveis() {
+        try {
+            const resposta = await fetch('/api/empresasDisponiveis');
+            if (!resposta.ok) {
+                throw new Error('Erro ao carregar empresas');
+            }
+            const dados = await resposta.json();
+            
+            // Backend retorna { success: true, data: [...] }
+            if (dados.success && Array.isArray(dados.data)) {
+                this.empresasDisponiveis = dados.data;
+                this.atualizarSelectEmpresas();
+                this.atualizarFiltroEmpresas();
+                console.log(`${this.empresasDisponiveis.length} empresas carregadas`);
+            } else {
+                console.error('Formato de resposta de empresas:', dados);
+                throw new Error('Formato de resposta inválido');
+            }
+        } catch (erro) {
+            console.error('Erro ao carregar empresas:', erro);
+            this.exibirMensagemErro('Erro ao carregar lista de empresas');
+        }
+    }
+
+    atualizarSelectEmpresas() {
+        // Atualizar checkboxes de empresas no modal
+        const checkboxContainer = document.getElementById('checkboxEmpresas');
+        if (!checkboxContainer) return;
+
+        checkboxContainer.innerHTML = '';
         
-        // Checkbox "Selecionar Todas"
-        const divSelectAll = document.createElement('div');
-        divSelectAll.className = 'form-check mb-2';
-        divSelectAll.innerHTML = `
-            <input type="checkbox" id="selectAllEmpresas" class="form-check-input">
-            <label for="selectAllEmpresas" class="form-check-label fw-bold">Selecionar Todas</label>
-        `;
-        container.appendChild(divSelectAll);
-        
-        // Checkboxes individuais das empresas
-        empresas.forEach(empresa => {
+        this.empresasDisponiveis.forEach(empresa => {
             const div = document.createElement('div');
             div.className = 'form-check';
             div.innerHTML = `
-                <input type="checkbox" id="empresa_${empresa.id}" class="form-check-input empresa-checkbox" value="${empresa.id}">
-                <label for="empresa_${empresa.id}" class="form-check-label">${empresa.nome}</label>
+                <input class="form-check-input" type="checkbox" value="${empresa.id}" id="empresa_${empresa.id}">
+                <label class="form-check-label" for="empresa_${empresa.id}">
+                    ${empresa.nome}
+                </label>
             `;
-            container.appendChild(div);
+            checkboxContainer.appendChild(div);
         });
-        
-        // Funcionalidade "Selecionar Todas"
-        document.getElementById('selectAllEmpresas').addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.empresa-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = this.checked;
-            });
-        });
-        
-        // Atualizar "Selecionar Todas" quando checkboxes individuais mudam
-        document.querySelectorAll('.empresa-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const totalCheckboxes = document.querySelectorAll('.empresa-checkbox').length;
-                const checkedCheckboxes = document.querySelectorAll('.empresa-checkbox:checked').length;
-                const selectAllCheckbox = document.getElementById('selectAllEmpresas');
-                
-                if (checkedCheckboxes === 0) {
-                    selectAllCheckbox.indeterminate = false;
-                    selectAllCheckbox.checked = false;
-                } else if (checkedCheckboxes === totalCheckboxes) {
-                    selectAllCheckbox.indeterminate = false;
-                    selectAllCheckbox.checked = true;
-                } else {
-                    selectAllCheckbox.indeterminate = true;
-                }
-            });
-        });
-        
-    } catch (error) {
-        console.error('Erro ao carregar empresas:', error);
-        document.getElementById('checkboxEmpresas').innerHTML = 
-            '<p class="text-danger">Erro ao carregar empresas.</p>';
     }
-}
 
-// Salvar notificação
-document.getElementById('salvarNotificacao').addEventListener('click', async function(ev) {
-    ev.preventDefault();
-    
-    // Mostrar loading no botão
-    LoadingUtils.buttonLoading(this, true);
-    
-    const nomeNotificacao = document.getElementById('nomeNotificacao').value;
-    const numeroDestinatario = document.getElementById('numeroDestinatario').value;
-    const horarioNotificacao = document.getElementById('horarioNotificacao').value;
-    const notificacaoAtiva = document.getElementById('notificacaoAtiva').checked;
-    
-    // Coletar empresas selecionadas
-    const empresasSelecionadas = [];
-    document.querySelectorAll('.empresa-checkbox:checked').forEach(checkbox => {
-        empresasSelecionadas.push(parseInt(checkbox.value));
-    });
-    
-    // Validações
-    if (!nomeNotificacao.trim()) {
-        LoadingUtils.buttonLoading(this, false);
-        mostrarMensagem('Por favor, insira o nome da notificação.', 'danger');
-        return;
-    }
-    
-    if (!numeroDestinatario.trim()) {
-        LoadingUtils.buttonLoading(this, false);
-        mostrarMensagem('Por favor, insira o número do destinatário.', 'danger');
-        return;
-    }
-    
-    if (empresasSelecionadas.length === 0) {
-        LoadingUtils.buttonLoading(this, false);
-        mostrarMensagem('Por favor, selecione pelo menos uma empresa.', 'danger');
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/criarNotificacao', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                nome: nomeNotificacao,
-                numeroDestinatario: numeroDestinatario,
-                empresas: empresasSelecionadas,
-                horario: horarioNotificacao,
-                ativo: notificacaoAtiva
-            })
+    atualizarFiltroEmpresas() {
+        const filtroEmpresa = document.getElementById('empresaFiltroNotificacoes');
+        if (!filtroEmpresa) return;
+
+        filtroEmpresa.innerHTML = '<option value="">Todas as empresas</option>';
+        
+        this.empresasDisponiveis.forEach(empresa => {
+            const option = document.createElement('option');
+            option.value = empresa.id;
+            option.textContent = empresa.nome;
+            filtroEmpresa.appendChild(option);
         });
+    }
+
+    configurarEventListeners() {
+        // Botão adicionar notificação (no painel)
+        const btnAdicionar = document.getElementById('btnCadastrarNotificacao');
+        if (btnAdicionar) {
+            btnAdicionar.addEventListener('click', () => this.abrirModal());
+        }
+
+        // Botão salvar no modal
+        const btnSalvar = document.getElementById('salvarNotificacao');
+        if (btnSalvar) {
+            btnSalvar.addEventListener('click', () => this.cadastrarNotificacao());
+        }
+
+        // Filtro de empresas
+        const filtroEmpresa = document.getElementById('empresaFiltroNotificacoes');
+        if (filtroEmpresa) {
+            filtroEmpresa.addEventListener('change', () => this.filtrarNotificacoes());
+        }
+
+        // Validação em tempo real dos campos
+        const campos = ['nomeNotificacao', 'numeroDestinatario', 'horarioNotificacao'];
+        campos.forEach(campoId => {
+            const campo = document.getElementById(campoId);
+            if (campo) {
+                campo.addEventListener('input', () => this.validarCampo(campo));
+                campo.addEventListener('blur', () => this.validarCampo(campo));
+            }
+        });
+
+        console.log('Event listeners configurados');
+    }
+
+    validarCampo(campo) {
+        const valor = campo.value.trim();
+        const isValido = valor.length > 0;
         
-        const resultado = await response.json();
-        
-        LoadingUtils.buttonLoading(this, false);
-        
-        if (response.ok) {
-            mostrarMensagem('Notificação cadastrada com sucesso!', 'success');
-            limparFormulario();
-            fecharModalCadastro();
-            carregarListaNotificacoes(); // Recarregar a lista
+        if (isValido) {
+            campo.classList.remove('is-invalid');
+            campo.classList.add('is-valid');
         } else {
-            mostrarMensagem(resultado.message || 'Erro ao cadastrar notificação.', 'danger');
+            campo.classList.remove('is-valid');
+            campo.classList.add('is-invalid');
         }
         
-    } catch (error) {
-        console.error('Erro ao salvar notificação:', error);
-        mostrarMensagem('Erro interno do servidor.', 'danger');
+        return isValido;
     }
-});
 
-// Carregar lista de notificações
-async function carregarListaNotificacoes() {
-    try {
-        LoadingUtils.showContainer('listaNotificacoes', 'Carregando notificações...');
+    validarFormulario() {
+        const nome = document.getElementById('nomeNotificacao');
+        const numero = document.getElementById('numeroDestinatario');
+        const horario = document.getElementById('horarioNotificacao');
+
+        const nomeValido = this.validarCampo(nome);
+        const numeroValido = this.validarCampo(numero);
+        const horarioValido = this.validarCampo(horario);
+
+        // Validar se pelo menos uma empresa foi selecionada
+        const checkboxes = document.querySelectorAll('#checkboxEmpresas input[type="checkbox"]:checked');
+        const empresasValidas = checkboxes.length > 0;
         
-        const response = await fetch('/api/buscarNotificacoes');
-        const resultado = await response.json();
-        const notificacoes = Array.isArray(resultado.data) ? resultado.data : [];
+        const empresasError = document.getElementById('empresasError');
+        if (empresasValidas) {
+            empresasError.style.display = 'none';
+        } else {
+            empresasError.style.display = 'block';
+        }
+
+        return nomeValido && numeroValido && horarioValido && empresasValidas;
+    }
+
+    limparValidacoes() {
+        const campos = ['nomeNotificacao', 'numeroDestinatario', 'horarioNotificacao'];
+        campos.forEach(campoId => {
+            const campo = document.getElementById(campoId);
+            if (campo) {
+                campo.classList.remove('is-valid', 'is-invalid');
+            }
+        });
         
-        const container = document.getElementById('listaNotificacoes');
-        
-        if (notificacoes.length === 0) {
-            container.innerHTML = '<p class="text-muted">Nenhuma notificação cadastrada.</p>';
+        const empresasError = document.getElementById('empresasError');
+        if (empresasError) {
+            empresasError.style.display = 'none';
+        }
+    }
+
+    abrirModal() {
+        // Verificar se usuário está identificado
+        if (!this.usuarioAtual) {
+            this.exibirMensagemErro('Usuário não identificado');
             return;
         }
+
+        // Limpar formulário
+        this.limparFormulario();
         
-        let html = `
-            <table class="tabela-empresas">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Número</th>
-                        <th>Horário</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
+        // Abrir modal Bootstrap
+        const modalElement = document.getElementById('modalCadastroNotificacao');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
+
+    fecharModal() {
+        const modalElement = document.getElementById('modalCadastroNotificacao');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+        this.limparFormulario();
+    }
+
+    limparFormulario() {
+        document.getElementById('nomeNotificacao').value = '';
+        document.getElementById('numeroDestinatario').value = '41996616801';
+        document.getElementById('horarioNotificacao').value = '09:00';
+        document.getElementById('notificacaoAtiva').checked = true;
         
-        notificacoes.forEach(notificacao => {
-            const status = notificacao.ativo ? 
-                '<span class="badge bg-success">Ativa</span>' : 
-                '<span class="badge bg-secondary">Inativa</span>';
-                
-            html += `
+        // Desmarcar todos os checkboxes de empresas
+        const checkboxes = document.querySelectorAll('#checkboxEmpresas input[type="checkbox"]');
+        checkboxes.forEach(checkbox => checkbox.checked = false);
+        
+        this.limparValidacoes();
+    }
+
+    async cadastrarNotificacao() {
+        if (!this.validarFormulario()) {
+            this.exibirMensagemErro('Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        const nome = document.getElementById('nomeNotificacao').value.trim();
+        const numero = document.getElementById('numeroDestinatario').value.trim();
+        const horario = document.getElementById('horarioNotificacao').value;
+        const ativo = document.getElementById('notificacaoAtiva').checked;
+        
+        // Coletar empresas selecionadas
+        const checkboxes = document.querySelectorAll('#checkboxEmpresas input[type="checkbox"]:checked');
+        const empresaIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+        const btnSalvar = document.getElementById('salvarNotificacao');
+        const textoOriginal = btnSalvar.textContent;
+        
+        try {
+            btnSalvar.disabled = true;
+            btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
+
+            const resposta = await fetch('/api/criarNotificacao', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    nome: nome,
+                    numeroDestinatario: numero,
+                    empresas: empresaIds,
+                    horario: horario,
+                    ativo: ativo
+                })
+            });
+
+            const dados = await resposta.json();
+
+            // Backend retorna { success: true, data: {...} }
+            if (dados.success) {
+                this.exibirMensagemSucesso('Notificação cadastrada com sucesso!');
+                this.fecharModal();
+                await this.carregarNotificacoes();
+            } else {
+                const mensagemErro = dados.error?.message || 'Erro ao cadastrar notificação';
+                throw new Error(mensagemErro);
+            }
+        } catch (erro) {
+            console.error('Erro ao cadastrar notificação:', erro);
+            this.exibirMensagemErro(erro.message || 'Erro ao cadastrar notificação');
+        } finally {
+            btnSalvar.disabled = false;
+            btnSalvar.innerHTML = textoOriginal;
+        }
+    }
+
+    async carregarNotificacoes() {
+        try {
+            const resposta = await fetch('/api/buscarNotificacoes');
+            
+            console.log('Status da resposta:', resposta.status);
+            
+            if (!resposta.ok) {
+                const erro = await resposta.text();
+                console.error('Erro HTTP:', resposta.status, erro);
+                throw new Error(`Erro ao carregar notificações: ${resposta.status}`);
+            }
+
+            const dados = await resposta.json();
+            console.log('Dados recebidos:', dados);
+            
+            // Backend retorna { success: true, data: [...] }
+            if (dados.success && Array.isArray(dados.data)) {
+                this.notificacoes = dados.data;
+                this.renderizarNotificacoes();
+                console.log(`${this.notificacoes.length} notificações carregadas`);
+            } else {
+                console.error('Formato de resposta:', dados);
+                throw new Error(dados.error?.message || 'Formato de resposta inválido');
+            }
+        } catch (erro) {
+            console.error('Erro ao carregar notificações:', erro);
+            this.exibirMensagemErro('Erro ao carregar notificações: ' + erro.message);
+        }
+    }
+
+    filtrarNotificacoes() {
+        const filtroEmpresaId = document.getElementById('empresaFiltroNotificacoes').value;
+        this.renderizarNotificacoes(filtroEmpresaId);
+    }
+
+    renderizarNotificacoes(filtroEmpresaId = '') {
+        const tbody = document.getElementById('tabelaNotificacoesBody');
+        if (!tbody) return;
+
+        // Filtrar notificações
+        let notificacoesFiltradas = this.notificacoes;
+        
+        if (filtroEmpresaId) {
+            // Filtrar por empresas relacionadas
+            notificacoesFiltradas = this.notificacoes.filter(notif => {
+                if (Array.isArray(notif.empresas)) {
+                    return notif.empresas.some(emp => emp.id === parseInt(filtroEmpresaId));
+                }
+                return false;
+            });
+        }
+
+        // Limpar tbody
+        tbody.innerHTML = '';
+
+        if (notificacoesFiltradas.length === 0) {
+            tbody.innerHTML = `
                 <tr>
-                    <td>${notificacao.nome}</td>
-                    <td>${parseInt(notificacao.numeroDestinatario)}</td>
-                    <td>${notificacao.horario}</td>
-                    <td>${status}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editarNotificacao(${notificacao.id})">
-                            Editar
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="excluirNotificacao(${notificacao.id})">
-                            Excluir
-                        </button>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2"></i><br>
+                        Nenhuma notificação encontrada
                     </td>
                 </tr>
             `;
-        });
-        
-        html += '</tbody></table>';
-        container.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Erro ao carregar notificações:', error);
-        document.getElementById('listaNotificacoes').innerHTML = 
-            '<p class="text-danger">Erro ao carregar notificações.</p>';
-    }
-}
+            return;
+        }
 
-// Funções auxiliares
-function mostrarMensagem(mensagem, tipo) {
-    // Mapear tipos do Bootstrap para tipos do Toast
-    const tipoMap = {
-        'success': 'success',
-        'danger': 'error',
-        'warning': 'warning',
-        'info': 'info'
-    };
-    
-    const tipoToast = tipoMap[tipo] || 'info';
-    
-    // Usar o novo sistema de toast se disponível
-    if (typeof showToast === 'function') {
-        showToast(tipoToast, '', mensagem, 5000);
-    } else {
-        // Fallback para o sistema antigo
-        const container = document.getElementById('mensagemNotificacao');
-        if (container) {
-            container.innerHTML = `
-                <div class="alert alert-${tipo} alert-dismissible fade show" role="alert">
-                    ${mensagem}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
+        // Renderizar notificações
+        notificacoesFiltradas.forEach(notificacao => {
+            const tr = document.createElement('tr');
+            
+            // Montar lista de empresas
+            let empresasHtml = '';
+            if (Array.isArray(notificacao.empresas) && notificacao.empresas.length > 0) {
+                empresasHtml = notificacao.empresas.map(emp => 
+                    `<span class="badge bg-info text-dark me-1">${this.escapeHtml(emp.nome)}</span>`
+                ).join('');
+            } else {
+                empresasHtml = '<span class="text-muted">-</span>';
+            }
+            
+            const statusBadge = notificacao.ativo 
+                ? '<span class="badge bg-success">Ativa</span>' 
+                : '<span class="badge bg-secondary">Inativa</span>';
+            
+            tr.innerHTML = `
+                <td>${this.escapeHtml(notificacao.nome)}</td>
+                <td>${this.escapeHtml(notificacao.numero_destinatario || '-')}</td>
+                <td>${this.escapeHtml(notificacao.horario || '-')}</td>
+                <td>${empresasHtml}</td>
+                <td>${statusBadge}</td>
+                <td>
+                    <button class="btn btn-sm btn-danger" onclick="notificacaoManager.excluirNotificacao(${notificacao.id})" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
             `;
             
-            // Auto-remover após 5 segundos
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 5000);
-        }
+            tbody.appendChild(tr);
+        });
+
+        console.log(`${notificacoesFiltradas.length} notificações renderizadas`);
     }
-}
 
-function limparFormulario() {
-    document.getElementById('nomeNotificacao').value = '';
-    // Número padrão solicitado
-    document.getElementById('numeroDestinatario').value = '41996616801';
-    document.getElementById('horarioNotificacao').value = '09:00';
-    document.getElementById('notificacaoAtiva').checked = true;
-    
-    // Desmarcar todas as empresas
-    document.querySelectorAll('.empresa-checkbox').forEach(checkbox => {
-        checkbox.checked = false;
-    });
-    document.getElementById('selectAllEmpresas').checked = false;
-    document.getElementById('selectAllEmpresas').indeterminate = false;
-}
+    async excluirNotificacao(id) {
+        if (!confirm('Tem certeza que deseja excluir esta notificação?')) {
+            return;
+        }
 
-// Funções para editar/excluir (placeholder)
-window.editarNotificacao = function(id) {
-    // Implementar edição
-    console.log('Editar notificação:', id);
-    mostrarMensagem('Funcionalidade de edição em desenvolvimento.', 'info');
-};
-
-window.excluirNotificacao = async function(id) {
-    if (confirm('Tem certeza que deseja excluir esta notificação?')) {
         try {
-            const response = await fetch(`/api/excluirNotificacao/${id}`, {
+            const resposta = await fetch(`/api/excluirNotificacao/${id}`, {
                 method: 'DELETE'
             });
-            
-            if (response.ok) {
-                mostrarMensagem('Notificação excluída com sucesso!', 'success');
-                carregarListaNotificacoes();
+
+            const dados = await resposta.json();
+
+            // Backend retorna { success: true, data: {...} }
+            if (dados.success) {
+                this.exibirMensagemSucesso('Notificação excluída com sucesso!');
+                await this.carregarNotificacoes();
             } else {
-                mostrarMensagem('Erro ao excluir notificação.', 'danger');
+                const mensagemErro = dados.error?.message || 'Erro ao excluir notificação';
+                throw new Error(mensagemErro);
             }
-        } catch (error) {
-            console.error('Erro ao excluir notificação:', error);
-            mostrarMensagem('Erro interno do servidor.', 'danger');
+        } catch (erro) {
+            console.error('Erro ao excluir notificação:', erro);
+            this.exibirMensagemErro(erro.message || 'Erro ao excluir notificação');
         }
     }
-};
 
-// Carregar empresas quando o painel for ativado
-const observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-            const painelNotificacoes = document.getElementById('painelNotificacoes');
-            if (painelNotificacoes.dataset.theme === 'ativo') {
-                console.log('Painel de notificações ativado');
-                carregarEmpresasCheckbox();
-                mostrarSubAbaNotificacao('cadastro'); // Mostrar aba de cadastro por padrão
-            }
+    formatarData(dataString) {
+        if (!dataString) return '-';
+        
+        try {
+            const data = new Date(dataString);
+            if (isNaN(data.getTime())) return '-';
+            
+            return data.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch (erro) {
+            console.error('Erro ao formatar data:', erro);
+            return '-';
         }
-    });
-});
-
-observer.observe(document.getElementById('painelNotificacoes'), {
-    attributes: true,
-    attributeFilter: ['data-theme']
-});
-
-// Carregar lista de notificações quando o painel for ativado
-setTimeout(() => {
-    const painelNotificacoes = document.getElementById('painelNotificacoes');
-    if (painelNotificacoes && painelNotificacoes.dataset.theme === 'ativo') {
-        carregarListaNotificacoes();
     }
-}, 100);
 
-// Observar mudanças no painel para carregar a lista automaticamente
-const painelNotificacoes = document.getElementById('painelNotificacoes');
-if (painelNotificacoes) {
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(mutation => {
-            if (mutation.attributeName === 'data-theme' && 
-                painelNotificacoes.dataset.theme === 'ativo') {
-                carregarListaNotificacoes();
-            }
-        });
-    });
-    
-    observer.observe(painelNotificacoes, {
-        attributes: true,
-        attributeFilter: ['data-theme']
-    });
+    escapeHtml(texto) {
+        if (!texto) return '';
+        const div = document.createElement('div');
+        div.textContent = texto;
+        return div.innerHTML;
+    }
+
+    exibirMensagemSucesso(mensagem) {
+        this.exibirMensagem(mensagem, 'success');
+    }
+
+    exibirMensagemErro(mensagem) {
+        this.exibirMensagem(mensagem, 'danger');
+    }
+
+    exibirMensagem(mensagem, tipo = 'info') {
+        // Remover mensagens antigas
+        const mensagensAntigas = document.querySelectorAll('.alert-flutuante');
+        mensagensAntigas.forEach(msg => msg.remove());
+
+        // Criar nova mensagem
+        const alerta = document.createElement('div');
+        alerta.className = `alert alert-${tipo} alert-dismissible fade show alert-flutuante`;
+        alerta.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        `;
+        alerta.innerHTML = `
+            ${mensagem}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(alerta);
+
+        // Remover automaticamente após 5 segundos
+        setTimeout(() => {
+            alerta.remove();
+        }, 5000);
+    }
 }
 
-});
+// Inicializar quando o DOM estiver pronto
+let notificacaoManager;
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        notificacaoManager = new NotificacaoManager();
+    });
+} else {
+    notificacaoManager = new NotificacaoManager();
+}

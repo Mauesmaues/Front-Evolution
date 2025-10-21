@@ -9,6 +9,7 @@ const PropostaController = require('../controllers/PropostaController');
 const { UploadController, uploadMiddleware } = require('../controllers/UploadController');
 const { carregarEmpresasPermitidas } = require('../controllers/PermissaoController');
 const NotificacaoScheduler = require('../schedulers/NotificacaoScheduler');
+const VisualPropostaController = require('../controllers/VisualPropostaController');
 
 const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
@@ -72,6 +73,11 @@ router.delete('/excluir-arquivo', UploadController.excluirArquivo);
 // Rotas para proposta pública
 router.get('/proposta/:id', PropostaController.buscarPropostaPorId);
 router.post('/proposta/:id/visualizar', PropostaController.registrarVisualizacao);
+
+// Rotas de configuração visual das propostas
+router.post('/configuracoes/visuais', VisualPropostaController.upload.single('logo'), VisualPropostaController.salvarVisual);
+router.get('/configuracoes/visuais', VisualPropostaController.buscarVisualUsuarioAtual);
+router.get('/configuracoes/visuais/:empresaId', VisualPropostaController.buscarVisualPorEmpresa);
 
 // Rota para processar proposta
 router.post('/enviarProposta', (req, res) => {

@@ -73,24 +73,116 @@ class NotificacaoController {
   static async buscarNotificacoes(req, res) {
     try {
       // Verificar se o usuário está logado
-      const { data: notificacoes, error } = await supabase
-        .from('notificacoes')
-        .select(`
-          *,
-          notificacao_empresas (
-            empresa_id,
-            empresas (
-              id,
-              nome
-            )
-          )
-        `)
-      
-      if (error) {
-        console.error('Erro ao buscar notificações:', error);
-        return res.status(500).json(
-          responseFormatter.error('Erro ao buscar notificações.')
+      if (!req.session || !req.session.user) {
+        return res.status(401).json(
+          responseFormatter.error('Usuário não autenticado.')
         );
+      }
+
+      const usuario = req.session.user;
+      let notificacoes = [];
+
+      if (usuario.permissao === 'ADMIN' || usuario.permissao === 'GESTOR') {
+        // ADMIN e GESTOR: todas as notificações
+        const { data, error } = await supabase
+          .from('notificacoes')
+          .select(`
+            *,
+            notificacao_empresas (
+              empresa_id,
+              empresas (
+                id,
+                nome
+              )
+            )
+          `)
+          .order('id', { ascending: false });
+        
+        if (error) {
+          console.error('Erro ao buscar notificações:', error);
+          return res.status(500).json(
+            responseFormatter.error('Erro ao buscar notificações.')
+          );
+        }
+        
+        notificacoes = data;
+
+      } else if (usuario.permissao === 'USER') {
+        // USER: apenas notificações das empresas que ele tem acesso
+        
+        // 1. Buscar empresas do usuário
+        const { data: empresasUsuario, error: errorEmpresas } = await supabase
+          .from('usuario_empresa')
+          .select('empresa_id')
+          .eq('usuario_id', usuario.id);
+
+        if (errorEmpresas) {
+          console.error('Erro ao buscar empresas do usuário:', errorEmpresas);
+          return res.status(500).json(
+            responseFormatter.error('Erro ao buscar empresas do usuário.')
+          );
+        }
+
+        const empresasUsuarioIds = empresasUsuario.map(e => e.empresa_id);
+
+        if (empresasUsuarioIds.length === 0) {
+          // Usuário sem empresas, retorna lista vazia
+          return res.json(
+            responseFormatter.success([], 'Nenhuma notificação encontrada.')
+          );
+        }
+
+        // 2. Buscar notificações que estão vinculadas a essas empresas
+        const { data: notificacoesIds, error: errorNotifEmpresas } = await supabase
+          .from('notificacao_empresas')
+          .select('notificacao_id')
+          .in('empresa_id', empresasUsuarioIds);
+
+        if (errorNotifEmpresas) {
+          console.error('Erro ao buscar relação notificação-empresa:', errorNotifEmpresas);
+          return res.status(500).json(
+            responseFormatter.error('Erro ao buscar notificações.')
+          );
+        }
+
+        const notificacoesIdsUnicos = [...new Set(notificacoesIds.map(n => n.notificacao_id))];
+
+        if (notificacoesIdsUnicos.length === 0) {
+          return res.json(
+            responseFormatter.success([], 'Nenhuma notificação encontrada.')
+          );
+        }
+
+        // 3. Buscar detalhes das notificações
+        const { data, error } = await supabase
+          .from('notificacoes')
+          .select(`
+            *,
+            notificacao_empresas (
+              empresa_id,
+              empresas (
+                id,
+                nome
+              )
+            )
+          `)
+          .in('id', notificacoesIdsUnicos)
+          .order('id', { ascending: false });
+
+        if (error) {
+          console.error('Erro ao buscar detalhes das notificações:', error);
+          return res.status(500).json(
+            responseFormatter.error('Erro ao buscar notificações.')
+          );
+        }
+
+        // Filtrar empresas para mostrar apenas as que o usuário tem acesso
+        notificacoes = data.map(notif => ({
+          ...notif,
+          notificacao_empresas: notif.notificacao_empresas.filter(
+            rel => empresasUsuarioIds.includes(rel.empresa_id)
+          )
+        }));
       }
       
       // Formatar dados para incluir lista de empresas

@@ -333,11 +333,78 @@
     <script>
         // Variáveis globais para dados da proposta
         let propostaData = null;
+        let visualData = null;
 
         // Função para extrair ID da proposta da URL
         function getPropostaId() {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get('id');
+        }
+
+        // Carregar configuração visual da empresa
+        async function carregarVisualEmpresa(empresaId) {
+            try {
+                console.log('🎨 Carregando visual da empresa ID:', empresaId);
+                
+                const response = await fetch(`/api/configuracoes/visuais/${empresaId}`);
+                
+                if (!response.ok) {
+                    console.warn('⚠️ Não foi possível carregar visual, usando padrão');
+                    return null;
+                }
+                
+                const result = await response.json();
+                
+                if (result && result.success && result.data) {
+                    visualData = result.data;
+                    console.log('✅ Visual carregado:', visualData);
+                    aplicarVisuais();
+                    return visualData;
+                }
+                
+                return null;
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar visual:', error);
+                return null;
+            }
+        }
+
+        // Aplicar configurações visuais à página
+        function aplicarVisuais() {
+            if (!visualData) {
+                console.log('⚠️ Nenhum visual para aplicar, usando padrão');
+                return;
+            }
+
+            console.log('🎨 Aplicando visuais:', visualData);
+
+            // Aplicar logo
+            if (visualData.logo_url) {
+                const logoImg = document.querySelector('.logo-svg');
+                if (logoImg) {
+                    logoImg.src = visualData.logo_url;
+                    console.log('✅ Logo aplicado:', visualData.logo_url);
+                }
+            }
+
+            // Aplicar cor dos objetos flutuantes
+            if (visualData.cor_objetos_flutuantes) {
+                const shapes = document.querySelectorAll('.shape');
+                shapes.forEach(shape => {
+                    shape.style.background = visualData.cor_objetos_flutuantes;
+                });
+                console.log('✅ Cor dos objetos aplicada:', visualData.cor_objetos_flutuantes);
+            }
+
+            // Aplicar cor de fundo do painel esquerdo
+            if (visualData.cor_fundo_painel_esquerdo) {
+                const leftSection = document.querySelector('.left-section');
+                if (leftSection) {
+                    leftSection.style.background = visualData.cor_fundo_painel_esquerdo;
+                }
+                console.log('✅ Cor de fundo aplicada:', visualData.cor_fundo_painel_esquerdo);
+            }
         }
 
         // Carregar dados da proposta do banco de dados
@@ -372,8 +439,14 @@
                         tipo: propostaData.tipo,
                         pedir_whatsapp: propostaData.pedir_whatsapp,
                         tem_arquivo: !!propostaData.arquivo,
-                        tem_link_canva: !!propostaData.link_canva
+                        tem_link_canva: !!propostaData.link_canva,
+                        empresa_id: propostaData.empresa_id
                     });
+
+                    // Carregar visual da empresa
+                    if (propostaData.empresa_id) {
+                        await carregarVisualEmpresa(propostaData.empresa_id);
+                    }
 
                     // Atualizar título e formulário
                     document.title = `${propostaData.nome || 'Proposta'} - BulBox`;
