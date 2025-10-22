@@ -1298,24 +1298,36 @@ async function carregarConfiguracoesVisuaisPorEmpresa(empresaId) {
 }
 
 function aplicarConfiguracoesVisuais(config) {
+    // Accept both camelCase and snake_case from backend
+    const logoUrl = config.logoUrl || config.logo_url || null;
+    const corObjetos = config.corObjetosFlutuantes || config.cor_objetos_flutuantes || null;
+    const corFundo = config.corFundoPainelEsquerdo || config.cor_fundo_painel_esquerdo || null;
+
     // Aplicar logo
-    if (config.logoUrl) {
-        document.getElementById('previewLogoImg').src = config.logoUrl;
-        document.getElementById('logoPreviewImg').src = config.logoUrl;
-        document.getElementById('logoPreview').style.display = 'block';
+    if (logoUrl) {
+        const preview = document.getElementById('previewLogoImg');
+        const previewImg = document.getElementById('logoPreviewImg');
+        if (preview) preview.src = logoUrl;
+        if (previewImg) previewImg.src = logoUrl;
+        const logoPreviewContainer = document.getElementById('logoPreview');
+        if (logoPreviewContainer) logoPreviewContainer.style.display = 'block';
     }
 
     // Aplicar cores
-    if (config.corObjetosFlutuantes) {
-        document.getElementById('corObjetosFlutuantes').value = config.corObjetosFlutuantes;
-        document.getElementById('corObjetosFlutuantesHex').value = config.corObjetosFlutuantes;
-        atualizarPreviewCoresObjetos(config.corObjetosFlutuantes);
+    if (corObjetos) {
+        const input = document.getElementById('corObjetosFlutuantes');
+        const inputHex = document.getElementById('corObjetosFlutuantesHex');
+        if (input) input.value = corObjetos;
+        if (inputHex) inputHex.value = corObjetos;
+        atualizarPreviewCoresObjetos(corObjetos);
     }
 
-    if (config.corFundoPainelEsquerdo) {
-        document.getElementById('corFundoPainelEsquerdo').value = config.corFundoPainelEsquerdo;
-        document.getElementById('corFundoPainelEsquerdoHex').value = config.corFundoPainelEsquerdo;
-        atualizarPreviewCorFundo(config.corFundoPainelEsquerdo);
+    if (corFundo) {
+        const input = document.getElementById('corFundoPainelEsquerdo');
+        const inputHex = document.getElementById('corFundoPainelEsquerdoHex');
+        if (input) input.value = corFundo;
+        if (inputHex) inputHex.value = corFundo;
+        atualizarPreviewCorFundo(corFundo);
     }
 }
 
