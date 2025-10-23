@@ -5,6 +5,7 @@ const router = express.Router();
 const EmpresaController = require('../controllers/EmpresaController');
 const usuarioController = require('../controllers/UsuarioController');
 const NotificacaoController = require('../controllers/NotificacaoController');
+const NumeroNotificacaoController = require('../controllers/NumeroNotificacaoController');
 const PropostaController = require('../controllers/PropostaController');
 const { UploadController, uploadMiddleware } = require('../controllers/UploadController');
 const { carregarEmpresasPermitidas } = require('../controllers/PermissaoController');
@@ -33,6 +34,12 @@ router.post('/criarNotificacao', NotificacaoController.criarNotificacao);
 router.get('/buscarNotificacoes', NotificacaoController.buscarNotificacoes);
 router.delete('/excluirNotificacao/:id', NotificacaoController.excluirNotificacao);
 router.post('/enviarNotificacao', NotificacaoController.enviarNotificação);
+
+// Rotas de números para notificação de saldo baixo
+router.get('/numeros-notificacao', NumeroNotificacaoController.listarNumeros);
+router.post('/numeros-notificacao', NumeroNotificacaoController.adicionarNumero);
+router.delete('/numeros-notificacao/:id', NumeroNotificacaoController.excluirNumero);
+router.post('/enviar-notificacoes-saldo-baixo', NumeroNotificacaoController.enviarNotificacoesSaldoBaixo);
 
 // Rotas de agendamento
 router.post('/testarEnvioNotificacao', async (req, res) => {

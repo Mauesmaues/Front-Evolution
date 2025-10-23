@@ -2,6 +2,350 @@ window.addEventListener('DOMContentLoaded', function() {
 // Verificar permissões do usuário e configurar interface
 verificarPermissoesEConfigurarInterface();
 
+// Carregar saldos e verificar notificações logo ao iniciar
+carregarSaldosParaNotificacoes();
+
+// ====== SISTEMA DE NOTIFICAÇÕES DE SALDO BAIXO ======
+const LIMIAR_SALDO_BAIXO = 90; // R$ 90
+let notificacoesSaldoBaixo = [];
+
+function verificarSaldosBaixos(empresas) {
+    notificacoesSaldoBaixo = [];
+    
+    if (!empresas || empresas.length === 0) return;
+    
+    empresas.forEach(emp => {
+        // Ignorar saldos tipo "cartão"
+        if (isSaldoCartao(emp.saldo)) return;
+        
+        const valorSaldo = extrairValorSaldo(emp.saldo);
+        
+        // Se o saldo for válido e menor que o limiar
+        if (!isNaN(valorSaldo) && valorSaldo < LIMIAR_SALDO_BAIXO) {
+            notificacoesSaldoBaixo.push({
+                empresa: emp.empresa,
+                contaDeAnuncio: emp.contaDeAnuncio,
+                saldo: emp.saldo,
+                valorNumerico: valorSaldo,
+                timestamp: new Date()
+            });
+        }
+    });
+    
+    atualizarInterfaceNotificacoes();
+    
+    // Se houver saldos baixos, enviar notificações
+    if (notificacoesSaldoBaixo.length > 0) {
+        enviarNotificacoesSaldoBaixoAutomatico();
+    }
+}
+
+// Função para enviar notificações automáticas de saldo baixo
+let ultimoEnvioNotificacao = null;
+async function enviarNotificacoesSaldoBaixoAutomatico() {
+    // Evitar enviar múltiplas vezes na mesma sessão
+    const agora = new Date();
+    const hoje = agora.toDateString();
+    
+    if (ultimoEnvioNotificacao === hoje) {
+        console.log('⏭️ Notificações já enviadas hoje');
+        return;
+    }
+    
+    try {
+        console.log('📲 Enviando notificações automáticas de saldo baixo...');
+        
+        const response = await fetch('/api/enviar-notificacoes-saldo-baixo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const resultado = await response.json();
+        
+        if (resultado.success) {
+            ultimoEnvioNotificacao = hoje;
+            console.log('✅ Notificações enviadas:', resultado.message);
+        } else {
+            console.log('⚠️ Notificações não enviadas:', resultado.message);
+        }
+        
+    } catch (error) {
+        console.error('❌ Erro ao enviar notificações automáticas:', error);
+    }
+}
+
+function atualizarInterfaceNotificacoes() {
+    const badge = document.getElementById('badgeNotificacoes');
+    const listaContainer = document.getElementById('listaNotificacoesSaldo');
+    const iconeSino = document.getElementById('iconeSinoNotificacoes');
+    
+    const qtdNotificacoes = notificacoesSaldoBaixo.length;
+    
+    // Atualizar badge
+    if (qtdNotificacoes > 0) {
+        badge.textContent = qtdNotificacoes;
+        badge.style.display = 'block';
+        
+        // Animar o sino
+        iconeSino.style.color = '#dc3545'; // vermelho
+        iconeSino.classList.add('fa-shake'); // animação de shake (FontAwesome 6)
+    } else {
+        badge.style.display = 'none';
+        iconeSino.style.color = '#333';
+        iconeSino.classList.remove('fa-shake');
+    }
+    
+    // Renderizar lista de notificações
+    if (qtdNotificacoes === 0) {
+        listaContainer.innerHTML = `
+            <div style="text-align: center; padding: 20px; color: #6c757d;">
+                <i class="fas fa-check-circle" style="font-size: 48px; color: #28a745; margin-bottom: 12px;"></i>
+                <p style="margin: 0; font-size: 14px;">Nenhum alerta no momento</p>
+                <small>Todos os saldos estão adequados</small>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '';
+    notificacoesSaldoBaixo
+        .sort((a, b) => a.valorNumerico - b.valorNumerico) // Do menor para o maior
+        .forEach((notif, index) => {
+            const urgencia = notif.valorNumerico < 50 ? 'danger' : 'warning';
+            const iconUrgencia = notif.valorNumerico < 50 ? 'fa-exclamation-circle' : 'fa-exclamation-triangle';
+            
+            html += `
+                <div class="notification-item" style="padding: 12px; border-bottom: 1px solid #eee; ${index === 0 ? 'border-top: 1px solid #eee;' : ''} transition: background 0.2s;" 
+                     onmouseover="this.style.background='#f8f9fa'" 
+                     onmouseout="this.style.background='white'">
+                    <div style="display: flex; align-items: start; gap: 10px;">
+                        <i class="fas ${iconUrgencia} text-${urgencia}" style="font-size: 20px; margin-top: 2px;"></i>
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; font-size: 13px; color: #333; margin-bottom: 4px;">
+                                ${notif.empresa}
+                            </div>
+                            <div style="font-size: 12px; color: #6c757d; margin-bottom: 6px;">
+                                Conta: ${notif.contaDeAnuncio}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="badge bg-${urgencia}" style="font-size: 11px;">
+                                    Saldo: ${notif.saldo}
+                                </span>
+                                ${notif.valorNumerico < 50 ? '<span class="badge bg-danger" style="font-size: 10px;"><i class="fas fa-bolt"></i> URGENTE</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    
+    listaContainer.innerHTML = html;
+}
+
+// Toggle do dropdown de notificações
+const iconeSinoNotificacoes = document.getElementById('iconeSinoNotificacoes');
+const dropdownNotificacoes = document.getElementById('dropdownNotificacoesSaldo');
+
+if (iconeSinoNotificacoes && dropdownNotificacoes) {
+    iconeSinoNotificacoes.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isVisible = dropdownNotificacoes.style.display === 'block';
+        dropdownNotificacoes.style.display = isVisible ? 'none' : 'block';
+    });
+    
+    // Fechar dropdown ao clicar fora
+    document.addEventListener('click', function(e) {
+        if (!dropdownNotificacoes.contains(e.target) && e.target !== iconeSinoNotificacoes) {
+            dropdownNotificacoes.style.display = 'none';
+        }
+    });
+}
+
+// Botão de configuração de números no dropdown
+const btnConfigNotificacoes = document.getElementById('btnConfigNotificacoes');
+if (btnConfigNotificacoes) {
+    btnConfigNotificacoes.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdownNotificacoes.style.display = 'none'; // Fechar dropdown
+        const modal = new bootstrap.Modal(document.getElementById('modalConfigNumeros'));
+        modal.show();
+        carregarNumerosNotificacao(); // Carregar números ao abrir modal
+    });
+}
+
+// Função para carregar números cadastrados
+async function carregarNumerosNotificacao() {
+    try {
+        const response = await fetch('/api/numeros-notificacao');
+        const resultado = await response.json();
+        
+        const tbody = document.getElementById('tabelaNumerosBody');
+        
+        if (!resultado.success || resultado.data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center text-muted py-4">
+                        <i class="fas fa-phone-slash fa-2x mb-2"></i><br>
+                        Nenhum número cadastrado ainda.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        let html = '';
+        resultado.data.forEach(num => {
+            const ultimaNoti = num.ultimanoti 
+                ? new Date(num.ultimanoti).toLocaleDateString('pt-BR') 
+                : 'Nunca';
+            
+            html += `
+                <tr>
+                    <td><i class="fas fa-phone text-success me-2"></i>${num.numero}</td>
+                    <td><small class="text-muted">${ultimaNoti}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="excluirNumeroNotificacao(${num.id}, '${num.numero}')" title="Excluir">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = html;
+        
+    } catch (error) {
+        console.error('Erro ao carregar números:', error);
+        showToast('Erro ao carregar números de notificação', 'error');
+    }
+}
+
+// Formulário para adicionar número
+const formAdicionarNumero = document.getElementById('formAdicionarNumero');
+if (formAdicionarNumero) {
+    formAdicionarNumero.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const numeroInput = document.getElementById('numeroTelefone');
+        const numero = numeroInput.value.replace(/\D/g, ''); // Remove caracteres não numéricos
+        
+        if (numero.length < 10) {
+            showToast('Número inválido. Digite um número com DDD.', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/numeros-notificacao', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ numero })
+            });
+            
+            const resultado = await response.json();
+            
+            if (resultado.success) {
+                showToast('Número cadastrado com sucesso!', 'success');
+                numeroInput.value = '';
+                carregarNumerosNotificacao(); // Recarregar lista
+            } else {
+                showToast(resultado.message || 'Erro ao cadastrar número', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Erro ao adicionar número:', error);
+            showToast('Erro ao cadastrar número', 'error');
+        }
+    });
+}
+
+// Função para excluir número
+async function excluirNumeroNotificacao(id, numero) {
+    if (!confirm(`Deseja realmente excluir o número ${numero}?`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/numeros-notificacao/${id}`, {
+            method: 'DELETE'
+        });
+        
+        const resultado = await response.json();
+        
+        if (resultado.success) {
+            showToast('Número excluído com sucesso!', 'success');
+            carregarNumerosNotificacao(); // Recarregar lista
+        } else {
+            showToast(resultado.message || 'Erro ao excluir número', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Erro ao excluir número:', error);
+        showToast('Erro ao excluir número', 'error');
+    }
+}
+
+// Função para carregar saldos e verificar notificações (sem renderizar tabela)
+async function carregarSaldosParaNotificacoes() {
+    try {
+        console.log('🔔 Carregando saldos para verificar notificações...');
+        
+        // 1. Verificar se há usuário logado
+        const usuarioResponse = await fetch('/api/session-user');
+        if (usuarioResponse.status === 401) {
+            return; // Não está logado, não faz nada
+        }
+        
+        const { usuario } = await usuarioResponse.json();
+        if (!usuario) return;
+
+        // 2. Buscar empresas
+        const resEmpresas = await fetch("/api/buscarEmpresas");
+        const resultado = await resEmpresas.json();
+        const empresas = Array.isArray(resultado.data) ? resultado.data : [];
+
+        if (empresas.length === 0) {
+            console.log('⚠️ Nenhuma empresa encontrada');
+            return;
+        }
+
+        // 3. Buscar saldos de cada empresa
+        const promessas = empresas.map(async (emp) => {
+            try {
+                const resSaldo = await fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`);
+                const saldo = await resSaldo.json();
+                
+                return {
+                    id: emp.id,
+                    empresa: emp.nome,
+                    contaDeAnuncio: emp.contaDeAnuncio,
+                    saldo: saldo?.data?.saldoOriginal || 0
+                };
+            } catch (err) {
+                console.error(`Erro ao buscar saldo da empresa ${emp.nome}:`, err);
+                return {
+                    id: emp.id,
+                    empresa: emp.nome,
+                    contaDeAnuncio: emp.contaDeAnuncio,
+                    saldo: 0
+                };
+            }
+        });
+
+        const dadosComSaldos = (await Promise.all(promessas)).filter(Boolean);
+        
+        // 4. Verificar saldos baixos e atualizar notificações
+        verificarSaldosBaixos(dadosComSaldos);
+        console.log('✅ Notificações de saldo atualizadas');
+
+    } catch (err) {
+        console.error("Erro ao carregar saldos para notificações:", err);
+    }
+}
+
 //Seleção de painel
 const painelMonitoramento = document.getElementById('painelMonitoramento');
 const painelAdministracao = document.getElementById('painelAdministracao');
@@ -292,6 +636,43 @@ const PermissaoEnum = {
 
 // Variável global para armazenar a permissão do usuário logado
 let permissaoUsuarioLogado = null;
+
+// ====== ESTADO E UTILITÁRIOS PARA ORDENAÇÃO POR "SALDO [META]" ======
+let saldoMetaSort = 0; // 0 = sem ordenação, 1 = asc (menor->maior), -1 = desc (maior->menor)
+let ultimoDadosEmpresas = []; // guarda os últimos dados para re-render quando ordenar
+
+function isSaldoCartao(saldo) {
+    if (saldo === null || saldo === undefined) return false;
+    const saldoStr = String(saldo).toLowerCase();
+    return saldoStr.includes('cartão') || saldoStr.includes('cartao') || saldoStr.includes('card');
+}
+
+function extrairValorSaldo(saldo) {
+    if (saldo === null || saldo === undefined) return NaN;
+    if (typeof saldo === 'number') return saldo;
+
+    let s = String(saldo).trim();
+    if (!s) return NaN;
+
+    // Se contém indicação de cartão, marcar como NaN (irá para o fim)
+    if (isSaldoCartao(s)) return NaN;
+
+    // Remover símbolos de moeda e letras, manter dígitos, ponto e vírgula e sinal
+    let clean = s.replace(/[^\d.,-]/g, '');
+
+    if (!clean) return NaN;
+
+    // Tratar formatos BR e EN:
+    // Se contém '.' e ',' -> presumir '.' thousands e ',' decimal -> remover '.' e trocar ',' por '.'
+    if (clean.indexOf('.') !== -1 && clean.indexOf(',') !== -1) {
+        clean = clean.replace(/\./g, '').replace(',', '.');
+    } else if (clean.indexOf(',') !== -1 && clean.indexOf('.') === -1) {
+        // só vírgula -> decimal em BR
+        clean = clean.replace(',', '.');
+    }
+    const num = parseFloat(clean);
+    return isNaN(num) ? NaN : num;
+}
 
 // Função para verificar permissões e configurar interface
 async function verificarPermissoesEConfigurarInterface() {
@@ -682,8 +1063,12 @@ async function carregarEmpresasCadastradas() {
     // 4. Aguardar todas as promessas de uma vez
     const dadosComMetricas = (await Promise.all(promessas)).filter(Boolean);
 
-    // 5. Renderizar tabela (isso remove automaticamente o loading)
+    // 5. Guardar dados e renderizar tabela (remove o loading)
+    ultimoDadosEmpresas = dadosComMetricas.slice();
     renderTabelaEmpresas(dadosComMetricas);
+    
+    // 6. Verificar saldos baixos e atualizar notificações
+    verificarSaldosBaixos(dadosComMetricas);
 
   } catch (err) {
     console.error("Erro ao carregar empresas e métricas:", err);
@@ -696,7 +1081,37 @@ async function carregarEmpresasCadastradas() {
 function renderTabelaEmpresas(dados) {
   const container = document.getElementById("subAbaEmpresas");
 
-  if (dados.length === 0) {
+  // Guardar últimos dados para reuso (re-render ao trocar ordenação)
+  ultimoDadosEmpresas = Array.isArray(dados) ? dados.slice() : [];
+
+  // Aplicar ordenação se solicitada
+  let dadosParaRender = ultimoDadosEmpresas.slice();
+
+  if (saldoMetaSort !== 0) {
+      dadosParaRender.sort((a, b) => {
+          // Priorizar não-cartão antes de cartão
+          const aIsCard = isSaldoCartao(a.saldo);
+          const bIsCard = isSaldoCartao(b.saldo);
+          if (aIsCard && !bIsCard) return 1;
+          if (!aIsCard && bIsCard) return -1;
+
+          // Ambos cartão ou ambos não-cartão -> comparar valor numérico
+          const va = extrairValorSaldo(a.saldo);
+          const vb = extrairValorSaldo(b.saldo);
+
+          // Valores não numéricos vão para o fim (após numéricos, antes dos cartões já tratados)
+          const aNaN = isNaN(va);
+          const bNaN = isNaN(vb);
+          if (aNaN && bNaN) return 0;
+          if (aNaN && !bNaN) return 1;
+          if (!aNaN && bNaN) return -1;
+
+          // Comparação padrão
+          return (va - vb) * (saldoMetaSort === 1 ? 1 : -1);
+      });
+  }
+
+  if (!dadosParaRender || dadosParaRender.length === 0) {
     container.innerHTML = "<p>Nenhuma empresa cadastrada.</p>";
     return;
   }
@@ -711,7 +1126,9 @@ function renderTabelaEmpresas(dados) {
           <tr>
             <th>Empresa</th>
             <th>Conta de Anúncio</th>
-            <th>Saldo [META]</th>
+            <th id="thSaldoMeta" class="sortable" style="cursor:pointer; user-select:none;">
+              Saldo [META] <i class="fas fa-sort" style="margin-left:8px"></i>
+            </th>
             <th>Saldo [GOOGLE]</th>
             ${mostrarBotoesAcao ? '<th>Ações</th>' : ''}
           </tr>
@@ -719,7 +1136,7 @@ function renderTabelaEmpresas(dados) {
         <tbody>
   `;
 
-  dados.forEach(emp => {
+  dadosParaRender.forEach(emp => {
     tabela += `
       <tr>
         <td>${emp.empresa}</td>
@@ -742,6 +1159,36 @@ function renderTabelaEmpresas(dados) {
 
   tabela += `</tbody></table></div>`;
   container.innerHTML = tabela;
+
+  // Atualizar ícone de ordenação conforme estado e anexar listener ao header
+  const thSaldo = document.getElementById('thSaldoMeta');
+  if (thSaldo) {
+      const icone = thSaldo.querySelector('i');
+      if (icone) {
+          if (saldoMetaSort === 1) {
+              icone.className = 'fas fa-sort-amount-down-alt'; // menor->maior
+          } else if (saldoMetaSort === -1) {
+              icone.className = 'fas fa-sort-amount-up'; // maior->menor
+          } else {
+              icone.className = 'fas fa-sort';
+          }
+      }
+
+      // Garantir que o listener não seja duplicado
+      if (!thSaldo._sortableAttached) {
+          thSaldo.addEventListener('click', function() {
+              // Alterna 0 -> 1 -> -1 -> 1 ...
+              if (saldoMetaSort === 0 || saldoMetaSort === -1) {
+                  saldoMetaSort = 1;
+              } else if (saldoMetaSort === 1) {
+                  saldoMetaSort = -1;
+              }
+              // Re-render com último conjunto de dados
+              renderTabelaEmpresas(ultimoDadosEmpresas);
+          });
+          thSaldo._sortableAttached = true;
+      }
+  }
 }
 
 function refreshDados(tipo = "cadastradas") {

@@ -8,6 +8,43 @@
   <link rel="stylesheet" href="css/tabele.css">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Animação do sino de notificações */
+    @keyframes bell-ring {
+      0% { transform: rotate(0deg); }
+      10% { transform: rotate(15deg); }
+      20% { transform: rotate(-15deg); }
+      30% { transform: rotate(10deg); }
+      40% { transform: rotate(-10deg); }
+      50% { transform: rotate(5deg); }
+      60% { transform: rotate(-5deg); }
+      70% { transform: rotate(0deg); }
+      100% { transform: rotate(0deg); }
+    }
+    
+    #iconeSinoNotificacoes.fa-shake {
+      animation: bell-ring 2s ease-in-out infinite;
+    }
+    
+    /* Scrollbar customizada para o dropdown */
+    #dropdownNotificacoesSaldo::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #dropdownNotificacoesSaldo::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    #dropdownNotificacoesSaldo::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 10px;
+    }
+    
+    #dropdownNotificacoesSaldo::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -24,6 +61,27 @@
       </div>
     </div>
     <div id="headerUser">
+      <!-- Ícone de Notificações de Saldo -->
+      <div id="notificacoesSaldo" class="notification-icon-container" style="position: relative; margin-right: 20px;">
+        <i class="fas fa-bell" id="iconeSinoNotificacoes" style="font-size: 20px; cursor: pointer; color: #333;"></i>
+        <span id="badgeNotificacoes" class="badge bg-danger rounded-pill" style="position: absolute; top: -8px; right: -8px; display: none; font-size: 10px; min-width: 18px; padding: 2px 6px;">0</span>
+        
+        <!-- Dropdown de Notificações -->
+        <div id="dropdownNotificacoesSaldo" class="notification-dropdown" style="display: none; position: absolute; top: 35px; right: 0; width: 320px; max-height: 400px; overflow-y: auto; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;">
+          <div style="padding: 12px 16px; border-bottom: 1px solid #eee; background: #f8f9fa; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+            <h6 style="margin: 0; font-weight: 600; color: #333;">
+              <i class="fas fa-exclamation-triangle text-warning me-2"></i>Alertas de Saldo Baixo
+            </h6>
+            <button id="btnConfigNotificacoes" class="btn btn-sm" style="padding: 4px 8px; font-size: 12px; background: transparent; border: none; color: #6c757d;" title="Configurar números para notificação">
+              <i class="fas fa-phone-alt"></i>
+            </button>
+          </div>
+          <div id="listaNotificacoesSaldo" style="padding: 8px;">
+            <!-- Notificações serão inseridas aqui -->
+          </div>
+        </div>
+      </div>
+      
       <div id="userInfo">
         <span id="headerLogin">Login</span>
         <div class="user-avatar">
@@ -1022,6 +1080,90 @@
           </button>
           <button type="button" class="btn btn-primary" id="btnSalvarProposta">
             <i class="fas fa-save me-1"></i>Salvar Proposta
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para Configurar Números de Notificação -->
+  <div id="modalConfigNumeros" class="modal fade" tabindex="-1" aria-labelledby="modalConfigNumerosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title" id="modalConfigNumerosLabel">
+            <i class="fas fa-phone-alt me-2"></i>Números para Notificação de Saldo Baixo
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Formulário para adicionar número -->
+          <div class="card mb-3">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">
+                <i class="fas fa-plus-circle me-2"></i>Adicionar Novo Número
+              </h6>
+            </div>
+            <div class="card-body">
+              <form id="formAdicionarNumero">
+                <div class="mb-3">
+                  <label for="numeroTelefone" class="form-label fw-bold">
+                    Número de Telefone <span class="text-danger">*</span>
+                  </label>
+                  <input 
+                    type="tel" 
+                    class="form-control" 
+                    id="numeroTelefone" 
+                    placeholder="(41) 99661-6801"
+                    required>
+                  <div class="form-text">Número com DDD. Ex: 41996616801</div>
+                  <div class="invalid-feedback">Por favor, insira um número válido.</div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                  <i class="fas fa-plus me-1"></i>Adicionar Número
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Lista de números cadastrados -->
+          <div class="card">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">
+                <i class="fas fa-list me-2"></i>Números Cadastrados
+              </h6>
+            </div>
+            <div class="card-body">
+              <div id="listaNumerosNotificacao" class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Número</th>
+                      <th>Última Notificação</th>
+                      <th style="width: 80px;">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaNumerosBody">
+                    <tr>
+                      <td colspan="3" class="text-center text-muted py-4">
+                        <i class="fas fa-phone-slash fa-2x mb-2"></i><br>
+                        Nenhum número cadastrado ainda.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="alert alert-info mt-3" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <small>Estes números receberão notificações automáticas quando houver empresas com saldo abaixo de R$90,00</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Fechar
           </button>
         </div>
       </div>
