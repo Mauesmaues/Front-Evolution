@@ -161,23 +161,68 @@ class NumeroNotificacaoController {
       const empresasComSaldoBaixo = [];
       const LIMIAR_SALDO_BAIXO = 90;
       
+      // Função auxiliar para extrair valor numérico do saldo (formato BR/EN)
+      const extrairValorSaldo = (saldo) => {
+        if (saldo === null || saldo === undefined) return NaN;
+        if (typeof saldo === 'number') return saldo;
+        
+        let s = String(saldo).trim();
+        if (!s) return NaN;
+        
+        // Verificar se é cartão
+        const saldoStrLower = s.toLowerCase();
+        if (saldoStrLower.includes('cartão') || saldoStrLower.includes('cartao') || saldoStrLower.includes('card')) {
+          return NaN;
+        }
+        
+        // Remover símbolos de moeda e letras, manter dígitos, ponto e vírgula
+        let clean = s.replace(/[^\d.,-]/g, '');
+        if (!clean) return NaN;
+        
+        // Tratar formatos BR e EN
+        if (clean.indexOf('.') !== -1 && clean.indexOf(',') !== -1) {
+          const posVirgula = clean.indexOf(',');
+          const posPonto = clean.indexOf('.');
+          
+          if (posPonto < posVirgula) {
+            // Formato BR (1.029,61): remover pontos e trocar vírgula por ponto
+            clean = clean.replace(/\./g, '').replace(',', '.');
+          } else {
+            // Formato EN (1,029.61): remover vírgulas
+            clean = clean.replace(/,/g, '');
+          }
+        } else if (clean.indexOf(',') !== -1 && clean.indexOf('.') === -1) {
+          // Só vírgula (formato BR): trocar por ponto
+          clean = clean.replace(',', '.');
+        } else if (clean.indexOf('.') !== -1 && clean.indexOf(',') === -1) {
+          // Só ponto: verificar se é separador de milhar ou decimal
+          const partes = clean.split('.');
+          
+          if (partes.length > 2) {
+            // Múltiplos pontos: separador de milhar BR
+            clean = clean.replace(/\./g, '');
+          } else if (partes.length === 2) {
+            const parteDecimal = partes[1];
+            // Se tem 3 dígitos após o ponto, é separador de milhar BR (ex: 1.029)
+            if (parteDecimal.length === 3) {
+              clean = clean.replace('.', '');
+            }
+            // Senão, é decimal EN (ex: 10.5 ou 10.50)
+          }
+        }
+        
+        const num = parseFloat(clean);
+        return isNaN(num) ? NaN : num;
+      };
+      
       for (const emp of empresas) {
         try {
           const resSaldo = await fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`);
           const saldo = await resSaldo.json();
           const saldoOriginal = saldo?.data?.saldoOriginal || 0;
           
-          // Verificar se é cartão
-          const saldoStr = String(saldoOriginal).toLowerCase();
-          const isCartao = saldoStr.includes('cartão') || saldoStr.includes('cartao') || saldoStr.includes('card');
-          
-          if (isCartao) {
-            console.log(`⏭️ Ignorando ${emp.nome} - Usa cartão`);
-            continue;
-          }
-          
-          // Extrair valor numérico
-          const valorNumerico = parseFloat(String(saldoOriginal).replace(/[^\d,.-]/g, '').replace(',', '.'));
+          // Extrair valor numérico usando função melhorada
+          const valorNumerico = extrairValorSaldo(saldoOriginal);
           
           if (!isNaN(valorNumerico) && valorNumerico < LIMIAR_SALDO_BAIXO) {
             empresasComSaldoBaixo.push({
@@ -210,11 +255,23 @@ class NumeroNotificacaoController {
         mensagem += `   📊 Conta: ${emp.contaDeAnuncio}\n\n`;
       });
       
-      // 5. Enviar notificação para cada número
+      // 5. Enviar notificação para cada número (com verificação de data)
       const today = new Date().toISOString().split('T')[0];
+      let numerosNotificados = 0;
+      let numerosIgnorados = 0;
       
       for (const numeroData of numeros) {
         try {
+          // Verificar se já recebeu notificação hoje
+          const ultimaNoti = numeroData.ultimanoti;
+          
+          if (ultimaNoti === today) {
+            console.log(`⏭️ Pulando ${numeroData.numero} - Já recebeu notificação hoje (${ultimaNoti})`);
+            numerosIgnorados++;
+            continue; // Pula para o próximo número
+          }
+          
+          // Enviar notificação
           const response = await fetch(`https://new-backend.botconversa.com.br/api/v1/webhooks-automation/catch/133147/oma7bYgznono/`, {
             method: "POST",
             headers: {
@@ -235,6 +292,8 @@ class NumeroNotificacaoController {
             .from('notificasaldobaixo')
             .update({ ultimanoti: today })
             .eq('id', numeroData.id);
+          
+          numerosNotificados++;
           
         } catch (error) {
           console.error(`❌ Erro ao enviar notificação para ${numeroData.numero}:`, error);

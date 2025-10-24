@@ -662,14 +662,51 @@ function extrairValorSaldo(saldo) {
 
     if (!clean) return NaN;
 
-    // Tratar formatos BR e EN:
-    // Se contém '.' e ',' -> presumir '.' thousands e ',' decimal -> remover '.' e trocar ',' por '.'
+    // Tratar formatos BR e EN de forma mais inteligente:
+    
+    // Caso 1: Contém AMBOS ponto e vírgula (ex: 1.029,61 ou 1,029.61)
     if (clean.indexOf('.') !== -1 && clean.indexOf(',') !== -1) {
-        clean = clean.replace(/\./g, '').replace(',', '.');
-    } else if (clean.indexOf(',') !== -1 && clean.indexOf('.') === -1) {
-        // só vírgula -> decimal em BR
+        // Verificar qual vem primeiro
+        const posVirgula = clean.indexOf(',');
+        const posPonto = clean.indexOf('.');
+        
+        if (posPonto < posVirgula) {
+            // Ponto vem antes: formato BR (1.029,61)
+            // Remover pontos (separador de milhar) e trocar vírgula por ponto (decimal)
+            clean = clean.replace(/\./g, '').replace(',', '.');
+        } else {
+            // Vírgula vem antes: formato EN (1,029.61)
+            // Remover vírgulas (separador de milhar) e manter ponto (decimal)
+            clean = clean.replace(/,/g, '');
+        }
+    }
+    // Caso 2: Só vírgula (formato BR: 1029,61 ou 10,50)
+    else if (clean.indexOf(',') !== -1 && clean.indexOf('.') === -1) {
+        // Trocar vírgula por ponto para parseFloat
         clean = clean.replace(',', '.');
     }
+    // Caso 3: Só ponto - AQUI ESTÁ O PROBLEMA!
+    else if (clean.indexOf('.') !== -1 && clean.indexOf(',') === -1) {
+        // Verificar se é separador de milhar (formato BR) ou decimal (formato EN)
+        const partes = clean.split('.');
+        
+        // Se tem mais de 2 partes (ex: 1.029.450), é definitivamente separador de milhar BR
+        if (partes.length > 2) {
+            clean = clean.replace(/\./g, '');
+        }
+        // Se tem exatamente 2 partes, verificar o tamanho da parte decimal
+        else if (partes.length === 2) {
+            const parteDecimal = partes[1];
+            // Se a parte depois do ponto tem exatamente 3 dígitos (ex: 1.029), é separador de milhar BR
+            // Se tem 1 ou 2 dígitos (ex: 10.5 ou 10.50), é separador decimal EN
+            if (parteDecimal.length === 3) {
+                // Formato BR: 1.029 -> remover o ponto
+                clean = clean.replace('.', '');
+            }
+            // else: manter como está (formato EN decimal)
+        }
+    }
+    
     const num = parseFloat(clean);
     return isNaN(num) ? NaN : num;
 }
