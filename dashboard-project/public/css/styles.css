@@ -1945,7 +1945,8 @@ main {
   height: calc(100% - 60px);
   width: 100%;
   padding: 15px;
-  overflow: hidden;
+  overflow: auto;
+  flex-direction: column;
 }
 
 #subAbaEmpresas{
@@ -2154,6 +2155,304 @@ main {
 
 .btn-whatsapp-main i {
     font-size: 16px;
+}
+
+/* Botão Lead Qualificado */
+.btn-lead-qualificado {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: #333;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.btn-lead-qualificado:hover {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+    color: white;
+}
+
+.btn-lead-qualificado i {
+    font-size: 14px;
+}
+
+/* Modal Lead Qualificado */
+.modal-overlay-qualificado {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content-qualificado {
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.modal-header-qualificado {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: #333;
+    padding: 20px 24px;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header-qualificado h4 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-header-qualificado .btn-close-modal {
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.modal-header-qualificado .btn-close-modal:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: rotate(90deg);
+}
+
+.modal-body-qualificado {
+    padding: 30px 24px;
+}
+
+.lead-info-qualificado {
+    background: #f8f9fa;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border-left: 4px solid #ffc107;
+}
+
+.lead-name-qualificado {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.confirmacao-message {
+    text-align: center;
+    margin: 24px 0;
+    padding: 20px;
+    background: #e3f2fd;
+    border-radius: 12px;
+}
+
+.confirmacao-message p {
+    margin: 10px 0;
+}
+
+.beneficios-qualificacao {
+    background: #f1f8f4;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #28a745;
+}
+
+.beneficios-qualificacao h6 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.beneficios-qualificacao ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.beneficios-qualificacao li {
+    padding: 8px 0;
+    font-size: 14px;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.beneficios-qualificacao li i {
+    color: #28a745;
+    font-size: 16px;
+}
+
+.modal-footer-qualificado {
+    padding: 20px 24px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn-cancelar-qualificado {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-cancelar-qualificado:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-confirmar-qualificado {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-confirmar-qualificado:hover {
+    background: linear-gradient(135deg, #218838, #1e9e7a);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-confirmar-qualificado:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Badge de Lead Qualificado no Card */
+.badge-qualificado {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: #333;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+    animation: pulse 2s infinite;
+}
+
+.badge-qualificado i {
+    font-size: 10px;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Toast de Qualificado */
+.toast-qualificado {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    z-index: 10001;
+    animation: slideInRight 0.3s ease;
+    transition: opacity 0.3s ease;
+}
+
+.toast-qualificado i {
+    font-size: 20px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 /* Header do card com botão expandir */

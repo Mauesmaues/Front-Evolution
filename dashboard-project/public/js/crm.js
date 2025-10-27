@@ -1,5 +1,149 @@
 // Variável global para armazenar dados dos leads
 window.leadsData = [];
+window.leadsGlobais = [];
+
+// Variável global para armazenar empresas e filtro atual
+window.empresasCRM = []; // ⭐ Array para armazenar empresas
+window.empresaIdFiltroAtual = ''; // '' = todas, ou ID específico da empresa
+
+// ========================================
+// FUNÇÕES DE FILTRO POR EMPRESA
+// ========================================
+
+/**
+ * Carrega empresas disponíveis e popula o select
+ * Segue o mesmo padrão do painel de notificações
+ */
+async function carregarEmpresasDisponiveisCRM() {
+    try {
+        console.log('🏢 [CRM] Carregando empresas disponíveis...');
+        
+        const resposta = await fetch('/api/buscarEmpresas');
+        
+        if (!resposta.ok) {
+            if (resposta.status === 401) {
+                console.log('❌ [CRM] Não autenticado');
+                window.location.href = '/login.html';
+                return;
+            }
+            throw new Error(`Erro ao buscar empresas: ${resposta.status}`);
+        }
+        
+        const dados = await resposta.json();
+        console.log('📦 [CRM] Resposta da API:', dados);
+        
+        // Backend retorna { success: true, data: [...] }
+        if (dados.success && Array.isArray(dados.data)) {
+            window.empresasCRM = dados.data;
+            console.log(`✅ [CRM] ${dados.data.length} empresas carregadas`);
+            
+            // Atualizar o select de filtro
+            atualizarFiltroEmpresasCRM();
+        } else {
+            console.error('❌ [CRM] Formato de resposta inválido:', dados);
+        }
+    } catch (erro) {
+        console.error('❌ [CRM] Erro ao carregar empresas:', erro);
+    }
+}
+
+/**
+ * Atualiza o select de filtro com as empresas disponíveis
+ * Segue exatamente o padrão de notificacoes.js
+ */
+function atualizarFiltroEmpresasCRM() {
+    const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+    
+    if (!filtroEmpresa) {
+        console.error('❌ [CRM] Select #filtroEmpresaCRM não encontrado');
+        return;
+    }
+    
+    console.log('🎨 [CRM] Atualizando select com empresas...');
+    
+    // Limpar e adicionar opção "Todas"
+    filtroEmpresa.innerHTML = '<option value="">Todas as empresas</option>';
+    
+    // Adicionar cada empresa
+    window.empresasCRM.forEach(empresa => {
+        const option = document.createElement('option');
+        option.value = empresa.id;
+        option.textContent = empresa.nome;
+        filtroEmpresa.appendChild(option);
+    });
+    
+    console.log(`✅ [CRM] Select populado com ${filtroEmpresa.options.length} opções`);
+}
+
+/**
+ * Filtra os leads por empresa selecionada
+ * Segue o padrão de notificacoes.js -> filtrarNotificacoes()
+ */
+function filtrarLeadsPorEmpresaCRM() {
+    const filtroEmpresaId = document.getElementById('filtroEmpresaCRM').value;
+    console.log('🔄 [CRM] Filtrando por empresa:', filtroEmpresaId || 'TODAS');
+    renderizarLeadsCRM(filtroEmpresaId);
+}
+
+/**
+ * Renderiza os leads no Kanban com filtro opcional de empresa
+ * Segue o padrão de notificacoes.js -> renderizarNotificacoes()
+ */
+function renderizarLeadsCRM(filtroEmpresaId = '') {
+    console.log('🎨 [CRM] Renderizando leads com filtro:', filtroEmpresaId || 'TODAS');
+    
+    // Filtrar leads se necessário
+    let leadsFiltrados = window.leadsGlobais;
+    
+    if (filtroEmpresaId) {
+        leadsFiltrados = window.leadsGlobais.filter(item => {
+            const empresaIdLead = item.lead.empresa_id || 
+                                  item.lead.dados_originais?.empresa_id;
+            return empresaIdLead && empresaIdLead.toString() === filtroEmpresaId;
+        });
+        console.log(`📋 [CRM] ${leadsFiltrados.length} leads da empresa ${filtroEmpresaId}`);
+    } else {
+        console.log(`📋 [CRM] Exibindo TODOS os ${leadsFiltrados.length} leads`);
+    }
+    
+    // Limpar colunas
+    limparColunasEContadores();
+    
+    // Renderizar cada lead filtrado
+    leadsFiltrados.forEach(item => {
+        criarCardLead(item.lead, item.stageSalva);
+    });
+    
+    // Atualizar contadores
+    atualizarContadoresColunas();
+    
+    // Atualizar info de leads filtrados
+    atualizarInfoLeadsFiltrados();
+}
+
+/**
+ * Atualiza contador de leads filtrados
+ */
+function atualizarInfoLeadsFiltrados() {
+    const totalElement = document.getElementById('totalLeadsFiltrados');
+    
+    if (totalElement) {
+        // Contar cards visíveis em todas as colunas
+        const todasColunas = document.querySelectorAll('.crm-column-body');
+        let totalLeads = 0;
+        
+        todasColunas.forEach(coluna => {
+            const cards = coluna.querySelectorAll('.lead-card');
+            totalLeads += cards.length;
+        });
+        
+        totalElement.textContent = totalLeads;
+    }
+}
+
+// ========================================
+// FIM - FUNÇÕES DE FILTRO POR EMPRESA
+// ========================================
 
 // Função para obter dados do usuário da sessão
 async function obterUsuarioSessao() {
@@ -27,10 +171,6 @@ async function obterUsuarioSessao() {
     }
 }
 
-// Variáveis globais para o CRM
-window.leadsGlobais = [];
-window.leadsData = [];
-
 // Função principal para carregar leads do CRM
 async function carregarLeadsCRM() {
     try {
@@ -42,152 +182,113 @@ async function carregarLeadsCRM() {
         window.leadsGlobais = [];
         window.leadsData = [];
         
-        console.log('Tentando carregar leads da API externa...');
-        const response = await fetch('http://localhost:3001/api/v1/paginas/785063038017478/respostas');
+        console.log('📥 [CRM] Buscando leads do banco de dados...');
+        
+        // Buscar leads do backend (já vêm filtrados por empresa se for USER)
+        const response = await fetch('/api/leads');
         
         if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/login.html';
+                return;
+            }
             throw new Error(`Erro da API: ${response.status}`);
         }
         
-        const data = await response.json();
+        const resultado = await response.json();
         
-        if (data.success && data.data) {
-            // Limpar dados anteriores
-            window.leadsData = [];
+        if (resultado.success && resultado.data) {
+            const leads = resultado.data;
+            console.log(`✅ [CRM] ${leads.length} leads recebidos do banco`);
             
-            // Limpar colunas antes de carregar
-            limparColunasEContadores();
-            
-            // Processar leads da API
-            data.data.forEach(lead => {
-                processarLead(lead);
+            // Processar cada lead do banco
+            leads.forEach(lead => {
+                processarLeadDoBanco(lead);
             });
             
             // Atualizar contadores após carregar todos os leads
             atualizarContadoresColunas();
             
-            LoadingUtils.hideOverlay();
-            console.log(`✅ ${data.data.length} leads carregados com sucesso!`);
+            // ⭐ Atualizar info de leads filtrados
+            atualizarInfoLeadsFiltrados();
             
-            console.log(`${data.data.length} leads carregados com sucesso!`);
+            LoadingUtils.hideOverlay();
+            console.log(`✅ [CRM] ${leads.length} leads carregados e renderizados!`);
+        } else {
+            console.log('⚠️ [CRM] Nenhum lead encontrado');
+            LoadingUtils.hideOverlay();
         }
     } catch (error) {
         LoadingUtils.hideOverlay();
-        console.warn('API externa indisponível, carregando dados de exemplo:', error);
-        carregarLeadsExemplo();
+        console.error('❌ [CRM] Erro ao carregar leads:', error);
+        mostrarErroCarregamento();
     }
 }
 
-// Função para carregar leads de exemplo quando a API não estiver disponível
-function carregarLeadsExemplo() {
-    // Limpar dados anteriores
-    window.leadsData = [];
-    window.leadsGlobais = [];
+// Função para processar lead que veio do banco de dados
+function processarLeadDoBanco(lead) {
+    // Extrair informações principais
+    const nome = lead.nome || 'Nome não informado';
+    const email = lead.email || 'Email não informado';
+    const telefone = lead.telefone || 'Telefone não informado';
+    const stage = lead.stage || 'entrou';
     
-    // Limpar colunas antes de carregar
-    limparColunasEContadores();
+    // Extrair dados extras do JSONB
+    const dadosOriginais = lead.dados_originais || {};
+    const empresa = dadosOriginais.empresa || 'Empresa não informada';
+    const origem = dadosOriginais.origem || 'Origem não informada';
+    const empresaId = dadosOriginais.empresa_id; // ⭐ Extrair empresa_id para filtro
     
-    // Dados de exemplo
-    const leadsExemplo = [
-        {
-            id: 'lead_001',
-            created_time: new Date().toISOString(),
-            form_id: '123456789',
-            field_data: [
-                { name: 'full_name', values: ['João Silva'] },
-                { name: 'email', values: ['joao@email.com'] },
-                { name: 'phone_number', values: ['11999999999'] },
-                { name: 'interesse', values: ['Produto A'] }
-            ]
-        },
-        {
-            id: 'lead_002',
-            created_time: new Date(Date.now() - 86400000).toISOString(), // 1 dia atrás
-            form_id: '123456789',
-            field_data: [
-                { name: 'full_name', values: ['Maria Santos'] },
-                { name: 'email', values: ['maria@email.com'] },
-                { name: 'phone_number', values: ['11888888888'] },
-                { name: 'empresa', values: ['Tech Corp'] }
-            ]
-        },
-        {
-            id: 'lead_003',
-            created_time: new Date(Date.now() - 172800000).toISOString(), // 2 dias atrás
-            form_id: '123456789',
-            field_data: [
-                { name: 'full_name', values: ['Pedro Costa'] },
-                { name: 'email', values: ['pedro@email.com'] },
-                { name: 'phone_number', values: ['11777777777'] },
-                { name: 'servico', values: ['Consultoria'] }
-            ]
-        }
-    ];
-    
-    // Processar leads de exemplo
-    leadsExemplo.forEach(lead => {
-        processarLead(lead);
-    });
-    
-    // Atualizar contadores após carregar todos os leads
-    atualizarContadoresColunas();
-    
-    console.log(`${leadsExemplo.length} leads de exemplo carregados!`);
-}
-
-// Função para processar um lead individual
-function processarLead(lead) {
-    // Extrair dados dos campos do lead
-    const fieldData = {};
-    lead.field_data.forEach(field => {
-        fieldData[field.name] = field.values[0] || '';
-    });
-    
-    // Criar objeto do lead normalizado
+    // Criar objeto do lead normalizado para compatibilidade com código existente
     const leadData = {
         id: lead.id,
-        created_time: lead.created_time,
-        respostas: [
-            { campo: 'nome', valor: fieldData.full_name || 'Nome não informado' },
-            { campo: 'email', valor: fieldData.email || 'Email não informado' },
-            { campo: 'telefone', valor: fieldData.phone_number || 'Telefone não informado' }
-        ],
-        formulario: { nome: 'Formulário de Contato', id: lead.form_id }
+        created_time: lead.created_at || lead.data_entrada,
+        nome: nome,
+        email: email,
+        telefone: telefone,
+        stage: stage,
+        empresa: empresa,
+        empresa_id: empresaId, // ⭐ Adicionar empresa_id ao leadData
+        origem: origem,
+        respostas: {
+            full_name: [nome],
+            email: [email],
+            phone_number: [telefone]
+        },
+        dados_originais: dadosOriginais,
+        formulario: { 
+            nome: origem,
+            id: 'banco_dados' 
+        }
     };
     
-    // Adicionar outros campos customizados
-    Object.keys(fieldData).forEach(key => {
-        if (!['full_name', 'email', 'phone_number'].includes(key)) {
-            leadData.respostas.push({
-                campo: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                valor: fieldData[key]
-            });
+    // Adicionar campos extras das respostas
+    Object.keys(dadosOriginais).forEach(chave => {
+        // Pular campos que já foram mapeados
+        if (!['empresa_id', 'empresa', 'origem', 'criado_por', 'criado_por_id'].includes(chave)) {
+            leadData.respostas[chave] = [dadosOriginais[chave]];
         }
     });
     
-    // Armazenar dados globalmente
-    if (!window.leadsData) {
-        window.leadsData = [];
-    }
-    if (!window.leadsGlobais) {
-        window.leadsGlobais = [];
-    }
-    
+    // Armazenar dados globalmente (formato atualizado para suportar filtro)
     window.leadsData.push(leadData);
-    window.leadsGlobais.push(leadData);
+    window.leadsGlobais.push({
+        lead: leadData,
+        stageSalva: stage
+    });
     
     // Criar objeto resposta simulado para compatibilidade
     const respostaSimulada = {
         id: lead.id,
-        created_time: lead.created_time,
-        nome: fieldData.full_name || 'Nome não informado',
-        email: fieldData.email || 'Email não informado',
-        telefone: fieldData.phone_number || 'Telefone não informado',
-        respostas: fieldData
+        created_time: leadData.created_time,
+        nome: nome,
+        email: email,
+        telefone: telefone,
+        respostas: leadData.respostas
     };
     
     // Criar card visual
-    criarCardLead(respostaSimulada, leadData.formulario);
+    criarCardLead(respostaSimulada, leadData.formulario, stage);
 }
 
 // Função para limpar colunas e contadores
@@ -199,11 +300,13 @@ function limparColunasEContadores() {
 }
 
 // Função para criar card individual do lead
-function criarCardLead(resposta, formulario) {
+function criarCardLead(resposta, formulario, stageSalva = null) {
     const leadId = resposta.id;
     
-    // Verificar posição salva no localStorage
-    const posicaoSalva = localStorage.getItem(`lead_position_${leadId}`) || 'entrou';
+    // PRIORIDADE: Stage do banco de dados (se vier do carregamento)
+    // Se stageSalva for null, usa 'entrou' como padrão
+    // localStorage NÃO é mais usado para posicionamento inicial
+    const posicaoSalva = stageSalva || 'entrou';
     
     // Extrair informações principais
     const nome = resposta.respostas.full_name ? resposta.respostas.full_name[0] : 'Nome não informado';
@@ -261,6 +364,9 @@ function criarCardLead(resposta, formulario) {
                 </button>
                 <button class="btn-whatsapp-main" onclick="chamarWhatsApp('${telefone}', '${nome}')" title="Chamar no WhatsApp">
                     <i class="fab fa-whatsapp"></i> WhatsApp
+                </button>
+                <button class="btn-lead-qualificado" onclick="abrirModalLeadQualificado('${leadId}')" title="Marcar como lead qualificado">
+                    <i class="fas fa-star"></i> Lead Qualificado
                 </button>
             </div>
         </div>
@@ -340,7 +446,7 @@ function drop(ev) {
             // Mover o card
             target.appendChild(leadCard);
             
-            // Salvar nova posição no localStorage
+            // Salvar nova posição no localStorage (apenas como backup temporário durante o drag)
             const novaColuna = target.closest('.crm-column').getAttribute('data-stage');
             localStorage.setItem(`lead_position_${leadId}`, novaColuna);
             
@@ -349,9 +455,66 @@ function drop(ev) {
             
             console.log(`Lead ${leadId} movido para ${novaColuna}`);
             
-            // Futuramente: salvar no banco
-            // salvarPosicaoNoBanco(leadId, novaColuna);
+            // Salvar no banco de dados (fonte única da verdade)
+            salvarPosicaoNoBanco(leadId, novaColuna);
         }
+    }
+}
+
+/**
+ * Salva a nova posição do lead no banco de dados
+ * @param {string} leadId - ID do lead
+ * @param {string} novoStage - Novo stage (entrou, qualificado, conversao, ganho)
+ */
+async function salvarPosicaoNoBanco(leadId, novoStage) {
+    try {
+        console.log(`💾 Salvando stage do lead ${leadId} no banco: ${novoStage}`);
+        
+        const response = await fetch(`/api/leads/${leadId}/stage`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ stage: novoStage })
+        });
+
+        const resultado = await response.json();
+
+        if (!response.ok) {
+            throw new Error(resultado.message || 'Erro ao atualizar stage');
+        }
+
+        console.log(`✅ Stage do lead ${leadId} atualizado com sucesso no banco`);
+        
+        // Limpar localStorage após salvar com sucesso no banco
+        // O banco de dados é agora a fonte única da verdade
+        localStorage.removeItem(`lead_position_${leadId}`);
+        console.log(`🗑️ localStorage limpo para lead ${leadId}`);
+        
+        // Atualizar o stage no array global para manter sincronizado
+        if (window.leadsGlobais) {
+            const leadIndex = window.leadsGlobais.findIndex(item => item.lead.id === leadId);
+            if (leadIndex !== -1) {
+                window.leadsGlobais[leadIndex].stageSalva = novoStage;
+                window.leadsGlobais[leadIndex].lead.stage = novoStage;
+            }
+        }
+        
+        // Opcional: mostrar feedback visual
+        if (typeof mostrarToast === 'function') {
+            mostrarToast('Lead movido com sucesso!', 'success');
+        }
+
+    } catch (error) {
+        console.error('❌ Erro ao salvar posição no banco:', error);
+        
+        // Opcional: mostrar erro ao usuário
+        if (typeof mostrarToast === 'function') {
+            mostrarToast('Erro ao mover lead. Tente novamente.', 'error');
+        }
+        
+        // Em caso de erro, manter no localStorage como backup
+        console.log(`⚠️ Mantendo posição no localStorage como backup devido ao erro`);
     }
 }
 
@@ -624,86 +787,8 @@ function mostrarInfoComentario(leadId) {
 💬 Comentário: "${ultimoComentario.texto}"`);
 }
 
-// Função para expandir card em modal
-function expandirCard(leadId) {
-    const leadData = window.leadsData?.find(lead => lead.id === leadId);
-    if (!leadData) {
-        console.error('Lead não encontrado');
-        return;
-    }
-
-    // Criar modal de expansão
-    const modalHTML = `
-        <div class="lead-modal-overlay" id="modal-${leadId}" onclick="fecharModal('${leadId}')">
-            <div class="lead-modal-content" onclick="event.stopPropagation()">
-                <div class="lead-modal-header">
-                    <h4>${leadData.respostas.find(r => r.campo === 'nome')?.valor || 'Nome não informado'}</h4>
-                    <button class="btn-close-modal" onclick="fecharModal('${leadId}')">&times;</button>
-                </div>
-                
-                <div class="lead-modal-body">
-                    <div class="lead-info-section">
-                        <h6>Informações de Contato</h6>
-                        <div class="info-grid">
-                            <div class="info-item">
-                                <strong>📧 Email:</strong> ${leadData.respostas.find(r => r.campo === 'email')?.valor || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>📱 Telefone:</strong> ${leadData.respostas.find(r => r.campo === 'telefone')?.valor || 'Não informado'}
-                            </div>
-                            <div class="info-item">
-                                <strong>📅 Data do Lead:</strong> ${new Date(leadData.created_time).toLocaleDateString('pt-BR')}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="lead-responses-section">
-                        <h6>Respostas do Formulário</h6>
-                        <div class="responses-grid">
-                            ${leadData.respostas.map(resposta => `
-                                <div class="response-item">
-                                    <strong>${resposta.campo}:</strong> ${resposta.valor}
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-
-                    <div class="lead-comments-section">
-                        <h6>💬 Comentários</h6>
-                        <div class="comments-list" id="comments-list-${leadId}">
-                            ${renderizarTodosComentarios(leadId)}
-                        </div>
-                        <div class="comment-input-section">
-                            <textarea id="modal-comment-${leadId}" class="comment-input" placeholder="Adicionar comentário..."></textarea>
-                            <button class="btn-add-comment" onclick="adicionarComentarioModal('${leadId}')" title="Adicionar comentário">
-                                <i class="fas fa-paper-plane"></i> Adicionar Comentário
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="lead-modal-footer">
-                    <button class="btn-whatsapp-main" onclick="chamarWhatsApp('${leadData.respostas.find(r => r.campo === 'telefone')?.valor}', '${leadData.respostas.find(r => r.campo === 'nome')?.valor}')">
-                        <i class="fab fa-whatsapp"></i> WhatsApp
-                    </button>
-                    <button class="btn-secondary" onclick="fecharModal('${leadId}')">Fechar</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Adicionar modal ao body
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    document.body.style.overflow = 'hidden';
-}
-
-function fecharModal(leadId) {
-    const modal = document.getElementById(`modal-${leadId}`);
-    if (modal) {
-        modal.remove();
-        document.body.style.overflow = 'auto';
-    }
-}
+// Função expandirCard já definida anteriormente (linha 558)
+// Removida duplicação
 
 function renderizarTodosComentarios(leadId) {
     const comentarios = obterComentarios(leadId);
@@ -805,6 +890,17 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.remove('drag-over');
         });
     });
+    
+    // ⭐ Event listener para filtro de empresa (igual notificações)
+    const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+    if (filtroEmpresa) {
+        filtroEmpresa.addEventListener('change', function() {
+            filtrarLeadsPorEmpresaCRM();
+        });
+        console.log('✅ [CRM] Event listener do filtro configurado no DOMContentLoaded');
+    } else {
+        console.warn('⚠️ [CRM] Select de filtro não encontrado no DOM');
+    }
 });
 
 // Integração com a navegação existente
@@ -814,7 +910,10 @@ document.addEventListener('click', function(event) {
         setTimeout(() => {
             const crmSection = document.getElementById('crmSection');
             if (crmSection && getComputedStyle(crmSection).display !== 'none') {
-                carregarLeadsCRM();
+                // ⭐ Carregar empresas primeiro (padrão notificações)
+                carregarEmpresasDisponiveisCRM().then(() => {
+                    carregarLeadsCRM();
+                });
             }
         }, 100);
     }
@@ -953,6 +1052,195 @@ async function adicionarComentarioPopup(leadId) {
         console.error('Erro ao adicionar comentário:', error);
         alert('Erro ao adicionar comentário. Tente novamente.');
     }
+}
+
+/**
+ * Abre modal de confirmação para marcar lead como qualificado
+ * @param {string} leadId - ID do lead
+ */
+function abrirModalLeadQualificado(leadId) {
+    const leadData = window.leadsGlobais?.find(lead => lead.id === leadId);
+    if (!leadData) {
+        console.error('Lead não encontrado');
+        return;
+    }
+
+    const nome = leadData.nome || 'Lead sem nome';
+
+    // Criar modal de confirmação
+    const modalHTML = `
+        <div class="modal-overlay-qualificado" id="modal-qualificado-${leadId}" onclick="fecharModalLeadQualificado('${leadId}')">
+            <div class="modal-content-qualificado" onclick="event.stopPropagation()">
+                <div class="modal-header-qualificado">
+                    <h4><i class="fas fa-star text-warning"></i> Lead Qualificado</h4>
+                    <button class="btn-close-modal" onclick="fecharModalLeadQualificado('${leadId}')">&times;</button>
+                </div>
+                
+                <div class="modal-body-qualificado">
+                    <div class="lead-info-qualificado">
+                        <p class="lead-name-qualificado">
+                            <i class="fas fa-user"></i> <strong>${nome}</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="confirmacao-message">
+                        <i class="fas fa-question-circle text-info fa-3x mb-3"></i>
+                        <p class="text-center fs-5">
+                            <strong>Deseja retornar esse lead para a meta como um lead qualificado?</strong>
+                        </p>
+                        <p class="text-muted text-center">
+                            Isso fará com que a plataforma tente alcançar mais leads como este, 
+                            otimizando seus anúncios e melhorando seus resultados.
+                        </p>
+                    </div>
+                    
+                    <div class="beneficios-qualificacao">
+                        <h6><i class="fas fa-check-circle text-success"></i> Benefícios:</h6>
+                        <ul>
+                            <li><i class="fas fa-bullseye"></i> Melhora o targeting dos anúncios</li>
+                            <li><i class="fas fa-chart-line"></i> Otimiza a performance das campanhas</li>
+                            <li><i class="fas fa-users"></i> Atrai leads com perfil semelhante</li>
+                            <li><i class="fas fa-dollar-sign"></i> Reduz custo por lead qualificado</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="modal-footer-qualificado">
+                    <button class="btn-cancelar-qualificado" onclick="fecharModalLeadQualificado('${leadId}')">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button class="btn-confirmar-qualificado" onclick="confirmarLeadQualificado('${leadId}')">
+                        <i class="fas fa-star"></i> Confirmar e Otimizar
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Adicionar modal ao body
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Fecha modal de lead qualificado
+ * @param {string} leadId - ID do lead
+ */
+function fecharModalLeadQualificado(leadId) {
+    const modal = document.getElementById(`modal-qualificado-${leadId}`);
+    if (modal) {
+        modal.remove();
+        document.body.style.overflow = 'auto';
+    }
+}
+
+/**
+ * Confirma marcação do lead como qualificado e envia para backend
+ * @param {string} leadId - ID do lead
+ */
+async function confirmarLeadQualificado(leadId) {
+    try {
+        console.log(`⭐ Marcando lead ${leadId} como qualificado`);
+
+        // Mostrar loading no botão
+        const btnConfirmar = document.querySelector(`#modal-qualificado-${leadId} .btn-confirmar-qualificado`);
+        if (btnConfirmar) {
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+        }
+
+        // Enviar para o backend
+        const response = await fetch(`/api/leads/${leadId}/qualificado`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                qualificado: true,
+                timestamp: new Date().toISOString()
+            })
+        });
+
+        const resultado = await response.json();
+
+        if (!response.ok) {
+            throw new Error(resultado.message || 'Erro ao marcar lead como qualificado');
+        }
+
+        console.log('✅ Lead marcado como qualificado com sucesso');
+
+        // Fechar modal
+        fecharModalLeadQualificado(leadId);
+
+        // Mostrar mensagem de sucesso
+        mostrarToastQualificado('Lead marcado como qualificado! A plataforma irá otimizar para encontrar leads semelhantes.', 'success');
+
+        // Adicionar badge visual no card
+        const leadCard = document.querySelector(`[data-lead-id="${leadId}"]`);
+        if (leadCard && !leadCard.querySelector('.badge-qualificado')) {
+            const header = leadCard.querySelector('.lead-header');
+            if (header) {
+                header.insertAdjacentHTML('beforeend', '<span class="badge-qualificado" title="Lead Qualificado"><i class="fas fa-star"></i></span>');
+            }
+        }
+
+        // Opcional: Recarregar leads
+        // await carregarLeadsCRM();
+
+    } catch (error) {
+        console.error('❌ Erro ao marcar lead como qualificado:', error);
+        mostrarToastQualificado('Erro ao marcar lead como qualificado. Tente novamente.', 'error');
+        
+        // Restaurar botão
+        const btnConfirmar = document.querySelector(`#modal-qualificado-${leadId} .btn-confirmar-qualificado`);
+        if (btnConfirmar) {
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerHTML = '<i class="fas fa-star"></i> Confirmar e Otimizar';
+        }
+    }
+}
+
+/**
+ * Mostra toast de feedback
+ * @param {string} mensagem - Mensagem a exibir
+ * @param {string} tipo - Tipo do toast (success, error, info)
+ */
+function mostrarToastQualificado(mensagem, tipo = 'info') {
+    // Verificar se já existe um toast
+    const toastExistente = document.querySelector('.toast-qualificado');
+    if (toastExistente) {
+        toastExistente.remove();
+    }
+
+    const iconMap = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        info: 'fa-info-circle'
+    };
+
+    const colorMap = {
+        success: '#28a745',
+        error: '#dc3545',
+        info: '#17a2b8'
+    };
+
+    const toastHTML = `
+        <div class="toast-qualificado toast-${tipo}" style="background-color: ${colorMap[tipo]}">
+            <i class="fas ${iconMap[tipo]}"></i>
+            <span>${mensagem}</span>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', toastHTML);
+
+    // Remover após 5 segundos
+    setTimeout(() => {
+        const toast = document.querySelector('.toast-qualificado');
+        if (toast) {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }
+    }, 5000);
 }
 
 // Expor funções globalmente para uso em outros arquivos

@@ -11,6 +11,7 @@ const { UploadController, uploadMiddleware } = require('../controllers/UploadCon
 const { carregarEmpresasPermitidas } = require('../controllers/PermissaoController');
 const NotificacaoScheduler = require('../schedulers/NotificacaoScheduler');
 const VisualPropostaController = require('../controllers/VisualPropostaController');
+const CrmController = require('../controllers/CrmController');
 
 const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
@@ -28,6 +29,26 @@ router.post('/adicionarEmpresaUsuario', usuarioController.adicionarEmpresaAoUsua
 router.get('/session-user', usuarioController.usuarioSecao);
 router.post('/sair', usuarioController.sair);
 router.get('/permission/:userId', carregarEmpresasPermitidas );
+
+// ========== ROTAS DE CRM ==========
+// Receber lead único de fonte externa (Google Sheets, Apps Script, etc)
+router.post('/leads', CrmController.receberLeadExterno);
+
+// Receber múltiplos leads de uma vez (batch)
+router.post('/leads/batch', CrmController.receberLeadsBatch);
+
+// Listar leads (com permissionamento por empresa)
+router.get('/leads', CrmController.listarLeads);
+
+// Adicionar lead manualmente pelo frontend
+router.post('/leads/manual', CrmController.adicionarLeadManual);
+
+// Atualizar stage de um lead (drag and drop no Kanban)
+router.put('/leads/:id/stage', CrmController.atualizarStage);
+
+// Marcar lead como qualificado (otimização de campanhas)
+router.post('/leads/:id/qualificado', CrmController.marcarLeadQualificado);
+// ===================================
 
 // Rotas de notificações
 router.post('/criarNotificacao', NotificacaoController.criarNotificacao);

@@ -1381,11 +1381,16 @@ function getPermissaoBadgeColor(permissao) {
 
 // Função para editar usuário
 async function editarUsuario(usuarioId) {
+  console.log('🔧 editarUsuario chamada com ID:', usuarioId);
   try {
     const response = await fetch('/api/listarUsuarios');
     const resultado = await response.json();
+    console.log('📊 Resultado da API:', resultado);
+    
     const usuarios = resultado.data || [];
     const usuario = usuarios.find(u => u.id === usuarioId);
+    
+    console.log('👤 Usuário encontrado:', usuario);
     
     if (!usuario) {
       alert('Usuário não encontrado');
@@ -1442,24 +1447,31 @@ async function editarUsuario(usuarioId) {
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalEditarUsuario'));
     modal.show();
+    
+    console.log('✅ Modal de edição aberto');
 
   } catch (error) {
-    console.error('Erro ao carregar dados do usuário:', error);
-    alert('Erro ao carregar dados do usuário');
+    console.error('❌ Erro ao carregar dados do usuário:', error);
+    alert('Erro ao carregar dados do usuário: ' + error.message);
   }
 }
 
 // Função para salvar edição do usuário
 async function salvarEdicaoUsuario(usuarioId) {
+  console.log('💾 salvarEdicaoUsuario chamada com ID:', usuarioId);
   try {
     const nome = document.getElementById('editNome').value;
     const email = document.getElementById('editEmail').value;
     const permissao = document.getElementById('editPermissao').value;
 
+    console.log('📝 Dados do formulário:', { nome, email, permissao });
+
     if (!nome || !email || !permissao) {
       alert('Todos os campos são obrigatórios');
       return;
     }
+
+    console.log('📤 Enviando requisição PUT para /api/atualizarUsuario/' + usuarioId);
 
     const response = await fetch(`/api/atualizarUsuario/${usuarioId}`, {
       method: 'PUT',
@@ -1467,62 +1479,86 @@ async function salvarEdicaoUsuario(usuarioId) {
       body: JSON.stringify({ nome, email, permissao })
     });
 
+    console.log('📥 Response status:', response.status);
     const resultado = await response.json();
+    console.log('📥 Resultado:', resultado);
 
-    if (resultado.error) {
-      alert('Erro ao atualizar usuário: ' + resultado.error);
+    if (!response.ok || resultado.error) {
+      alert('Erro ao atualizar usuário: ' + (resultado.error || resultado.mensagem || 'Erro desconhecido'));
       return;
     }
 
     alert('Usuário atualizado com sucesso!');
     
     // Fechar modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalEditarUsuario'));
-    modal.hide();
+    const modalElement = document.getElementById('modalEditarUsuario');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
     
+    // Remover backdrop manualmente se necessário
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.remove();
+    }
+    
+    console.log('🔄 Recarregando lista de usuários...');
     // Recarregar lista
     carregarUsuariosCadastrados();
 
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
-    alert('Erro ao atualizar usuário');
+    console.error('❌ Erro ao atualizar usuário:', error);
+    alert('Erro ao atualizar usuário: ' + error.message);
   }
 }
 
 // Função para excluir usuário
 async function excluirUsuario(usuarioId, nomeUsuario) {
+  console.log('🗑️ excluirUsuario chamada com ID:', usuarioId, 'Nome:', nomeUsuario);
+  
   if (!confirm(`Tem certeza que deseja excluir o usuário "${nomeUsuario}"?`)) {
+    console.log('❌ Exclusão cancelada pelo usuário');
     return;
   }
 
   try {
+    console.log('📤 Enviando requisição DELETE para /api/removerUsuario/' + usuarioId);
+    
     const response = await fetch(`/api/removerUsuario/${usuarioId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     });
 
+    console.log('📥 Response status:', response.status);
     const resultado = await response.json();
+    console.log('📥 Resultado:', resultado);
 
-    if (resultado.error) {
-      alert('Erro ao excluir usuário: ' + resultado.error);
+    if (!response.ok || resultado.error) {
+      alert('Erro ao excluir usuário: ' + (resultado.error || resultado.mensagem || 'Erro desconhecido'));
       return;
     }
 
     alert('Usuário excluído com sucesso!');
+    console.log('🔄 Recarregando lista de usuários...');
     carregarUsuariosCadastrados();
 
   } catch (error) {
-    console.error('Erro ao excluir usuário:', error);
-    alert('Erro ao excluir usuário');
+    console.error('❌ Erro ao excluir usuário:', error);
+    alert('Erro ao excluir usuário: ' + error.message);
   }
 }
 
 // Função para adicionar empresa ao usuário
 async function adicionarEmpresaUsuario(usuarioId) {
+  console.log('🏢 adicionarEmpresaUsuario chamada com ID:', usuarioId);
   try {
     // Carregar empresas disponíveis
+    console.log('📤 Buscando empresas disponíveis...');
     const response = await fetch('/api/buscarEmpresas');
     const resultado = await response.json();
+    console.log('📥 Empresas recebidas:', resultado);
+    
     const empresas = resultado.data || [];
 
     if (empresas.length === 0) {
@@ -1569,22 +1605,29 @@ async function adicionarEmpresaUsuario(usuarioId) {
     // Mostrar modal
     const modal = new bootstrap.Modal(document.getElementById('modalAdicionarEmpresa'));
     modal.show();
+    
+    console.log('✅ Modal de adicionar empresa aberto');
 
   } catch (error) {
-    console.error('Erro ao carregar empresas:', error);
-    alert('Erro ao carregar empresas');
+    console.error('❌ Erro ao carregar empresas:', error);
+    alert('Erro ao carregar empresas: ' + error.message);
   }
 }
 
 // Função para salvar empresa ao usuário
 async function salvarEmpresaUsuario(usuarioId) {
+  console.log('💾 salvarEmpresaUsuario chamada com usuarioId:', usuarioId);
   try {
     const empresaId = document.getElementById('selectEmpresa').value;
+    console.log('📝 Empresa selecionada:', empresaId);
 
     if (!empresaId) {
       alert('Selecione uma empresa');
       return;
     }
+
+    console.log('📤 Enviando requisição POST para /api/adicionarEmpresaUsuario');
+    console.log('📦 Dados:', { usuarioId: parseInt(usuarioId), empresaId: parseInt(empresaId) });
 
     const response = await fetch('/api/adicionarEmpresaUsuario', {
       method: 'POST',
@@ -1592,25 +1635,37 @@ async function salvarEmpresaUsuario(usuarioId) {
       body: JSON.stringify({ usuarioId: parseInt(usuarioId), empresaId: parseInt(empresaId) })
     });
 
+    console.log('📥 Response status:', response.status);
     const resultado = await response.json();
+    console.log('📥 Resultado:', resultado);
 
-    if (resultado.error) {
-      alert('Erro ao adicionar empresa: ' + resultado.error);
+    if (!response.ok || resultado.error) {
+      alert('Erro ao adicionar empresa: ' + (resultado.error || resultado.mensagem || 'Erro desconhecido'));
       return;
     }
 
     alert('Empresa adicionada com sucesso!');
     
     // Fechar modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalAdicionarEmpresa'));
-    modal.hide();
+    const modalElement = document.getElementById('modalAdicionarEmpresa');
+    const modal = bootstrap.Modal.getInstance(modalElement);
+    if (modal) {
+      modal.hide();
+    }
     
+    // Remover backdrop manualmente se necessário
+    const backdrop = document.querySelector('.modal-backdrop');
+    if (backdrop) {
+      backdrop.remove();
+    }
+    
+    console.log('🔄 Recarregando lista de usuários...');
     // Recarregar lista
     carregarUsuariosCadastrados();
 
   } catch (error) {
-    console.error('Erro ao adicionar empresa:', error);
-    alert('Erro ao adicionar empresa');
+    console.error('❌ Erro ao adicionar empresa:', error);
+    alert('Erro ao adicionar empresa: ' + error.message);
   }
 }
 

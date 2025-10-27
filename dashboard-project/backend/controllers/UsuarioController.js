@@ -106,15 +106,20 @@ const UsuarioController = {
       const { id } = req.params;
       const novosDados = req.body;
       
+      console.log('🔧 [UsuarioController] Atualizar usuário - ID:', id);
+      console.log('📦 [UsuarioController] Novos dados:', novosDados);
+      
       // Validação da permissão se fornecida
       if (novosDados.permissao && !Object.values(PermissaoEnum).includes(novosDados.permissao)) {
+        console.error('❌ [UsuarioController] Permissão inválida:', novosDados.permissao);
         return res.status(400).json(responseFormatter.error('Permissão inválida.'));
       }
       
       const usuario = await usuarioDAO.atualizar(id, novosDados);
+      console.log('✅ [UsuarioController] Usuário atualizado:', usuario);
       res.json(responseFormatter.success(usuario, 'Usuário atualizado com sucesso.'));
     } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
+      console.error('❌ [UsuarioController] Erro ao atualizar usuário:', error);
       res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
     }
   },
@@ -122,10 +127,13 @@ const UsuarioController = {
   removerUsuario: async (req, res) => {
     try {
       const { id } = req.params;
+      console.log('🗑️ [UsuarioController] Remover usuário - ID:', id);
+      
       const usuario = await usuarioDAO.remover(id);
+      console.log('✅ [UsuarioController] Usuário removido:', usuario);
       res.json(responseFormatter.success(usuario, 'Usuário removido com sucesso.'));
     } catch (error) {
-      console.error('Erro ao remover usuário:', error);
+      console.error('❌ [UsuarioController] Erro ao remover usuário:', error);
       res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
     }
   },
@@ -134,14 +142,19 @@ const UsuarioController = {
     try {
       const { usuarioId, empresaId } = req.body;
       
+      console.log('🏢 [UsuarioController] Adicionar empresa ao usuário');
+      console.log('📦 [UsuarioController] usuarioId:', usuarioId, 'empresaId:', empresaId);
+      
       if (!usuarioId || !empresaId) {
+        console.error('❌ [UsuarioController] IDs faltando');
         return res.status(400).json(responseFormatter.error('ID do usuário e ID da empresa são obrigatórios.'));
       }
       
       const resultado = await usuarioDAO.adicionarEmpresa(usuarioId, empresaId);
+      console.log('✅ [UsuarioController] Empresa adicionada:', resultado);
       res.json(responseFormatter.success(resultado, 'Empresa adicionada ao usuário com sucesso.'));
     } catch (error) {
-      console.error('Erro ao adicionar empresa ao usuário:', error);
+      console.error('❌ [UsuarioController] Erro ao adicionar empresa:', error);
       res.status(500).json(responseFormatter.error('Erro interno do servidor: ' + error.message));
     }
   },

@@ -47,7 +47,7 @@ class UsuarioDAO {
   // Busca todos os usuários do banco com suas empresas associadas
   async listar() {
     try {
-      // Primeiro, testar apenas listagem básica de usuários
+      // Buscar todos os usuários
       const { data: usuarios, error } = await supabase
         .from('usuario')
         .select('id, nome, email, permissao')
@@ -55,11 +55,38 @@ class UsuarioDAO {
 
       if (error) throw error;
 
-      // Por enquanto, retornar usuários sem empresas para testar
-      const usuariosComEmpresas = usuarios.map(usuario => ({
-        ...usuario,
-        empresas: [] // Temporariamente vazio para testar
-      }));
+      // Para cada usuário, buscar as empresas associadas
+      const usuariosComEmpresas = await Promise.all(
+        usuarios.map(async (usuario) => {
+          // Buscar empresas do usuário via tabela de relacionamento
+          const { data: relacoes, error: relError } = await supabase
+            .from('usuario_empresa')
+            .select(`
+              empresa_id,
+              empresa (
+                id,
+                nome
+              )
+            `)
+            .eq('usuario_id', usuario.id);
+
+          if (relError) {
+            console.error(`Erro ao buscar empresas do usuário ${usuario.id}:`, relError);
+            return {
+              ...usuario,
+              empresas: []
+            };
+          }
+
+          // Extrair apenas os dados das empresas
+          const empresas = relacoes?.map(rel => rel.empresa).filter(emp => emp != null) || [];
+
+          return {
+            ...usuario,
+            empresas
+          };
+        })
+      );
 
       return usuariosComEmpresas;
     } catch (error) {

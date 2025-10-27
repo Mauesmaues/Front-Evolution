@@ -1,0 +1,197 @@
+<!-- ============================================================ -->
+<!-- ADICIONAR ESTE MODAL APÓS O modalCriarProposta (linha ~1085) -->
+<!-- ============================================================ -->
+
+<!-- Modal para Adicionar Lead Manualmente -->
+<div id="modalAdicionarLead" class="modal fade" tabindex="-1" aria-labelledby="modalAdicionarLeadLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="modalAdicionarLeadLabel">
+          <i class="fas fa-user-plus me-2"></i>Adicionar Novo Lead
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="formAdicionarLead">
+          <!-- Nome -->
+          <div class="mb-3">
+            <label for="nomeLeadModal" class="form-label fw-bold">
+              Nome <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="nomeLeadModal" placeholder="Nome completo do lead" required>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label for="emailLeadModal" class="form-label fw-bold">
+              Email
+            </label>
+            <input type="email" class="form-control" id="emailLeadModal" placeholder="email@exemplo.com">
+            <div class="form-text">Pelo menos email ou telefone é obrigatório</div>
+          </div>
+
+          <!-- Telefone -->
+          <div class="mb-3">
+            <label for="telefoneLeadModal" class="form-label fw-bold">
+              Telefone/WhatsApp
+            </label>
+            <input type="tel" class="form-control" id="telefoneLeadModal" placeholder="(41) 99999-9999">
+          </div>
+
+          <!-- Empresa -->
+          <div class="mb-3">
+            <label for="empresaLeadModal" class="form-label fw-bold">
+              Empresa <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="empresaLeadModal" required>
+              <option value="">Selecione uma empresa...</option>
+              <!-- Opções carregadas via JavaScript -->
+            </select>
+          </div>
+
+          <!-- Observação -->
+          <div class="mb-3">
+            <label for="observacaoLeadModal" class="form-label fw-bold">
+              Observação
+            </label>
+            <textarea class="form-control" id="observacaoLeadModal" rows="3" placeholder="Informações adicionais sobre o lead"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" id="btnSalvarLead">
+          <i class="fas fa-save me-1"></i>Adicionar Lead
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ADICIONAR ESTE CÓDIGO JAVASCRIPT NO FINAL DO ARQUIVO crm.js -->
+<!-- ============================================================ -->
+
+<script>
+// Função para abrir modal de adicionar lead
+async function abrirModalAdicionarLead() {
+  try {
+    // Buscar empresas disponíveis
+    const response = await fetch('/api/buscarEmpresas');
+    const resultado = await response.json();
+    
+    if (resultado.success && resultado.data) {
+      const selectEmpresa = document.getElementById('empresaLeadModal');
+      selectEmpresa.innerHTML = '<option value="">Selecione uma empresa...</option>';
+      
+      resultado.data.forEach(empresa => {
+        const option = document.createElement('option');
+        option.value = empresa.id;
+        option.textContent = empresa.nome;
+        selectEmpresa.appendChild(option);
+      });
+      
+      // Abrir modal
+      const modal = new bootstrap.Modal(document.getElementById('modalAdicionarLead'));
+      modal.show();
+    }
+  } catch (error) {
+    console.error('Erro ao buscar empresas:', error);
+    alert('Erro ao carregar empresas. Tente novamente.');
+  }
+}
+
+// Função para salvar lead manual
+async function salvarLeadManual() {
+  try {
+    const nome = document.getElementById('nomeLeadModal').value.trim();
+    const email = document.getElementById('emailLeadModal').value.trim();
+    const telefone = document.getElementById('telefoneLeadModal').value.trim();
+    const empresaId = document.getElementById('empresaLeadModal').value;
+    const observacao = document.getElementById('observacaoLeadModal').value.trim();
+    
+    // Validações
+    if (!nome) {
+      alert('Nome é obrigatório');
+      return;
+    }
+    
+    if (!email && !telefone) {
+      alert('Informe pelo menos email ou telefone');
+      return;
+    }
+    
+    if (!empresaId) {
+      alert('Selecione uma empresa');
+      return;
+    }
+    
+    // Montar dados
+    const dados = {
+      nome: nome,
+      email: email || null,
+      telefone: telefone || null,
+      empresa_id: empresaId,
+      dados_extras: {
+        observacao: observacao || null
+      }
+    };
+    
+    console.log('📤 Enviando lead manual:', dados);
+    
+    // Enviar para o backend
+    const response = await fetch('/api/leads/manual', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dados)
+    });
+    
+    const resultado = await response.json();
+    
+    if (response.ok && resultado.success) {
+      console.log('✅ Lead adicionado com sucesso!');
+      alert('Lead adicionado com sucesso!');
+      
+      // Fechar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalAdicionarLead'));
+      modal.hide();
+      
+      // Limpar formulário
+      document.getElementById('formAdicionarLead').reset();
+      
+      // Recarregar leads
+      carregarLeadsCRM();
+    } else {
+      console.error('❌ Erro ao adicionar lead:', resultado);
+      alert('Erro ao adicionar lead: ' + (resultado.message || 'Erro desconhecido'));
+    }
+  } catch (error) {
+    console.error('❌ Erro ao salvar lead:', error);
+    alert('Erro ao salvar lead. Verifique o console para mais detalhes.');
+  }
+}
+
+// Event Listeners
+document.addEventListener('DOMContentLoaded', function() {
+  // Botão "Adicionar Lead" no CRM
+  const btnAdicionarLead = document.getElementById('addLeadBtn');
+  if (btnAdicionarLead) {
+    btnAdicionarLead.addEventListener('click', abrirModalAdicionarLead);
+  }
+  
+  // Botão "Salvar" no modal
+  const btnSalvarLead = document.getElementById('btnSalvarLead');
+  if (btnSalvarLead) {
+    btnSalvarLead.addEventListener('click', salvarLeadManual);
+  }
+});
+
+// Expor funções globalmente
+window.abrirModalAdicionarLead = abrirModalAdicionarLead;
+window.salvarLeadManual = salvarLeadManual;
+</script>
