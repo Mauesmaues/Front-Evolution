@@ -13,6 +13,7 @@ const NotificacaoScheduler = require('../schedulers/NotificacaoScheduler');
 const VisualPropostaController = require('../controllers/VisualPropostaController');
 const CrmController = require('../controllers/CrmController');
 const StageController = require('../controllers/StageController');
+const TrackeamentoController = require('../controllers/TrackeamentoController');
 
 const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
@@ -154,5 +155,9 @@ router.post('/enviarProposta', (req, res) => {
         });
     }
 });
+
+// Trackeamento Avançado
+router.post('/trackeamento/:empresaId', TrackeamentoController.salvarChave);
+router.get('/trackeamento/:empresaId', TrackeamentoController.buscarChave);
 
 module.exports = router;

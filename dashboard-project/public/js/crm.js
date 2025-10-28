@@ -795,7 +795,7 @@ function editarLead(leadId) {
 
 // Função para abrir WhatsApp
 function chamarWhatsApp(telefone, nome) {
-    const telefoneFormatado = telefone.replace(/\D/g, ''); // Remove caracteres não numéricos
+    const telefoneFormatado = telefone.replace(/\D/g, ''); // Removes non-numeric characters
     const mensagem = `Olá ${nome}! Vi que você demonstrou interesse em nossos serviços. Como posso te ajudar?`;
     const url = `https://wa.me/${telefoneFormatado}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, '_blank');
@@ -1568,10 +1568,68 @@ function mostrarToastQualificado(mensagem, tipo = 'info') {
     }, 5000);
 }
 
-// Expor funções globalmente para uso em outros arquivos
-window.carregarLeadsCRM = carregarLeadsCRM;
-window.recarregarLeads = recarregarLeads;
-window.filtrarLeads = filtrarLeads;
-window.allowDrop = allowDrop;
-window.drag = drag;
-window.drop = drop;
+// Trackeamento Avançado - Modal e lógica
+// Abrir modal
+
+const btnTrackeamento = document.getElementById('btnTrackeamentoAvancado');
+if (btnTrackeamento) {
+    btnTrackeamento.addEventListener('click', async () => {
+        const modal = document.getElementById('modalTrackeamentoAvancado');
+        const input = document.getElementById('inputApiPixelMeta');
+        const selectEmpresa = document.getElementById('filtroEmpresaCRM');
+        let empresaId = selectEmpresa ? selectEmpresa.value : null;
+        input.value = '';
+        if (empresaId) {
+            try {
+                const resp = await fetch(`/api/trackeamento/${empresaId}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.api_pixel_meta) {
+                        input.value = data.api_pixel_meta;
+                    }
+                }
+            } catch (e) {
+                // Silencioso: não impede abrir modal
+            }
+        }
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    });
+}
+
+// Fechar modal
+function fecharModalTrackeamento() {
+    document.getElementById('modalTrackeamentoAvancado').style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Salvar chave (agora salva no backend por empresa)
+async function salvarChaveTrackeamento() {
+    const chave = document.getElementById('inputApiPixelMeta').value.trim();
+    const selectEmpresa = document.getElementById('filtroEmpresaCRM');
+    const empresaId = selectEmpresa ? selectEmpresa.value : null;
+    if (!empresaId) {
+        alert('Selecione uma empresa para salvar a chave!');
+        return;
+    }
+    if (!chave) {
+        alert('Informe a chave da API do Pixel Meta!');
+        return;
+    }
+    try {
+        const resp = await fetch(`/api/trackeamento/${empresaId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ api_pixel_meta: chave })
+        });
+        const resultado = await resp.json();
+        if (resp.ok && resultado.success) {
+            fecharModalTrackeamento();
+            alert('Chave salva com sucesso!');
+        } else {
+            throw new Error(resultado.message || 'Erro ao salvar chave');
+        }
+    } catch (err) {
+        alert('Erro ao salvar chave: ' + err.message);
+    }
+}
