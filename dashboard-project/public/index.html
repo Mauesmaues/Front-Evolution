@@ -354,11 +354,39 @@
                     </div>
                 </div>
 
-                <div class="card-body">
+                <div class="card-body" style="position: relative; min-height: 500px;">
+                    <!-- Loading inicial -->
+                    <div id="crmLoadingContainer" style="
+                        display: none;
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: var(--bg-card);
+                        z-index: 10;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 1.5rem;
+                    ">
+                        <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <h5 style="color: var(--text-primary); margin-bottom: 0.5rem;">
+                                <i class="fas fa-sync fa-spin me-2"></i>Preparando CRM
+                            </h5>
+                            <p id="crmLoadingMessage" style="color: var(--text-secondary); font-size: 0.95rem;">
+                                Carregando empresas disponíveis...
+                            </p>
+                        </div>
+                    </div>
+                    
                     <!-- CRM Kanban Board -->
                     <div id="crmKanbanBoard">
                         <!-- Colunas serão renderizadas dinamicamente via JavaScript -->
-                        <!-- As colunas hardcoded foram removidas para suportar stages personalizáveis -->
                     </div>
                 </div>
           </div>

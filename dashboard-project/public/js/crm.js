@@ -10,6 +10,52 @@ window.empresaIdFiltroAtual = ''; // '' = todas, ou ID específico da empresa
 window.stagesEmpresa = [];
 
 // ========================================
+// FUNÇÕES DE LOADING
+// ========================================
+
+/**
+ * Mostra loading no container do CRM
+ */
+function mostrarLoadingCRM(mensagem = 'Carregando...') {
+    const loadingContainer = document.getElementById('crmLoadingContainer');
+    const loadingMessage = document.getElementById('crmLoadingMessage');
+    const kanbanBoard = document.getElementById('crmKanbanBoard');
+    
+    if (loadingContainer) {
+        if (loadingMessage) {
+            loadingMessage.textContent = mensagem;
+        }
+        loadingContainer.style.display = 'flex'; // Usar flex ao invés de block
+        
+        // Esconder kanban board
+        if (kanbanBoard) {
+            kanbanBoard.style.opacity = '0.3';
+        }
+    }
+    
+    console.log(`⏳ [CRM] Loading exibido: ${mensagem}`);
+}
+
+/**
+ * Esconde loading do container do CRM
+ */
+function esconderLoadingCRM() {
+    const loadingContainer = document.getElementById('crmLoadingContainer');
+    const kanbanBoard = document.getElementById('crmKanbanBoard');
+    
+    if (loadingContainer) {
+        loadingContainer.style.display = 'none';
+        
+        // Mostrar kanban board
+        if (kanbanBoard) {
+            kanbanBoard.style.opacity = '1';
+        }
+    }
+    
+    console.log('✅ [CRM] Loading escondido');
+}
+
+// ========================================
 // FUNÇÕES DE STAGES DINÂMICOS
 // ========================================
 
@@ -137,35 +183,54 @@ function criarColunaKanban(stage) {
  * Segue o mesmo padrão do painel de notificações
  */
 async function carregarEmpresasDisponiveisCRM() {
+    const TIMEOUT_MS = 10000; // 10 segundos
+    let timeoutId;
     try {
         console.log('🏢 [CRM] Carregando empresas disponíveis...');
-        
-        const resposta = await fetch('/api/buscarEmpresas');
-        
-        if (!resposta.ok) {
-            if (resposta.status === 401) {
-                console.log('❌ [CRM] Não autenticado');
-                window.location.href = '/login.html';
-                return;
-            }
-            throw new Error(`Erro ao buscar empresas: ${resposta.status}`);
-        }
-        
-        const dados = await resposta.json();
-        console.log('📦 [CRM] Resposta da API:', dados);
-        
-        // Backend retorna { success: true, data: [...] }
-        if (dados.success && Array.isArray(dados.data)) {
-            window.empresasCRM = dados.data;
-            console.log(`✅ [CRM] ${dados.data.length} empresas carregadas`);
+        // Timeout para evitar loading infinito
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('Tempo excedido ao carregar empresas')), TIMEOUT_MS);
+        });
+        // Fetch real
+        const fetchPromise = (async () => {
+            const resposta = await fetch('/api/buscarEmpresas');
             
-            // Atualizar o select de filtro
-            atualizarFiltroEmpresasCRM();
-        } else {
-            console.error('❌ [CRM] Formato de resposta inválido:', dados);
-        }
+            if (!resposta.ok) {
+                if (resposta.status === 401) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                throw new Error(`Erro ao buscar empresas: ${resposta.status}`);
+            }
+            
+            const dados = await resposta.json();
+            console.log('📦 [CRM] Resposta da API:', dados);
+            
+            // Backend retorna { success: true, data: [...] }
+            if (dados.success && Array.isArray(dados.data)) {
+                window.empresasCRM = dados.data;
+                console.log(`✅ [CRM] ${dados.data.length} empresas carregadas`);
+                
+                // Atualizar o select de filtro
+                atualizarFiltroEmpresasCRM();
+            } else {
+                console.error('❌ [CRM] Formato de resposta inválido:', dados);
+                throw new Error('Formato de resposta inválido');
+            }
+        })();
+        // Corrida entre fetch e timeout
+        await Promise.race([fetchPromise, timeoutPromise]);
+        clearTimeout(timeoutId);
     } catch (erro) {
+        clearTimeout(timeoutId);
         console.error('❌ [CRM] Erro ao carregar empresas:', erro);
+        const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+        if (filtroEmpresa) {
+            filtroEmpresa.innerHTML = '<option value="">Erro ao carregar empresas</option>';
+        }
+        mostrarLoadingCRM('Erro ao carregar empresas. Tente novamente mais tarde.');
+        setTimeout(() => esconderLoadingCRM(), 4000);
+        throw erro;
     }
 }
 
@@ -209,25 +274,40 @@ async function filtrarLeadsPorEmpresaCRM() {
     // ⚠️ Se "Todas empresas" selecionado, mostrar aviso
     if (!filtroEmpresaId || filtroEmpresaId === '') {
         console.log('⚠️ [CRM] Nenhuma empresa selecionada');
+        esconderLoadingCRM();
         mostrarAvisoSelecaoEmpresa();
         return;
     }
     
     try {
-        // ⭐ 1. Carregar stages da nova empresa
+        // ⏳ Mostrar loading enquanto carrega
+        mostrarLoadingCRM('Carregando stages da empresa...');
+        
+        // ⭐ 1. Carregar stages da empresa selecionada
         await carregarStagesEmpresa(filtroEmpresaId);
         
-        // ⭐ 2. Renderizar novas colunas
+        // ⭐ 2. Renderizar colunas com os stages
         renderizarColunasKanban();
         
-        // ⭐ 3. Renderizar leads filtrados nas novas colunas
+        // ⏳ Atualizar mensagem de loading
+        mostrarLoadingCRM('Carregando leads...');
+        
+        // ⭐ 3. Carregar leads se ainda não foram carregados
+        if (window.leadsGlobais.length === 0) {
+            await carregarLeadsCRM();
+        }
+        
+        // ⭐ 4. Renderizar leads filtrados pela empresa
         renderizarLeadsCRM(filtroEmpresaId);
         
-        console.log('✅ [CRM] Filtro aplicado com stages atualizados');
+        // ✅ Esconder loading
+        esconderLoadingCRM();
+        
+        console.log('✅ [CRM] Filtro aplicado com sucesso');
     } catch (error) {
         console.error('❌ [CRM] Erro ao filtrar:', error);
-        // Fallback: apenas renderizar leads
-        renderizarLeadsCRM(filtroEmpresaId);
+        esconderLoadingCRM();
+        mostrarErroCarregamento();
     }
 }
 
@@ -1078,39 +1158,27 @@ document.addEventListener('click', function(event) {
             const crmSection = document.getElementById('crmSection');
             if (crmSection && getComputedStyle(crmSection).display !== 'none') {
                 try {
-                    // ⭐ 1. Carregar empresas primeiro
+                    // ⏳ Mostrar loading inicial
+                    mostrarLoadingCRM('Carregando empresas disponíveis...');
+                    
+                    // ⚡ ETAPA 1: Carregar APENAS empresas (super rápido)
                     await carregarEmpresasDisponiveisCRM();
                     
-                    // ⭐ 2. Verificar se há empresa selecionada
-                    const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
-                    const empresaId = filtroEmpresa?.value;
-                    
-                    // ⚠️ Se não houver empresa selecionada, mostrar aviso
-                    if (!empresaId || empresaId === '') {
-                        console.log('⚠️ [CRM] Inicialização: Nenhuma empresa selecionada');
-                        // Criar colunas vazias
-                        await carregarStagesEmpresa(null);
-                        renderizarColunasKanban();
-                        // Mostrar aviso
-                        mostrarAvisoSelecaoEmpresa();
-                        return;
-                    }
-                    
-                    // ⭐ 3. Carregar stages da empresa
-                    await carregarStagesEmpresa(empresaId);
-                    
-                    // ⭐ 4. Renderizar colunas do Kanban com stages
+                    // ⚡ ETAPA 2: Criar colunas padrão vazias
+                    await carregarStagesEmpresa(null);
                     renderizarColunasKanban();
                     
-                    // ⭐ 5. Carregar leads
-                    await carregarLeadsCRM();
+                    // ⚡ ETAPA 3: Esconder loading e mostrar aviso
+                    esconderLoadingCRM();
+                    mostrarAvisoSelecaoEmpresa();
                     
-                    // ⭐ 6. Filtrar leads pela empresa selecionada
-                    renderizarLeadsCRM(empresaId);
+                    console.log('✅ [CRM] Interface pronta - aguardando seleção de empresa');
+                    console.log('💡 [CRM] Stages e leads serão carregados quando empresa for selecionada');
                     
-                    console.log('✅ [CRM] Sistema inicializado com stages dinâmicos');
                 } catch (error) {
                     console.error('❌ [CRM] Erro na inicialização:', error);
+                    esconderLoadingCRM();
+                    mostrarErroCarregamento();
                 }
             }
         }, 100);

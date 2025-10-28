@@ -23,47 +23,41 @@ const Empresa = require('../models/Empresa');
 
     async function buscarEmpresas(req, res) {
         try {
-            // Verificar se há usuário logado na sessão
             if (!req.session || !req.session.user) {
                 return res.status(401).json(responseFormatter.error('Usuário não autenticado'));
             }
-
             const usuario = req.session.user;
             let empresas = [];
-
-            // ADMIN e GESTOR: acesso a todas as empresas
             if (usuario.permissao === 'ADMIN' || usuario.permissao === 'GESTOR') {
                 const { data, error } = await supabase
-                    .from("empresas")   
-                    .select("*");      
-
+                    .from('empresas')
+                    .select('id, nome, contaDeAnuncio');
                 if (error) throw error;
                 empresas = data || [];
-            } 
-            // USER: apenas empresas vinculadas
-            else if (usuario.permissao === 'USER') {
-                // Buscar empresas vinculadas ao usuário
-                const { data: empresasVinculadas, error: errorVinculo } = await supabase
+            } else if (usuario.permissao === 'USER') {
+                // 1. Buscar IDs das empresas vinculadas
+                const { data: vinculos, error: errorVinculo } = await supabase
                     .from('usuario_empresa')
-                    .select(`
-                        empresa_id,
-                        empresas (
-                            id,
-                            nome,
-                            contaDeAnuncio
-                        )
-                    `)
+                    .select('empresa_id')
                     .eq('usuario_id', usuario.id);
-
                 if (errorVinculo) throw errorVinculo;
-
-                // Extrair dados das empresas
-                empresas = empresasVinculadas.map(vinculo => vinculo.empresas);
+                if (!vinculos || vinculos.length === 0) {
+                    // Nenhuma empresa vinculada, retorna vazio imediatamente
+                    res.status(200).json(responseFormatter.success([]));
+                    return;
+                }
+                const empresaIds = vinculos.map(v => v.empresa_id);
+                // 2. Buscar empresas por esses IDs
+                const { data, error } = await supabase
+                    .from('empresas')
+                    .select('id, nome, contaDeAnuncio')
+                    .in('id', empresaIds);
+                if (error) throw error;
+                empresas = data || [];
             }
-
             res.status(200).json(responseFormatter.success(empresas));
         } catch (error) {
-            res.status(500).json(responseFormatter.error("Erro ao buscar empresas", error));
+            res.status(500).json(responseFormatter.error('Erro ao buscar empresas', error));
         }
     }
     async function atualizarEmpresa(req, res) {
