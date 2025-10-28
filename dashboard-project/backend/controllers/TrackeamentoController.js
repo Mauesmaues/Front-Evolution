@@ -6,9 +6,12 @@ const TrackeamentoController = {
   async salvarChave(req, res) {
     try {
       const { empresaId } = req.params;
-      const { api_pixel_meta } = req.body;
+      const { api_pixel_meta, id_pixel_meta } = req.body;
       if (!api_pixel_meta) {
         return res.status(400).json(responseFormatter.error('Chave da API do Pixel Meta é obrigatória'));
+      }
+      if (!id_pixel_meta) {
+        return res.status(400).json(responseFormatter.error('ID do Pixel Meta é obrigatório'));
       }
       // Upsert: se já existe, atualiza; se não, insere
       const { data, error } = await supabase
@@ -16,12 +19,13 @@ const TrackeamentoController = {
         .upsert({
           id_empresa: parseInt(empresaId),
           api_pixel_meta: api_pixel_meta,
+          id_pixel_meta: id_pixel_meta,
           atualizado_em: new Date().toISOString()
         }, { onConflict: ['id_empresa'] })
         .select()
         .single();
       if (error) throw error;
-      return res.status(200).json(responseFormatter.success(data, 'Chave salva com sucesso'));
+      return res.status(200).json(responseFormatter.success(data, 'Chave e ID salvos com sucesso'));
     } catch (error) {
       return res.status(500).json(responseFormatter.error('Erro ao salvar chave', error));
     }
@@ -33,7 +37,7 @@ const TrackeamentoController = {
       const { empresaId } = req.params;
       const { data, error } = await supabase
         .from('trackeamento_empresa')
-        .select('api_pixel_meta')
+        .select('api_pixel_meta, id_pixel_meta')
         .eq('id_empresa', empresaId)
         .maybeSingle();
       if (error) throw error;

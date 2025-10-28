@@ -1,6 +1,9 @@
+
 // Rotas da API (opcional)
 const express = require('express');
 const router = express.Router();
+
+const MetaConversionController = require('../controllers/MetaConversionController');
 
 const EmpresaController = require('../controllers/EmpresaController');
 const usuarioController = require('../controllers/UsuarioController');
@@ -17,6 +20,9 @@ const TrackeamentoController = require('../controllers/TrackeamentoController');
 
 const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
+
+// Enviar lead qualificado para o Meta (API de Conversões)
+router.post('/leads/:id/enviar-para-meta/:empresaId', MetaConversionController.enviarLead);
 
 router.post('/criarEmpresa', EmpresaController.create);
 router.get('/buscarEmpresas', EmpresaController.buscarEmpresas);

@@ -466,6 +466,8 @@ async function carregarLeadsCRM() {
 
 // Função para processar lead que veio do banco de dados
 function processarLeadDoBanco(lead) {
+    // Logar id do lead carregado
+    console.log('[CRM] processarLeadDoBanco - id do lead:', lead.id, lead);
     // Extrair informações principais
     const nome = lead.nome || 'Nome não informado';
     const email = lead.email || 'Email não informado';
@@ -1325,10 +1327,13 @@ async function adicionarComentarioPopup(leadId) {
  * @param {string} leadId - ID do lead
  */
 function abrirModalLeadQualificado(leadId) {
+    console.log('[CRM] abrirModalLeadQualificado - leadId recebido:', leadId);
     // Busca robusta: aceita string ou número
+    // leadId pode vir como string ou número, garantir busca correta
     const leadObj = window.leadsGlobais?.find(item => String(item.lead.id) === String(leadId));
-    if (!leadObj) {
-        console.error('Lead não encontrado', leadId, window.leadsGlobais.map(x => x.lead.id));
+    if (!leadObj || !leadObj.lead || !leadObj.lead.id) {
+        console.error('Lead não encontrado ou sem ID válido', leadId, window.leadsGlobais.map(x => x.lead.id));
+        alert('Erro: Lead não encontrado ou sem ID válido. Não é possível qualificar este lead.');
         return;
     }
     const leadData = leadObj.lead;
@@ -1336,11 +1341,11 @@ function abrirModalLeadQualificado(leadId) {
 
     // Criar modal de confirmação
     const modalHTML = `
-        <div class="modal-overlay-qualificado" id="modal-qualificado-${leadId}" onclick="fecharModalLeadQualificado('${leadId}')">
+        <div class="modal-overlay-qualificado" id="modal-qualificado-${leadData.id}" onclick="fecharModalLeadQualificado('${leadData.id}')">
             <div class="modal-content-qualificado" onclick="event.stopPropagation()">
                 <div class="modal-header-qualificado">
                     <h4><i class="fas fa-star text-warning"></i> Lead Qualificado</h4>
-                    <button class="btn-close-modal" onclick="fecharModalLeadQualificado('${leadId}')">&times;</button>
+                    <button class="btn-close-modal" onclick="fecharModalLeadQualificado('${leadData.id}')">&times;</button>
                 </div>
                 
                 <div class="modal-body-qualificado">
@@ -1372,10 +1377,10 @@ function abrirModalLeadQualificado(leadId) {
                 </div>
                 
                 <div class="modal-footer-qualificado">
-                    <button class="btn-cancelar-qualificado" onclick="fecharModalLeadQualificado('${leadId}')">
+                    <button class="btn-cancelar-qualificado" onclick="fecharModalLeadQualificado('${leadData.id}')">
                         <i class="fas fa-times"></i> Cancelar
                     </button>
-                    <button class="btn-confirmar-qualificado" onclick="confirmarLeadQualificado('${leadId}')">
+                    <button class="btn-confirmar-qualificado" onclick="confirmarLeadQualificado('${leadData.id}')">
                         <i class="fas fa-star"></i> Confirmar e Otimizar
                     </button>
                 </div>
@@ -1415,7 +1420,7 @@ async function confirmarLeadQualificado(leadId) {
             btnConfirmar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
         }
 
-        // Enviar para o backend
+        // Enviar para o backend (marcar como qualificado)
         const response = await fetch(`/api/leads/${leadId}/qualificado`, {
             method: 'POST',
             headers: {
@@ -1426,20 +1431,47 @@ async function confirmarLeadQualificado(leadId) {
                 timestamp: new Date().toISOString()
             })
         });
-
         const resultado = await response.json();
-
         if (!response.ok) {
             throw new Error(resultado.message || 'Erro ao marcar lead como qualificado');
         }
-
         console.log('✅ Lead marcado como qualificado com sucesso');
+
+        // Após marcar como qualificado, enviar para o Meta
+        const selectEmpresa = document.getElementById('filtroEmpresaCRM');
+        const empresaId = selectEmpresa ? selectEmpresa.value : null;
+        // Garantir que leadId é passado corretamente
+        if (empresaId && leadId) {
+            try {
+                const respMeta = await fetch(`/api/leads/${encodeURIComponent(leadId)}/enviar-para-meta/${encodeURIComponent(empresaId)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const metaResult = await respMeta.json();
+                if (respMeta.ok && metaResult.success) {
+                    mostrarToastQualificado('Lead enviado para o Meta com sucesso!', 'success');
+                } else {
+                    let msg = 'Lead qualificado, mas falha ao enviar para o Meta: ';
+                    if (metaResult && metaResult.error) {
+                        msg += (metaResult.error.message || JSON.stringify(metaResult.error));
+                    } else if (metaResult && metaResult.message) {
+                        msg += metaResult.message;
+                    } else {
+                        msg += 'Erro desconhecido';
+                    }
+                    mostrarToastQualificado(msg, 'warning');
+                }
+            } catch (err) {
+                mostrarToastQualificado('Lead qualificado, mas erro ao enviar para o Meta.', 'warning');
+            }
+        } else if (!empresaId) {
+            mostrarToastQualificado('Lead qualificado, mas nenhuma empresa selecionada para envio ao Meta.', 'warning');
+        } else {
+            mostrarToastQualificado('Lead qualificado, mas ID do lead não encontrado.', 'error');
+        }
 
         // Fechar modal
         fecharModalLeadQualificado(leadId);
-
-        // Mostrar mensagem de sucesso
-        mostrarToastQualificado('Lead marcado como qualificado! A plataforma irá otimizar para encontrar leads semelhantes.', 'success');
 
         // Adicionar badge visual no card
         const leadCard = document.querySelector(`[data-lead-id="${leadId}"]`);
@@ -1456,7 +1488,6 @@ async function confirmarLeadQualificado(leadId) {
     } catch (error) {
         console.error('❌ Erro ao marcar lead como qualificado:', error);
         mostrarToastQualificado('Erro ao marcar lead como qualificado. Tente novamente.', 'error');
-        
         // Restaurar botão
         const btnConfirmar = document.querySelector(`#modal-qualificado-${leadId} .btn-confirmar-qualificado`);
         if (btnConfirmar) {
@@ -1546,7 +1577,8 @@ function mostrarToastQualificado(mensagem, tipo = 'info') {
     const colorMap = {
         success: '#28a745',
         error: '#dc3545',
-        info: '#17a2b8'
+        info: '#17a2b8',
+        warning: '#ffc107' // amarelo escuro para warning
     };
 
     const toastHTML = `
@@ -1575,17 +1607,20 @@ const btnTrackeamento = document.getElementById('btnTrackeamentoAvancado');
 if (btnTrackeamento) {
     btnTrackeamento.addEventListener('click', async () => {
         const modal = document.getElementById('modalTrackeamentoAvancado');
-        const input = document.getElementById('inputApiPixelMeta');
+        const inputChave = document.getElementById('inputApiPixelMeta');
+        const inputId = document.getElementById('inputIdPixelMeta');
         const selectEmpresa = document.getElementById('filtroEmpresaCRM');
         let empresaId = selectEmpresa ? selectEmpresa.value : null;
-        input.value = '';
+        inputChave.value = '';
+        inputId.value = '';
         if (empresaId) {
             try {
                 const resp = await fetch(`/api/trackeamento/${empresaId}`);
                 if (resp.ok) {
                     const data = await resp.json();
-                    if (data && data.api_pixel_meta) {
-                        input.value = data.api_pixel_meta;
+                    if (data && data.data) {
+                        if (data.data.api_pixel_meta) inputChave.value = data.data.api_pixel_meta;
+                        if (data.data.id_pixel_meta) inputId.value = data.data.id_pixel_meta;
                     }
                 }
             } catch (e) {
@@ -1606,6 +1641,7 @@ function fecharModalTrackeamento() {
 // Salvar chave (agora salva no backend por empresa)
 async function salvarChaveTrackeamento() {
     const chave = document.getElementById('inputApiPixelMeta').value.trim();
+    const idPixel = document.getElementById('inputIdPixelMeta').value.trim();
     const selectEmpresa = document.getElementById('filtroEmpresaCRM');
     const empresaId = selectEmpresa ? selectEmpresa.value : null;
     if (!empresaId) {
@@ -1616,16 +1652,20 @@ async function salvarChaveTrackeamento() {
         alert('Informe a chave da API do Pixel Meta!');
         return;
     }
+    if (!idPixel) {
+        alert('Informe o ID do Pixel Meta!');
+        return;
+    }
     try {
         const resp = await fetch(`/api/trackeamento/${empresaId}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ api_pixel_meta: chave })
+            body: JSON.stringify({ api_pixel_meta: chave, id_pixel_meta: idPixel })
         });
         const resultado = await resp.json();
         if (resp.ok && resultado.success) {
             fecharModalTrackeamento();
-            alert('Chave salva com sucesso!');
+            alert('Chave e ID salvos com sucesso!');
         } else {
             throw new Error(resultado.message || 'Erro ao salvar chave');
         }
