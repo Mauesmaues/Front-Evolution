@@ -12,6 +12,7 @@ const { carregarEmpresasPermitidas } = require('../controllers/PermissaoControll
 const NotificacaoScheduler = require('../schedulers/NotificacaoScheduler');
 const VisualPropostaController = require('../controllers/VisualPropostaController');
 const CrmController = require('../controllers/CrmController');
+const StageController = require('../controllers/StageController');
 
 const testeCrm = require('../service/CrmService');
 router.get('/testeCrm', testeCrm.getData);
@@ -48,6 +49,16 @@ router.put('/leads/:id/stage', CrmController.atualizarStage);
 
 // Marcar lead como qualificado (otimização de campanhas)
 router.post('/leads/:id/qualificado', CrmController.marcarLeadQualificado);
+
+// ========== ROTAS DE STAGES (ETAPAS PERSONALIZÁVEIS) ==========
+// Buscar stages de uma empresa (retorna padrão se não existir)
+router.get('/stages/:empresaId', StageController.buscarStages);
+
+// Salvar/atualizar stages de uma empresa
+router.post('/stages/:empresaId', StageController.salvarStages);
+
+// Resetar stages para o padrão
+router.delete('/stages/:empresaId', StageController.resetarStages);
 // ===================================
 
 // Rotas de notificações

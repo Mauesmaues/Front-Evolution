@@ -396,20 +396,20 @@ const CrmController = {
         );
       }
 
-      // Validar valores permitidos de stage
-      const stagesValidos = ['entrou', 'qualificado', 'conversao', 'ganho'];
-      if (!stagesValidos.includes(stage)) {
-        return res.status(400).json(
-          responseFormatter.error(`Stage inválido. Valores permitidos: ${stagesValidos.join(', ')}`)
-        );
-      }
+      // ⭐ VALIDAÇÃO REMOVIDA: Com stages dinâmicos, qualquer valor é permitido
+      // A validação agora é feita pelo StageController ao configurar stages
+      // Antigo código (REMOVIDO):
+      // const stagesValidos = ['entrou', 'qualificado', 'conversao', 'ganho'];
+      // if (!stagesValidos.includes(stage)) { ... }
 
       // Verificar sessão do usuário
-      const usuario = req.session.usuario;
+      const usuario = req.session.user; // ⚠️ CORRIGIDO: era req.session.usuario
       if (!usuario) {
         console.error('❌ [CrmController] Usuário não autenticado');
         return res.status(401).json(responseFormatter.error('Usuário não autenticado'));
       }
+
+      console.log(`👤 [CrmController] Usuário: ${usuario.nome} (${usuario.permissao})`);
 
       // Buscar o lead para verificar permissões
       const { data: lead, error: errorLead } = await supabase
@@ -462,6 +462,18 @@ const CrmController = {
 
       if (error) {
         console.error('❌ [CrmController] Erro ao atualizar stage:', error);
+        
+        // Mensagem específica para constraint de stage
+        if (error.code === '23514' && error.message.includes('leads_stage_check')) {
+          return res.status(400).json(
+            responseFormatter.error(
+              '⚠️ ERRO DE CONSTRAINT: A tabela leads tem uma constraint que valida apenas stages antigos (entrou, agendou, analisando, fechou). ' +
+              'Para usar stages personalizados, execute o script: docs/fix-stage-constraint.sql no banco de dados. ' +
+              'Este script remove a constraint e permite qualquer valor de stage.'
+            )
+          );
+        }
+        
         throw new Error(`Erro ao atualizar stage: ${error.message}`);
       }
 
@@ -502,11 +514,13 @@ const CrmController = {
       }
 
       // Verificar sessão do usuário
-      const usuario = req.session.usuario;
+      const usuario = req.session.user; // ⚠️ CORRIGIDO: era req.session.usuario
       if (!usuario) {
         console.error('❌ [CrmController] Usuário não autenticado');
         return res.status(401).json(responseFormatter.error('Usuário não autenticado'));
       }
+
+      console.log(`👤 [CrmController] Usuário: ${usuario.nome} (${usuario.permissao})`);
 
       // Buscar o lead para verificar permissões e obter dados completos
       const { data: lead, error: errorLead } = await supabase

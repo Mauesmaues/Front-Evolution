@@ -6,6 +6,128 @@ window.leadsGlobais = [];
 window.empresasCRM = []; // ⭐ Array para armazenar empresas
 window.empresaIdFiltroAtual = ''; // '' = todas, ou ID específico da empresa
 
+// ⭐ Variável global para armazenar stages da empresa
+window.stagesEmpresa = [];
+
+// ========================================
+// FUNÇÕES DE STAGES DINÂMICOS
+// ========================================
+
+/**
+ * Carrega stages da empresa atual
+ * Retorna stages personalizados ou padrão
+ */
+async function carregarStagesEmpresa(empresaId) {
+    try {
+        console.log(`📋 [CRM] Carregando stages da empresa ${empresaId || 'padrão'}...`);
+        
+        // Se não tiver empresa, usar stages padrão
+        if (!empresaId) {
+            console.log('ℹ️ [CRM] Sem empresa selecionada, usando stages padrão');
+            window.stagesEmpresa = getStagesPadrao();
+            return window.stagesEmpresa;
+        }
+        
+        const response = await fetch(`/api/stages/${empresaId}`);
+        
+        if (!response.ok) {
+            console.warn('⚠️ [CRM] Erro ao buscar stages, usando padrão');
+            window.stagesEmpresa = getStagesPadrao();
+            return window.stagesEmpresa;
+        }
+        
+        const resultado = await response.json();
+        
+        if (resultado.success && resultado.data && resultado.data.estagios) {
+            window.stagesEmpresa = resultado.data.estagios;
+            console.log(`✅ [CRM] ${window.stagesEmpresa.length} stages carregados`);
+            return window.stagesEmpresa;
+        } else {
+            console.warn('⚠️ [CRM] Resposta inválida, usando stages padrão');
+            window.stagesEmpresa = getStagesPadrao();
+            return window.stagesEmpresa;
+        }
+    } catch (error) {
+        console.error('❌ [CRM] Erro ao carregar stages:', error);
+        window.stagesEmpresa = getStagesPadrao();
+        return window.stagesEmpresa;
+    }
+}
+
+/**
+ * Retorna stages padrão
+ */
+function getStagesPadrao() {
+    return [
+        { id: 'entrou', nome: 'Entrou', cor: '#2196F3', ordem: 1 },
+        { id: 'qualificado', nome: 'Qualificado', cor: '#FF9800', ordem: 2 },
+        { id: 'conversao', nome: 'Conversão', cor: '#9C27B0', ordem: 3 },
+        { id: 'ganho', nome: 'Ganho', cor: '#4CAF50', ordem: 4 }
+    ];
+}
+
+/**
+ * Renderiza as colunas do Kanban baseado nos stages
+ */
+function renderizarColunasKanban() {
+    const kanbanContainer = document.querySelector('#crmKanbanBoard');
+    
+    if (!kanbanContainer) {
+        console.error('❌ [CRM] Container do Kanban não encontrado');
+        return;
+    }
+    
+    console.log(`🎨 [CRM] Renderizando ${window.stagesEmpresa.length} colunas...`);
+    
+    // Ordenar stages
+    const stagesOrdenados = [...window.stagesEmpresa].sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    
+    // Limpar container
+    kanbanContainer.innerHTML = '';
+    
+    // Criar cada coluna
+    stagesOrdenados.forEach(stage => {
+        const coluna = criarColunaKanban(stage);
+        kanbanContainer.appendChild(coluna);
+    });
+    
+    // ⭐ Re-anexar event listeners de drag & drop
+    const colunas = document.querySelectorAll('.crm-column-body');
+    colunas.forEach(coluna => {
+        coluna.addEventListener('dragover', allowDrop);
+        coluna.addEventListener('drop', drop);
+        coluna.addEventListener('dragleave', function() {
+            this.classList.remove('drag-over');
+        });
+    });
+    
+    console.log('✅ [CRM] Colunas renderizadas com event listeners');
+}
+
+/**
+ * Cria elemento HTML de uma coluna do Kanban
+ */
+function criarColunaKanban(stage) {
+    const colDiv = document.createElement('div');
+    colDiv.className = 'crm-column';
+    colDiv.setAttribute('data-stage', stage.id);
+    
+    colDiv.innerHTML = `
+        <div class="crm-column-header text-white text-center p-3 rounded-top" style="background-color: ${stage.cor}">
+            <h6 class="mb-0">${stage.nome}</h6>
+            <small class="contador-stage">(0)</small>
+        </div>
+        <div class="crm-column-body bg-light p-3 rounded-bottom" 
+             style="min-height: 400px;" 
+             ondrop="drop(event)" 
+             ondragover="allowDrop(event)">
+            <!-- Cards serão adicionados aqui -->
+        </div>
+    `;
+    
+    return colDiv;
+}
+
 // ========================================
 // FUNÇÕES DE FILTRO POR EMPRESA
 // ========================================
@@ -78,11 +200,35 @@ function atualizarFiltroEmpresasCRM() {
 /**
  * Filtra os leads por empresa selecionada
  * Segue o padrão de notificacoes.js -> filtrarNotificacoes()
+ * ⭐ ATUALIZADO: Recarrega stages ao mudar empresa
  */
-function filtrarLeadsPorEmpresaCRM() {
+async function filtrarLeadsPorEmpresaCRM() {
     const filtroEmpresaId = document.getElementById('filtroEmpresaCRM').value;
     console.log('🔄 [CRM] Filtrando por empresa:', filtroEmpresaId || 'TODAS');
-    renderizarLeadsCRM(filtroEmpresaId);
+    
+    // ⚠️ Se "Todas empresas" selecionado, mostrar aviso
+    if (!filtroEmpresaId || filtroEmpresaId === '') {
+        console.log('⚠️ [CRM] Nenhuma empresa selecionada');
+        mostrarAvisoSelecaoEmpresa();
+        return;
+    }
+    
+    try {
+        // ⭐ 1. Carregar stages da nova empresa
+        await carregarStagesEmpresa(filtroEmpresaId);
+        
+        // ⭐ 2. Renderizar novas colunas
+        renderizarColunasKanban();
+        
+        // ⭐ 3. Renderizar leads filtrados nas novas colunas
+        renderizarLeadsCRM(filtroEmpresaId);
+        
+        console.log('✅ [CRM] Filtro aplicado com stages atualizados');
+    } catch (error) {
+        console.error('❌ [CRM] Erro ao filtrar:', error);
+        // Fallback: apenas renderizar leads
+        renderizarLeadsCRM(filtroEmpresaId);
+    }
 }
 
 /**
@@ -109,9 +255,22 @@ function renderizarLeadsCRM(filtroEmpresaId = '') {
     // Limpar colunas
     limparColunasEContadores();
     
-    // Renderizar cada lead filtrado
+    // Renderizar cada lead filtrado com seu stage correto
     leadsFiltrados.forEach(item => {
-        criarCardLead(item.lead, item.stageSalva);
+        // ⭐ Criar objeto resposta simulado
+        const respostaSimulada = {
+            id: item.lead.id,
+            created_time: item.lead.created_time,
+            nome: item.lead.nome,
+            email: item.lead.email,
+            telefone: item.lead.telefone,
+            respostas: item.lead.respostas
+        };
+        
+        // ⭐ Passar o stageSalva correto para posicionar o lead
+        criarCardLead(respostaSimulada, item.lead.formulario, item.stageSalva);
+        
+        console.log(`📌 [CRM] Lead ${item.lead.nome} renderizado no stage: ${item.stageSalva}`);
     });
     
     // Atualizar contadores
@@ -523,13 +682,21 @@ function atualizarContadoresColunas() {
     const colunas = document.querySelectorAll('.crm-column');
     colunas.forEach(coluna => {
         const cards = coluna.querySelectorAll('.lead-card');
+        
+        // ⭐ Atualizar contador no header (classe .contador-stage)
+        const contadorStage = coluna.querySelector('.contador-stage');
+        if (contadorStage) {
+            contadorStage.textContent = `(${cards.length})`;
+        }
+        
+        // ⭐ Fallback: suporte ao contador antigo (se existir)
         const contador = coluna.querySelector('.column-counter');
         if (contador) {
             contador.textContent = cards.length;
         } else {
-            // Criar contador se não existir
+            // Criar contador se não existir (compatibilidade)
             const header = coluna.querySelector('.crm-column-header h6');
-            if (header) {
+            if (header && !contadorStage) {
                 const badge = document.createElement('span');
                 badge.className = 'column-counter badge bg-secondary ms-2';
                 badge.textContent = cards.length;
@@ -907,13 +1074,44 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('click', function(event) {
     if (event.target && event.target.id === 'crm') {
         // Aguardar o painel ser exibido
-        setTimeout(() => {
+        setTimeout(async () => {
             const crmSection = document.getElementById('crmSection');
             if (crmSection && getComputedStyle(crmSection).display !== 'none') {
-                // ⭐ Carregar empresas primeiro (padrão notificações)
-                carregarEmpresasDisponiveisCRM().then(() => {
-                    carregarLeadsCRM();
-                });
+                try {
+                    // ⭐ 1. Carregar empresas primeiro
+                    await carregarEmpresasDisponiveisCRM();
+                    
+                    // ⭐ 2. Verificar se há empresa selecionada
+                    const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+                    const empresaId = filtroEmpresa?.value;
+                    
+                    // ⚠️ Se não houver empresa selecionada, mostrar aviso
+                    if (!empresaId || empresaId === '') {
+                        console.log('⚠️ [CRM] Inicialização: Nenhuma empresa selecionada');
+                        // Criar colunas vazias
+                        await carregarStagesEmpresa(null);
+                        renderizarColunasKanban();
+                        // Mostrar aviso
+                        mostrarAvisoSelecaoEmpresa();
+                        return;
+                    }
+                    
+                    // ⭐ 3. Carregar stages da empresa
+                    await carregarStagesEmpresa(empresaId);
+                    
+                    // ⭐ 4. Renderizar colunas do Kanban com stages
+                    renderizarColunasKanban();
+                    
+                    // ⭐ 5. Carregar leads
+                    await carregarLeadsCRM();
+                    
+                    // ⭐ 6. Filtrar leads pela empresa selecionada
+                    renderizarLeadsCRM(empresaId);
+                    
+                    console.log('✅ [CRM] Sistema inicializado com stages dinâmicos');
+                } catch (error) {
+                    console.error('❌ [CRM] Erro na inicialização:', error);
+                }
             }
         }, 100);
     }
@@ -1198,6 +1396,65 @@ async function confirmarLeadQualificado(leadId) {
             btnConfirmar.innerHTML = '<i class="fas fa-star"></i> Confirmar e Otimizar';
         }
     }
+}
+
+/**
+ * Mostra aviso quando "Todas empresas" está selecionado
+ */
+function mostrarAvisoSelecaoEmpresa() {
+    const kanbanContainer = document.querySelector('#crmKanbanBoard');
+    
+    if (!kanbanContainer) return;
+    
+    // Limpar conteúdo atual
+    kanbanContainer.innerHTML = `
+        <div style="
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            gap: 1.5rem;
+        ">
+            <div style="
+                font-size: 4rem;
+                color: var(--text-secondary);
+                opacity: 0.5;
+            ">
+                <i class="fas fa-building"></i>
+            </div>
+            <div>
+                <h4 style="color: var(--text-primary); margin-bottom: 0.5rem;">
+                    Selecione uma empresa
+                </h4>
+                <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 500px;">
+                    Para visualizar os leads do CRM, por favor selecione uma empresa específica no filtro acima.
+                </p>
+            </div>
+            <div style="
+                background: var(--bg-card-2);
+                border-left: 4px solid var(--primary);
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                max-width: 600px;
+            ">
+                <p style="
+                    margin: 0;
+                    color: var(--text-secondary);
+                    font-size: 0.9rem;
+                    line-height: 1.6;
+                ">
+                    <i class="fas fa-info-circle" style="color: var(--primary); margin-right: 0.5rem;"></i>
+                    <strong>Dica:</strong> Cada empresa pode ter etapas personalizadas. 
+                    Selecione uma empresa para ver as etapas específicas do CRM dela.
+                </p>
+            </div>
+        </div>
+    `;
+    
+    console.log('⚠️ [CRM] Aviso "Selecione uma empresa" exibido');
 }
 
 /**
