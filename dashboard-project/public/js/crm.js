@@ -1325,12 +1325,13 @@ async function adicionarComentarioPopup(leadId) {
  * @param {string} leadId - ID do lead
  */
 function abrirModalLeadQualificado(leadId) {
-    const leadData = window.leadsGlobais?.find(lead => lead.id === leadId);
-    if (!leadData) {
-        console.error('Lead não encontrado');
+    // Busca robusta: aceita string ou número
+    const leadObj = window.leadsGlobais?.find(item => String(item.lead.id) === String(leadId));
+    if (!leadObj) {
+        console.error('Lead não encontrado', leadId, window.leadsGlobais.map(x => x.lead.id));
         return;
     }
-
+    const leadData = leadObj.lead;
     const nome = leadData.nome || 'Lead sem nome';
 
     // Criar modal de confirmação
@@ -1352,11 +1353,10 @@ function abrirModalLeadQualificado(leadId) {
                     <div class="confirmacao-message">
                         <i class="fas fa-question-circle text-info fa-3x mb-3"></i>
                         <p class="text-center fs-5">
-                            <strong>Deseja retornar esse lead para a meta como um lead qualificado?</strong>
+                            <strong>Realmente deseja enviar o lead para o META como qualificado?</strong>
                         </p>
                         <p class="text-muted text-center">
-                            Isso fará com que a plataforma tente alcançar mais leads como este, 
-                            otimizando seus anúncios e melhorando seus resultados.
+                            Ao fazer isso sua campanha será otimizada para buscar perfis semelhantes a este marcado como qualificado.
                         </p>
                     </div>
                     
