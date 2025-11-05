@@ -16,6 +16,38 @@ window.stagesEmpresa = [];
 /**
  * Mostra loading no container do CRM
  */
+function inicializarPainelCRM() {
+    setTimeout(async () => {
+        const crmSection = document.getElementById('crmSection');
+        if (crmSection && getComputedStyle(crmSection).display !== 'none') {
+            try {
+                mostrarLoadingCRM('Carregando empresas disponíveis...');
+                await carregarEmpresasDisponiveisCRM();
+                await carregarStagesEmpresa(null);
+                renderizarColunasKanban();
+                const filtroSalvo = localStorage.getItem('crm_empresa_filtro');
+                if (!filtroSalvo || filtroSalvo === '') {
+                    esconderLoadingCRM();
+                    mostrarAvisoSelecaoEmpresa();
+                    console.log('✅ [CRM] Interface pronta - aguardando seleção de empresa');
+                    console.log('💡 [CRM] Stages e leads serão carregados quando empresa for selecionada');
+                }
+            } catch (error) {
+                console.error('❌ [CRM] Erro na inicialização:', error);
+                esconderLoadingCRM();
+                mostrarErroCarregamento();
+            }
+        }
+    }, 100);
+}
+
+document.addEventListener('click', function(event) {
+    event.preventDefault();
+    if (event.target && event.target.id === 'crm') {
+            inicializarPainelCRM();
+        }
+    });
+
 function mostrarLoadingCRM(mensagem = 'Carregando...') {
     const loadingContainer = document.getElementById('crmLoadingContainer');
     const loadingMessage = document.getElementById('crmLoadingMessage');
@@ -193,29 +225,70 @@ async function carregarEmpresasDisponiveisCRM() {
         });
         // Fetch real
         const fetchPromise = (async () => {
-            const resposta = await fetch('/api/buscarEmpresas');
-            
-            if (!resposta.ok) {
-                if (resposta.status === 401) {
-                    window.location.href = '/login.html';
-                    return;
+            let resposta, dados;
+            try {
+                resposta = await fetch('/api/buscarEmpresas');
+                if (!resposta.ok) {
+                    if (resposta.status === 401) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    throw new Error(`Erro ao buscar empresas: ${resposta.status}`);
                 }
-                throw new Error(`Erro ao buscar empresas: ${resposta.status}`);
+                dados = await resposta.json();
+            } catch (err) {
+                // Erro de rede ou fetch
+                const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+                if (filtroEmpresa) {
+                    filtroEmpresa.innerHTML = '<option value="">Erro ao carregar empresas</option>';
+                    filtroEmpresa.disabled = true;
+                }
+                mostrarLoadingCRM('Erro ao carregar empresas. Tente novamente mais tarde.');
+                // Não some o loading automaticamente, feedback persistente
+                return;
             }
-            
-            const dados = await resposta.json();
             console.log('📦 [CRM] Resposta da API:', dados);
-            
             // Backend retorna { success: true, data: [...] }
             if (dados.success && Array.isArray(dados.data)) {
                 window.empresasCRM = dados.data;
                 console.log(`✅ [CRM] ${dados.data.length} empresas carregadas`);
-                
-                // Atualizar o select de filtro
                 atualizarFiltroEmpresasCRM();
+                const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+                // Caso 1: Nenhuma empresa disponível
+                if (window.empresasCRM.length === 0) {
+                    if (filtroEmpresa) {
+                        filtroEmpresa.innerHTML = '<option value="">Nenhuma empresa disponível</option>';
+                        filtroEmpresa.disabled = true;
+                    }
+                    mostrarLoadingCRM('Nenhuma empresa disponível para seu usuário.');
+                    setTimeout(() => esconderLoadingCRM(), 3000);
+                    return;
+                }
+                // Caso 2: Filtro salvo inválido
+                const filtroSalvo = localStorage.getItem('crm_empresa_filtro');
+                const idsEmpresas = window.empresasCRM.map(e => String(e.id));
+                if (filtroSalvo && filtroSalvo !== '' && idsEmpresas.includes(filtroSalvo)) {
+                    filtroEmpresa.value = filtroSalvo;
+                    await filtrarLeadsPorEmpresaCRM();
+                    return;
+                } else {
+                    // Limpar filtro inválido
+                    localStorage.removeItem('crm_empresa_filtro');
+                    filtroEmpresa.value = '';
+                    esconderLoadingCRM();
+                    mostrarAvisoSelecaoEmpresa();
+                    return;
+                }
             } else {
-                console.error('❌ [CRM] Formato de resposta inválido:', dados);
-                throw new Error('Formato de resposta inválido');
+                // Resposta inválida do backend
+                const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
+                if (filtroEmpresa) {
+                    filtroEmpresa.innerHTML = '<option value="">Erro ao carregar empresas</option>';
+                    filtroEmpresa.disabled = true;
+                }
+                mostrarLoadingCRM('Erro ao carregar empresas. Tente novamente mais tarde.');
+                // Não some o loading automaticamente, feedback persistente
+                return;
             }
         })();
         // Corrida entre fetch e timeout
@@ -227,10 +300,11 @@ async function carregarEmpresasDisponiveisCRM() {
         const filtroEmpresa = document.getElementById('filtroEmpresaCRM');
         if (filtroEmpresa) {
             filtroEmpresa.innerHTML = '<option value="">Erro ao carregar empresas</option>';
+            filtroEmpresa.disabled = true;
         }
         mostrarLoadingCRM('Erro ao carregar empresas. Tente novamente mais tarde.');
-        setTimeout(() => esconderLoadingCRM(), 4000);
-        throw erro;
+        // Não some o loading automaticamente, feedback persistente
+        return;
     }
 }
 
@@ -1169,13 +1243,14 @@ document.addEventListener('click', function(event) {
                     // ⚡ ETAPA 2: Criar colunas padrão vazias
                     await carregarStagesEmpresa(null);
                     renderizarColunasKanban();
-                    
-                    // ⚡ ETAPA 3: Esconder loading e mostrar aviso
-                    esconderLoadingCRM();
-                    mostrarAvisoSelecaoEmpresa();
-                    
-                    console.log('✅ [CRM] Interface pronta - aguardando seleção de empresa');
-                    console.log('💡 [CRM] Stages e leads serão carregados quando empresa for selecionada');
+                    // ⚡ ETAPA 3: Esconder loading e mostrar aviso (apenas se não aplicou filtro)
+                    const filtroSalvo = localStorage.getItem('crm_empresa_filtro');
+                    if (!filtroSalvo || filtroSalvo === '') {
+                        esconderLoadingCRM();
+                        mostrarAvisoSelecaoEmpresa();
+                        console.log('✅ [CRM] Interface pronta - aguardando seleção de empresa');
+                        console.log('💡 [CRM] Stages e leads serão carregados quando empresa for selecionada');
+                    }
                     
                 } catch (error) {
                     console.error('❌ [CRM] Erro na inicialização:', error);
@@ -1443,7 +1518,7 @@ async function confirmarLeadQualificado(leadId) {
         // Garantir que leadId é passado corretamente
         if (empresaId && leadId) {
             try {
-                const respMeta = await fetch(`/api/leads/${encodeURIComponent(leadId)}/enviar-para-meta/${encodeURIComponent(empresaId)}`, {
+                const respMeta = await fetch(`/api/leads/${leadId}/enviar-para-meta/${empresaId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });

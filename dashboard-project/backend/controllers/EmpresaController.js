@@ -22,41 +22,98 @@ const Empresa = require('../models/Empresa');
     }
 
     async function buscarEmpresas(req, res) {
-        try {
+    try {
+            console.log('🔍 Iniciando buscarEmpresas');
             if (!req.session || !req.session.user) {
+                console.log('❌ Sessão não encontrada');
                 return res.status(401).json(responseFormatter.error('Usuário não autenticado'));
             }
             const usuario = req.session.user;
+            console.log('👤 Usuário autenticado:', usuario.email, '- Permissão:', usuario.permissao);
             let empresas = [];
             if (usuario.permissao === 'ADMIN' || usuario.permissao === 'GESTOR') {
+                console.log('🔑 Buscando todas as empresas (ADMIN/GESTOR)');
                 const { data, error } = await supabase
                     .from('empresas')
                     .select('id, nome, contaDeAnuncio');
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Erro ao buscar empresas:', error);
+                    throw error;
+                }
                 empresas = data || [];
+                console.log('✅ Empresas encontradas:', empresas.length);
             } else if (usuario.permissao === 'USER') {
+                console.log('🔑 Buscando empresas vinculadas ao usuário');
                 // 1. Buscar IDs das empresas vinculadas
                 const { data: vinculos, error: errorVinculo } = await supabase
                     .from('usuario_empresa')
                     .select('empresa_id')
                     .eq('usuario_id', usuario.id);
-                if (errorVinculo) throw errorVinculo;
+                if (errorVinculo) {
+                    console.error('❌ Erro ao buscar vínculos:', errorVinculo);
+                    throw errorVinculo;
+                }
                 if (!vinculos || vinculos.length === 0) {
+                    console.log('⚠️ Nenhuma empresa vinculada ao usuário');
                     // Nenhuma empresa vinculada, retorna vazio imediatamente
                     res.status(200).json(responseFormatter.success([]));
                     return;
                 }
                 const empresaIds = vinculos.map(v => v.empresa_id);
+                console.log('📋 IDs das empresas vinculadas:', empresaIds);
                 // 2. Buscar empresas por esses IDs
                 const { data, error } = await supabase
                     .from('empresas')
                     .select('id, nome, contaDeAnuncio')
                     .in('id', empresaIds);
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Erro ao buscar empresas vinculadas:', error);
+                    throw error;
+                }
                 empresas = data || [];
+                console.log('✅ Empresas vinculadas encontradas:', empresas.length);
             }
-            res.status(200).json(responseFormatter.success(empresas));
+
+            // Buscar dados manuais para cada empresa
+            console.log('📊 Buscando dados manuais para', empresas.length, 'empresas');
+            const empresaIdsAll = empresas.map(e => e.id);
+            let manuais = [];
+            if (empresaIdsAll.length > 0) {
+                console.log('🔍 IDs para buscar dados manuais:', empresaIdsAll);
+                try {
+                    // Tentar buscar dados manuais - se a tabela não existir, continuar sem erro
+                    const { data: manuaisData, error: manuaisError } = await supabase
+                        .from('controle_saldo_inputs_manuais')
+                        .select('id_empresa, ultima_recarga, saldo_diario, recorrencia')
+                        .in('id_empresa', empresaIdsAll);
+                    
+                    if (manuaisError) {
+                        console.warn('⚠️ Aviso ao buscar dados manuais (tabela pode não existir):', manuaisError.message);
+                        // Não lançar erro, apenas continuar sem os dados manuais
+                    } else {
+                        manuais = manuaisData || [];
+                        console.log('✅ Dados manuais encontrados:', manuais.length);
+                    }
+                } catch (err) {
+                    console.warn('⚠️ Erro ao buscar dados manuais (ignorado):', err.message);
+                }
+            }
+            // Mesclar dados manuais nas empresas
+            console.log('🔄 Mesclando dados manuais nas empresas');
+            const empresasComManuais = empresas.map(emp => {
+                const manual = manuais.find(m => m.id_empresa === emp.id) || {};
+                return {
+                    ...emp,
+                    ultima_recarga: manual.ultima_recarga || null,
+                    saldo_diario: manual.saldo_diario || null,
+                    recorrencia: manual.recorrencia || null
+                };
+            });
+            console.log('✅ Dados mesclados com sucesso. Total de empresas:', empresasComManuais.length);
+            res.status(200).json(responseFormatter.success(empresasComManuais));
         } catch (error) {
+            console.error('❌ Erro detalhado ao buscar empresas:', error);
+            console.error('Stack trace:', error.stack);
             res.status(500).json(responseFormatter.error('Erro ao buscar empresas', error));
         }
     }
@@ -110,5 +167,67 @@ const Empresa = require('../models/Empresa');
         }
     }
     
+    async function salvarCamposManuais(req, res) {
+        try {
+            const { id_empresa, ultima_recarga, saldo_diario, recorrencia } = req.body;
+            
+            console.log('💾 Salvando campos manuais para empresa:', id_empresa);
+            console.log('📊 Dados:', { ultima_recarga, saldo_diario, recorrencia });
 
-module.exports = { create, buscarEmpresas, atualizarEmpresa, excluirEmpresa };
+            if (!id_empresa) {
+                return res.status(400).json(responseFormatter.error('ID da empresa é obrigatório'));
+            }
+
+            // Verificar se já existe registro para esta empresa
+            const { data: registroExistente, error: errorBusca } = await supabase
+                .from('controle_saldo_inputs_manuais')
+                .select('id')
+                .eq('id_empresa', id_empresa)
+                .single();
+
+            let resultado;
+            if (registroExistente) {
+                // Atualizar registro existente
+                console.log('🔄 Atualizando registro existente');
+                const { data, error } = await supabase
+                    .from('controle_saldo_inputs_manuais')
+                    .update({
+                        ultima_recarga: ultima_recarga || null,
+                        saldo_diario: saldo_diario || null,
+                        recorrencia: recorrencia || null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id_empresa', id_empresa)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                resultado = data;
+            } else {
+                // Criar novo registro
+                console.log('➕ Criando novo registro');
+                const { data, error } = await supabase
+                    .from('controle_saldo_inputs_manuais')
+                    .insert({
+                        id_empresa: id_empresa,
+                        ultima_recarga: ultima_recarga || null,
+                        saldo_diario: saldo_diario || null,
+                        recorrencia: recorrencia || null
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+                resultado = data;
+            }
+
+            console.log('✅ Campos manuais salvos com sucesso');
+            res.status(200).json(responseFormatter.success(resultado));
+        } catch (error) {
+            console.error('❌ Erro ao salvar campos manuais:', error);
+            res.status(500).json(responseFormatter.error('Erro ao salvar campos manuais', error));
+        }
+    }
+
+module.exports = { create, buscarEmpresas, atualizarEmpresa, excluirEmpresa, salvarCamposManuais };
+

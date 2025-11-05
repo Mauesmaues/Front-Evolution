@@ -1411,9 +1411,63 @@ main {
   transform: scale(1.001);
 }
 
+/* Linha com alerta crítico */
+#subAbaEmpresas .tabela-empresas tr.table-danger {
+  background-color: rgba(220, 53, 69, 0.15) !important;
+  border-left: 4px solid #dc3545;
+  animation: pulseWarning 2s ease-in-out infinite;
+}
+
+#subAbaEmpresas .tabela-empresas tr.table-danger:hover {
+  background-color: rgba(220, 53, 69, 0.25) !important;
+}
+
+#subAbaEmpresas .tabela-empresas tr.table-danger td {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Animação de pulso para alertas */
+@keyframes pulseWarning {
+  0%, 100% {
+    border-left-color: #dc3545;
+  }
+  50% {
+    border-left-color: #ff6b6b;
+  }
+}
+
 #subAbaEmpresas .tabela-empresas .valor {
   color: var(--success);
   font-weight: 700;
+}
+
+/* Estilos para inputs na tabela */
+#subAbaEmpresas .tabela-empresas .campo-manual {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+#subAbaEmpresas .tabela-empresas .campo-manual:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  background: var(--bg-card-hover);
+}
+
+#subAbaEmpresas .tabela-empresas .campo-manual:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#subAbaEmpresas .tabela-empresas .campo-manual::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.5;
 }
 
 /* Efeitos de loading */

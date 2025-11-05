@@ -28,6 +28,7 @@ router.post('/criarEmpresa', EmpresaController.create);
 router.get('/buscarEmpresas', EmpresaController.buscarEmpresas);
 router.put('/atualizarEmpresa/:id', EmpresaController.atualizarEmpresa);
 router.delete('/excluirEmpresa/:id', EmpresaController.excluirEmpresa);
+router.post('/empresa/manuais', EmpresaController.salvarCamposManuais);
 router.post('/login', usuarioController.login);
 router.post('/criarUsuario', usuarioController.criarUsuario)
 router.get('/listarUsuarios', usuarioController.listarUsuarios);

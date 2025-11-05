@@ -315,7 +315,7 @@ async function carregarSaldosParaNotificacoes() {
         // 3. Buscar saldos de cada empresa
         const promessas = empresas.map(async (emp) => {
             try {
-                const resSaldo = await fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`);
+                const resSaldo = await fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`);
                 const saldo = await resSaldo.json();
                 
                 return {
@@ -850,18 +850,19 @@ document.getElementById('btnSalvarEmpresa').addEventListener('click', async func
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Salvando...';
         this.disabled = true;
 
-        let nome = document.getElementById('nomeEmpresaModal').value;
-        let contaDeAnuncio = document.getElementById('idContaAnuncioModal').value;
 
-        if (!nome || !contaDeAnuncio) {
-            alert('Por favor, preencha todos os campos obrigatórios');
-            return;
-        }
+    let nome = document.getElementById('nomeEmpresaModal').value;
+    let contaDeAnuncio = document.getElementById('idContaAnuncioModal').value;
 
-        let empresa = {
-            nome: nome,
-            contaDeAnuncio: contaDeAnuncio
-        };
+    if (!nome || !contaDeAnuncio) {
+      alert('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    let empresa = {
+      nome: nome,
+      contaDeAnuncio: contaDeAnuncio
+    };
 
         const response = await fetch('/api/criarEmpresa', {
             method: 'POST',
@@ -1053,10 +1054,21 @@ async function carregarEmpresasCadastradas() {
     }
 
     // 2. Buscar empresas baseado na permissão do usuário
+    console.log('📡 Buscando empresas...');
     const resEmpresas = await fetch("/api/buscarEmpresas");
+    console.log('📡 Status da resposta:', resEmpresas.status);
+    
+    if (!resEmpresas.ok) {
+      const errorText = await resEmpresas.text();
+      console.error('❌ Erro ao buscar empresas:', errorText);
+      throw new Error(`Erro ${resEmpresas.status}: ${errorText}`);
+    }
+    
     const resultado = await resEmpresas.json();
+    console.log('✅ Resultado da API buscarEmpresas:', resultado);
 
     const empresas = Array.isArray(resultado.data) ? resultado.data : [];
+    console.log('📊 Total de empresas retornadas:', empresas.length);
 
     // 3. Criar promessas para cada empresa
     const promessas = empresas.map(async (emp) => {
@@ -1064,8 +1076,8 @@ async function carregarEmpresasCadastradas() {
         console.log(`Processando empresa:`, emp);
         
         const [resMetrica, resSaldo] = await Promise.all([
-          fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
-          fetch(`http://localhost:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
+          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
+          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
         ]);
 
         const metricas = await resMetrica.json();
@@ -1087,39 +1099,179 @@ async function carregarEmpresasCadastradas() {
             cpc: metricas.data[0].cpc || 0,
             cpr: metricas.data[0].cpr || 0,
             saldo: saldo?.data?.saldoOriginal || 0,
+            // Incluir dados manuais
+            ultima_recarga: emp.ultima_recarga || null,
+            saldo_diario: emp.saldo_diario || null,
+            recorrencia: emp.recorrencia || null
           };
           console.log(`Resultado final para ${emp.nome}:`, resultado);
           return resultado;
+        } else {
+          // Se não há métricas, retornar apenas os dados básicos da empresa
+          console.log(`⚠️ Sem métricas para ${emp.nome}, retornando dados básicos`);
+          return {
+            id: emp.id,
+            empresa: emp.nome,
+            contaDeAnuncio: emp.contaDeAnuncio,
+            cliques: 0,
+            impressoes: 0,
+            alcance: 0,
+            gasto: 0,
+            ctr: 0,
+            cpc: 0,
+            cpr: 0,
+            saldo: 0,
+            // Incluir dados manuais
+            ultima_recarga: emp.ultima_recarga || null,
+            saldo_diario: emp.saldo_diario || null,
+            recorrencia: emp.recorrencia || null
+          };
         }
       } catch (err) {
         console.error(`Erro ao buscar métricas da empresa ${emp.nome}:`, err);
-        return null;
+        // Retornar dados básicos mesmo em caso de erro
+        return {
+          id: emp.id,
+          empresa: emp.nome,
+          contaDeAnuncio: emp.contaDeAnuncio,
+          cliques: 0,
+          impressoes: 0,
+          alcance: 0,
+          gasto: 0,
+          ctr: 0,
+          cpc: 0,
+          cpr: 0,
+          saldo: 0,
+          // Incluir dados manuais
+          ultima_recarga: emp.ultima_recarga || null,
+          saldo_diario: emp.saldo_diario || null,
+          recorrencia: emp.recorrencia || null
+        };
       }
     });
 
     // 4. Aguardar todas as promessas de uma vez
     const dadosComMetricas = (await Promise.all(promessas)).filter(Boolean);
+    console.log('✅ Total de empresas processadas:', dadosComMetricas.length);
+    console.log('📊 Dados completos:', dadosComMetricas);
 
     // 5. Guardar dados e renderizar tabela (remove o loading)
     ultimoDadosEmpresas = dadosComMetricas.slice();
+    console.log('🎨 Chamando renderTabelaEmpresas...');
     renderTabelaEmpresas(dadosComMetricas);
+    console.log('✅ Tabela renderizada');
     
     // 6. Verificar saldos baixos e atualizar notificações
     verificarSaldosBaixos(dadosComMetricas);
 
   } catch (err) {
-    console.error("Erro ao carregar empresas e métricas:", err);
+    console.error("❌ Erro ao carregar empresas e métricas:", err);
     document.getElementById("subAbaEmpresas").innerHTML =
-      "<p style='color:red'>Erro ao carregar dados.</p>";
+      "<p style='color:red'>Erro ao carregar dados: " + err.message + "</p>";
+  }
+}
+
+// Função para calcular se o saldo está crítico
+function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario) {
+  // Verificar se todos os campos necessários estão preenchidos
+  if (!ultimaRecarga || !recorrencia || !saldoAtual || !saldoDiario) {
+    return { critico: false, info: null };
+  }
+
+  try {
+    // Converter última recarga para Date
+    const dataUltimaRecarga = new Date(ultimaRecarga);
+    const hoje = new Date();
+    
+    // Calcular próxima recarga baseado na recorrência
+    let proximaRecarga = new Date(dataUltimaRecarga);
+    const recorrenciaLower = recorrencia.toLowerCase().trim();
+    
+    if (recorrenciaLower.includes('diario') || recorrenciaLower.includes('diária') || recorrenciaLower.includes('dia')) {
+      proximaRecarga.setDate(proximaRecarga.getDate() + 1);
+    } else if (recorrenciaLower.includes('semanal') || recorrenciaLower.includes('semana')) {
+      proximaRecarga.setDate(proximaRecarga.getDate() + 7);
+    } else if (recorrenciaLower.includes('quinzenal') || recorrenciaLower.includes('15')) {
+      proximaRecarga.setDate(proximaRecarga.getDate() + 15);
+    } else if (recorrenciaLower.includes('mensal') || recorrenciaLower.includes('mes') || recorrenciaLower.includes('mês')) {
+      proximaRecarga.setMonth(proximaRecarga.getMonth() + 1);
+    } else if (recorrenciaLower.includes('bimestral') || recorrenciaLower.includes('2 meses')) {
+      proximaRecarga.setMonth(proximaRecarga.getMonth() + 2);
+    } else if (recorrenciaLower.includes('trimestral') || recorrenciaLower.includes('3 meses')) {
+      proximaRecarga.setMonth(proximaRecarga.getMonth() + 3);
+    } else if (recorrenciaLower.includes('semestral') || recorrenciaLower.includes('6 meses')) {
+      proximaRecarga.setMonth(proximaRecarga.getMonth() + 6);
+    } else if (recorrenciaLower.includes('anual') || recorrenciaLower.includes('ano')) {
+      proximaRecarga.setFullYear(proximaRecarga.getFullYear() + 1);
+    } else {
+      // Tentar extrair número de dias
+      const numeroDias = parseInt(recorrenciaLower.match(/\d+/));
+      if (numeroDias && numeroDias > 0) {
+        proximaRecarga.setDate(proximaRecarga.getDate() + numeroDias);
+      } else {
+        return { critico: false, info: 'Recorrência não reconhecida' };
+      }
+    }
+
+    // Calcular dias restantes até a próxima recarga
+    const diffTime = proximaRecarga - hoje;
+    const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Se já passou da data, não calcular
+    if (diasRestantes <= 0) {
+      return { 
+        critico: true, 
+        info: 'Recarga atrasada!',
+        diasRestantes: diasRestantes,
+        proximaRecarga: proximaRecarga,
+        saldoPorDia: 0
+      };
+    }
+
+    // Extrair valor numérico do saldo
+    const saldoNumerico = extrairValorSaldo(saldoAtual);
+    const saldoDiarioNumerico = parseFloat(saldoDiario);
+    
+    if (isNaN(saldoNumerico) || isNaN(saldoDiarioNumerico)) {
+      return { critico: false, info: null };
+    }
+
+    // Calcular saldo por dia até a próxima recarga
+    const saldoPorDia = saldoNumerico / diasRestantes;
+    
+    // Verificar se está abaixo do saldo diário esperado
+    const critico = saldoPorDia < saldoDiarioNumerico;
+    
+    return {
+      critico: critico,
+      info: `${diasRestantes} dias até recarga | Saldo/dia: R$ ${saldoPorDia.toFixed(2)} ${critico ? '⚠️' : '✓'}`,
+      diasRestantes: diasRestantes,
+      proximaRecarga: proximaRecarga,
+      saldoPorDia: saldoPorDia,
+      saldoDiarioEsperado: saldoDiarioNumerico
+    };
+    
+  } catch (err) {
+    console.error('Erro ao calcular alerta de saldo:', err);
+    return { critico: false, info: null };
   }
 }
 
 // Função de renderizar tabela de empresas
 function renderTabelaEmpresas(dados) {
+  console.log('🎨 renderTabelaEmpresas iniciada');
+  console.log('📊 Dados recebidos:', dados);
   const container = document.getElementById("subAbaEmpresas");
+  
+  if (!container) {
+    console.error('❌ Container subAbaEmpresas não encontrado!');
+    return;
+  }
+  console.log('✅ Container encontrado:', container);
 
   // Guardar últimos dados para reuso (re-render ao trocar ordenação)
   ultimoDadosEmpresas = Array.isArray(dados) ? dados.slice() : [];
+  console.log('📦 ultimoDadosEmpresas atualizado:', ultimoDadosEmpresas.length, 'empresas');
 
   // Aplicar ordenação se solicitada
   let dadosParaRender = ultimoDadosEmpresas.slice();
@@ -1149,12 +1301,16 @@ function renderTabelaEmpresas(dados) {
   }
 
   if (!dadosParaRender || dadosParaRender.length === 0) {
+    console.log('⚠️ Nenhum dado para renderizar');
     container.innerHTML = "<p>Nenhuma empresa cadastrada.</p>";
     return;
   }
+  
+  console.log('📋 Renderizando', dadosParaRender.length, 'empresas');
 
   // Verificar se deve mostrar botões de ação (somente para GESTOR e ADMIN)
   const mostrarBotoesAcao = permissaoUsuarioLogado !== 'USER';
+
 
   let tabela = `
     <div class="tabela-empresas-container">
@@ -1162,7 +1318,9 @@ function renderTabelaEmpresas(dados) {
         <thead>
           <tr>
             <th>Empresa</th>
-            <th>Conta de Anúncio</th>
+            <th>Última Recarga</th>
+            <th>Saldo Diário</th>
+            <th>Recorrência</th>
             <th id="thSaldoMeta" class="sortable" style="cursor:pointer; user-select:none;">
               Saldo [META] <i class="fas fa-sort" style="margin-left:8px"></i>
             </th>
@@ -1174,15 +1332,62 @@ function renderTabelaEmpresas(dados) {
   `;
 
   dadosParaRender.forEach(emp => {
+    // Formatar data para o input type="date" (YYYY-MM-DD)
+    const dataFormatada = emp.ultima_recarga ? emp.ultima_recarga.split('T')[0] : '';
+    
+    // Calcular se o saldo está crítico
+    const alertaSaldo = calcularAlertaSaldo(
+      emp.ultima_recarga, 
+      emp.recorrencia, 
+      emp.saldo, 
+      emp.saldo_diario
+    );
+    
+    // Aplicar classe CSS se estiver crítico
+    const classeCritica = alertaSaldo.critico ? 'table-danger' : '';
+    const tituloAlerta = alertaSaldo.info ? `title="${alertaSaldo.info}"` : '';
+    
     tabela += `
-      <tr>
+      <tr data-empresa-id="${emp.id}" class="${classeCritica}" ${tituloAlerta}>
         <td>${emp.empresa}</td>
-        <td>${emp.contaDeAnuncio || 'Não informado'}</td>
-        <td class="valor">${emp.saldo}</td>
+        <td>
+          <input type="date" 
+                 class="form-control form-control-sm campo-manual" 
+                 data-field="ultima_recarga"
+                 data-empresa-id="${emp.id}"
+                 value="${dataFormatada}"
+                 style="max-width: 150px;"
+                 ${mostrarBotoesAcao ? '' : 'disabled'}>
+        </td>
+        <td>
+          <input type="number" 
+                 step="0.01" 
+                 class="form-control form-control-sm campo-manual" 
+                 data-field="saldo_diario"
+                 data-empresa-id="${emp.id}"
+                 value="${emp.saldo_diario != null ? emp.saldo_diario : ''}"
+                 placeholder="0.00"
+                 style="max-width: 120px;"
+                 ${mostrarBotoesAcao ? '' : 'disabled'}>
+        </td>
+        <td>
+          <input type="text" 
+                 class="form-control form-control-sm campo-manual" 
+                 data-field="recorrencia"
+                 data-empresa-id="${emp.id}"
+                 value="${emp.recorrencia || ''}"
+                 placeholder="Ex: Mensal"
+                 style="max-width: 150px;"
+                 ${mostrarBotoesAcao ? '' : 'disabled'}>
+        </td>
+        <td class="valor">
+          ${emp.saldo}
+          ${alertaSaldo.critico ? '<i class="fas fa-exclamation-triangle text-danger ms-2" title="' + alertaSaldo.info + '"></i>' : ''}
+        </td>
         <td class="valor">SaldoGoogle</td>
         ${mostrarBotoesAcao ? `
         <td>
-          <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}', '${emp.contaDeAnuncio}')">
+          <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}')">
             <i class="fas fa-edit"></i> Editar
           </button>
           <button class="btn btn-sm btn-danger" onclick="excluirEmpresa(${emp.id}, '${emp.empresa}')">
@@ -1195,7 +1400,40 @@ function renderTabelaEmpresas(dados) {
   });
 
   tabela += `</tbody></table></div>`;
+  console.log('✅ HTML da tabela montado, tamanho:', tabela.length, 'caracteres');
   container.innerHTML = tabela;
+  console.log('✅ HTML inserido no container');
+
+  // Adicionar event listeners para salvar automaticamente quando o campo perde o foco
+  if (mostrarBotoesAcao) {
+    const camposManuais = container.querySelectorAll('.campo-manual');
+    camposManuais.forEach(campo => {
+      // Guardar o valor original
+      campo.dataset.valorOriginal = campo.value;
+      
+      // Salvar quando o campo perde o foco
+      campo.addEventListener('blur', async function() {
+        const empresaId = this.dataset.empresaId;
+        const field = this.dataset.field;
+        const novoValor = this.value;
+        const valorOriginal = this.dataset.valorOriginal;
+        
+        // Só salvar se o valor mudou
+        if (novoValor !== valorOriginal) {
+          console.log(`💾 Salvando ${field} para empresa ${empresaId}:`, novoValor);
+          await salvarCampoManualIndividual(empresaId, field, novoValor, this);
+          this.dataset.valorOriginal = novoValor; // Atualizar valor original
+        }
+      });
+      
+      // Salvar ao pressionar Enter
+      campo.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          this.blur(); // Acionar o evento blur que salva
+        }
+      });
+    });
+  }
 
   // Atualizar ícone de ordenação conforme estado e anexar listener ao header
   const thSaldo = document.getElementById('thSaldoMeta');
@@ -1225,6 +1463,151 @@ function renderTabelaEmpresas(dados) {
           });
           thSaldo._sortableAttached = true;
       }
+  }
+}
+
+// Função para salvar campo manual individual
+async function salvarCampoManualIndividual(empresaId, field, valor, inputElement) {
+  try {
+    // Adicionar indicador visual de salvamento
+    const originalBorder = inputElement.style.border;
+    inputElement.style.border = '2px solid #ffc107'; // Amarelo - salvando
+    inputElement.disabled = true;
+    
+    // Buscar todos os valores atuais da linha para enviar completo
+    const row = inputElement.closest('tr');
+    const inputs = row.querySelectorAll('.campo-manual');
+    
+    const dados = {
+      id_empresa: empresaId,
+      ultima_recarga: null,
+      saldo_diario: null,
+      recorrencia: null
+    };
+    
+    inputs.forEach(input => {
+      const fieldName = input.dataset.field;
+      dados[fieldName] = input.value || null;
+    });
+    
+    console.log('📤 Enviando dados para API:', dados);
+    
+    const response = await fetch('/api/empresa/manuais', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('✅ Campo salvo com sucesso');
+      // Indicador visual de sucesso
+      inputElement.style.border = '2px solid #28a745'; // Verde - sucesso
+      setTimeout(() => {
+        inputElement.style.border = originalBorder;
+      }, 1000);
+      
+      // Recalcular o alerta de saldo para essa linha
+      setTimeout(() => {
+        atualizarAlertaLinhaEmpresa(row, empresaId);
+      }, 100);
+      
+      // Toast de sucesso (opcional)
+      if (typeof toastUtils !== 'undefined') {
+        toastUtils.showToast(`${field === 'ultima_recarga' ? 'Última Recarga' : field === 'saldo_diario' ? 'Saldo Diário' : 'Recorrência'} salvo!`, 'success');
+      }
+    } else {
+      console.error('❌ Erro ao salvar:', data.message);
+      // Indicador visual de erro
+      inputElement.style.border = '2px solid #dc3545'; // Vermelho - erro
+      setTimeout(() => {
+        inputElement.style.border = originalBorder;
+      }, 2000);
+      
+      if (typeof toastUtils !== 'undefined') {
+        toastUtils.showToast(data.message || 'Erro ao salvar campo', 'error');
+      } else {
+        alert('Erro ao salvar: ' + (data.message || 'Erro desconhecido'));
+      }
+    }
+    
+  } catch (err) {
+    console.error('❌ Erro na requisição:', err);
+    const originalBorder = inputElement.style.border;
+    inputElement.style.border = '2px solid #dc3545';
+    setTimeout(() => {
+      inputElement.style.border = originalBorder;
+    }, 2000);
+    
+    if (typeof toastUtils !== 'undefined') {
+      toastUtils.showToast('Erro ao salvar campo', 'error');
+    } else {
+      alert('Erro ao salvar campo');
+    }
+  } finally {
+    inputElement.disabled = false;
+  }
+}
+
+// Função para atualizar o alerta visual de uma linha específica
+function atualizarAlertaLinhaEmpresa(row, empresaId) {
+  try {
+    // Buscar os dados da empresa nos dados em memória
+    const empresa = ultimoDadosEmpresas.find(e => e.id == empresaId);
+    if (!empresa) {
+      console.warn('Empresa não encontrada para atualizar alerta');
+      return;
+    }
+    
+    // Buscar valores atuais dos inputs da linha
+    const inputUltimaRecarga = row.querySelector('[data-field="ultima_recarga"]');
+    const inputSaldoDiario = row.querySelector('[data-field="saldo_diario"]');
+    const inputRecorrencia = row.querySelector('[data-field="recorrencia"]');
+    
+    const ultimaRecarga = inputUltimaRecarga?.value;
+    const saldoDiario = inputSaldoDiario?.value;
+    const recorrencia = inputRecorrencia?.value;
+    
+    // Recalcular alerta
+    const alertaSaldo = calcularAlertaSaldo(
+      ultimaRecarga, 
+      recorrencia, 
+      empresa.saldo, 
+      saldoDiario
+    );
+    
+    // Atualizar classe da linha
+    if (alertaSaldo.critico) {
+      row.classList.add('table-danger');
+      row.setAttribute('title', alertaSaldo.info || '');
+    } else {
+      row.classList.remove('table-danger');
+      row.removeAttribute('title');
+    }
+    
+    // Atualizar ícone de alerta na coluna de saldo
+    const tdSaldo = row.querySelector('.valor');
+    if (tdSaldo) {
+      // Remover ícone existente
+      const iconeExistente = tdSaldo.querySelector('.fa-exclamation-triangle');
+      if (iconeExistente) {
+        iconeExistente.remove();
+      }
+      
+      // Adicionar novo ícone se crítico
+      if (alertaSaldo.critico && alertaSaldo.info) {
+        const icone = document.createElement('i');
+        icone.className = 'fas fa-exclamation-triangle text-danger ms-2';
+        icone.setAttribute('title', alertaSaldo.info);
+        tdSaldo.appendChild(icone);
+      }
+    }
+    
+    console.log('✅ Alerta atualizado para empresa', empresaId, '- Crítico:', alertaSaldo.critico);
+    
+  } catch (err) {
+    console.error('Erro ao atualizar alerta da linha:', err);
   }
 }
 
@@ -1689,7 +2072,7 @@ async function editarEmpresa(empresaId, nomeAtual, contaAtual) {
                 </div>
                 <div class="mb-3">
                   <label class="form-label">Conta de Anúncio</label>
-                  <input type="text" class="form-control" id="editContaEmpresa" value="${contaAtual}" required>
+                  <input type="text" class="form-control" id="editContaEmpresa" value="${campoManual1Atual || ''}" required>
                 </div>
               </form>
             </div>
@@ -1724,6 +2107,7 @@ async function editarEmpresa(empresaId, nomeAtual, contaAtual) {
 // Função para salvar edição da empresa
 async function salvarEdicaoEmpresa(empresaId) {
   try {
+
     const nome = document.getElementById('editNomeEmpresa').value;
     const contaDeAnuncio = document.getElementById('editContaEmpresa').value;
 
