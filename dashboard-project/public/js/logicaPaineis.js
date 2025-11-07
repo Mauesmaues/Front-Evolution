@@ -1174,7 +1174,7 @@ async function carregarEmpresasCadastradas() {
 // Função para calcular se o saldo está crítico
 function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario) {
   // Verificar se todos os campos necessários estão preenchidos e não são zero
-  if (!ultimaRecarga || !recorrencia || !saldoAtual || !saldoDiario) {
+  if (!ultimaRecarga || (ultimaRecarga == 0) || !recorrencia || (recorrencia == 0) || !saldoAtual || (saldoAtual == 0) || !saldoDiario || (saldoDiario == 0)) {
     return { critico: false, impulsionar: false, info: null };
   }
 
@@ -1343,13 +1343,60 @@ function renderTabelaEmpresas(dados) {
     let iconeStatus = '';
     if (alertaSaldo.critico) {
       classeLinha = 'table-danger';
-      iconeStatus = `<i class="fas fa-exclamation-triangle text-danger ms-2" title="${alertaSaldo.info}"></i>`;
+      iconeStatus = `<i class="fas fa-exclamation-triangle text-danger ms-2 info-icon-critico" style="cursor:pointer"></i>`;
       console.log(`Linha vermelha aplicada para empresa: ${emp.empresa}`);
     } else if (alertaSaldo.impulsionar) {
       classeLinha = 'table-success linha-impulsionar';
-      iconeStatus = `<i class="fas fa-arrow-up text-success ms-2 seta-pulsando" title="Impulsionar"></i>`;
+      iconeStatus = `<i class="fas fa-arrow-up text-success ms-2 seta-pulsando info-icon-impulsionar " style="cursor:pointer"></i>`;
       console.log(`Linha verde impulsionar aplicada para empresa: ${emp.empresa}`);
     }
+  // Adicionar popover customizado leve para os ícones de alerta
+  if (!document.getElementById('popoverInfoAlertaSaldo')) {
+    const popoverDiv = document.createElement('div');
+    popoverDiv.id = 'popoverInfoAlertaSaldo';
+    popoverDiv.style.position = 'absolute';
+    popoverDiv.style.zIndex = '9999';
+    popoverDiv.style.background = '#fff';
+    popoverDiv.style.border = '1px solid #ccc';
+    popoverDiv.style.borderRadius = '6px';
+    popoverDiv.style.boxShadow = '0 2px 8px rgba(0,0,0,0.12)';
+    popoverDiv.style.padding = '8px 14px';
+    popoverDiv.style.fontSize = '13px';
+    popoverDiv.style.color = '#333';
+    popoverDiv.style.display = 'none';
+    popoverDiv.style.maxWidth = '350px';
+    document.body.appendChild(popoverDiv);
+  }
+
+  setTimeout(() => {
+    const popover = document.getElementById('popoverInfoAlertaSaldo');
+    function showPopover(text, icon) {
+      popover.innerHTML = text;
+      popover.style.display = 'block';
+      const rect = icon.getBoundingClientRect();
+      popover.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+      popover.style.left = (rect.left + window.scrollX - 10) + 'px';
+    }
+    function hidePopover() {
+      popover.style.display = 'none';
+    }
+    document.querySelectorAll('.info-icon-critico').forEach(icon => {
+      icon.removeAttribute('title');
+      icon.addEventListener('mouseenter', function() {
+        const info = icon.closest('tr').getAttribute('title') || '';
+        showPopover(`<b>${info}</b><br>O saldo diário calculado está maior que o orçamento definido para a campanha.<br><span style='color:#d9534f'>Atenção: ajuste o saldo ou recarregue para evitar bloqueio.</span>`, icon);
+      });
+      icon.addEventListener('mouseleave', hidePopover);
+    });
+    document.querySelectorAll('.info-icon-impulsionar').forEach(icon => {
+      icon.removeAttribute('title');
+      icon.addEventListener('mouseenter', function() {
+        const info = icon.closest('tr').getAttribute('title') || '';
+        showPopover(`<b>${info}</b><br>O saldo diário calculado está 50% maior que o saldo diário definido.<br>Sua campanha pode receber um <b>boost</b> com aumento de orçamento e ainda assim permanecer dentro do limite da conta.`, icon);
+      });
+      icon.addEventListener('mouseleave', hidePopover);
+    });
+  }, 300);
     const tituloAlerta = alertaSaldo.info ? `title="${alertaSaldo.info}"` : '';
     
     tabela += `
@@ -1755,28 +1802,33 @@ function atualizarAlertaLinhaEmpresa(row, empresaId) {
       saldoDiario
     );
     
-    // Atualizar classe da linha
+    // Atualizar classe da linha e ícone
+    row.classList.remove('table-danger', 'table-success', 'linha-impulsionar');
+    row.removeAttribute('title');
+    const tdSaldo = row.querySelector('.valor');
+    if (tdSaldo) {
+      // Remover ícones existentes
+      const iconeCritico = tdSaldo.querySelector('.fa-exclamation-triangle');
+      if (iconeCritico) iconeCritico.remove();
+      const iconeImpulsionar = tdSaldo.querySelector('.fa-arrow-up');
+      if (iconeImpulsionar) iconeImpulsionar.remove();
+    }
+
     if (alertaSaldo.critico) {
       row.classList.add('table-danger');
       row.setAttribute('title', alertaSaldo.info || '');
-    } else {
-      row.classList.remove('table-danger');
-      row.removeAttribute('title');
-    }
-    
-    // Atualizar ícone de alerta na coluna de saldo
-    const tdSaldo = row.querySelector('.valor');
-    if (tdSaldo) {
-      // Remover ícone existente
-      const iconeExistente = tdSaldo.querySelector('.fa-exclamation-triangle');
-      if (iconeExistente) {
-        iconeExistente.remove();
-      }
-      
-      // Adicionar novo ícone se crítico
-      if (alertaSaldo.critico && alertaSaldo.info) {
+      if (tdSaldo && alertaSaldo.info) {
         const icone = document.createElement('i');
-        icone.className = 'fas fa-exclamation-triangle text-danger ms-2';
+        icone.className = 'fas fa-exclamation-triangle text-danger ms-2 info-icon-critico';
+        icone.setAttribute('title', alertaSaldo.info);
+        tdSaldo.appendChild(icone);
+      }
+    } else if (alertaSaldo.impulsionar) {
+      row.classList.add('table-success', 'linha-impulsionar');
+      row.setAttribute('title', alertaSaldo.info || '');
+      if (tdSaldo && alertaSaldo.info) {
+        const icone = document.createElement('i');
+        icone.className = 'fas fa-arrow-up text-success ms-2 seta-pulsando info-icon-impulsionar';
         icone.setAttribute('title', alertaSaldo.info);
         tdSaldo.appendChild(icone);
       }
