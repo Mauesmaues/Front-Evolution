@@ -976,9 +976,9 @@ function carregarEmpresasUsuarioModal() {
                 let html = '';
                 data.data.forEach(empresa => {
                     html += `
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" value="${empresa.id}" id="empresa_user_${empresa.id}">
-                            <label class="form-check-label" for="empresa_user_${empresa.id}">
+                        <div class="form-check mb-2" style="position:relative;z-index:1;">
+                            <input class="form-check-input" type="checkbox" value="${empresa.id}" id="empresa_user_${empresa.id}" style="cursor:pointer;pointer-events:auto;position:relative;z-index:2;">
+                            <label class="form-check-label" for="empresa_user_${empresa.id}" style="cursor:pointer;user-select:none;">
                                 <i class="fas fa-building me-1"></i>
                                 ${empresa.nome}
                             </label>
@@ -986,6 +986,41 @@ function carregarEmpresasUsuarioModal() {
                     `;
                 });
                 container.innerHTML = html || '<div class="text-muted">Nenhuma empresa encontrada</div>';
+                console.log('✅ Checkboxes de empresas carregados:', data.data.length);
+                
+                // Garantir que os checkboxes funcionem após carregamento
+                setTimeout(() => {
+                    document.querySelectorAll('#empresasUsuarioCheckboxes .form-check-input').forEach(checkbox => {
+                        checkbox.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            console.log('Checkbox clicado:', this.id, 'Marcado:', this.checked);
+                        });
+                    });
+                    
+                    // Garantir que clicar no label também marque o checkbox
+                    document.querySelectorAll('#empresasUsuarioCheckboxes .form-check-label').forEach(label => {
+                        label.addEventListener('click', function(e) {
+                            const checkboxId = this.getAttribute('for');
+                            const checkbox = document.getElementById(checkboxId);
+                            if (checkbox) {
+                                checkbox.checked = !checkbox.checked;
+                                console.log('Label clicado, checkbox:', checkboxId, 'Marcado:', checkbox.checked);
+                            }
+                        });
+                    });
+                    
+                    // Funcionalidade "Selecionar Todas"
+                    const selecionarTodas = document.getElementById('selecionarTodasEmpresas');
+                    if (selecionarTodas) {
+                        selecionarTodas.addEventListener('change', function() {
+                            const checkboxes = document.querySelectorAll('#empresasUsuarioCheckboxes .form-check-input');
+                            checkboxes.forEach(cb => {
+                                cb.checked = this.checked;
+                            });
+                            console.log(this.checked ? '✅ Todas as empresas selecionadas' : '❌ Todas as empresas desmarcadas');
+                        });
+                    }
+                }, 100);
             } else {
                 container.innerHTML = '<div class="text-danger">Erro ao carregar empresas</div>';
             }
@@ -1231,9 +1266,11 @@ function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario
     
   // Verificar se está abaixo do saldo diário esperado
   const critico = saldoPorDia < saldoDiarioNumerico;
+
   // Impulsionar: saldoPorDia está muito acima do saldo diário esperado
   // Exemplo: saldoPorDia > saldoDiarioNumerico + (saldoDiarioNumerico / 2)
   const impulsionar = saldoPorDia > (saldoDiarioNumerico + (saldoDiarioNumerico / 2));
+
   console.log('Impulsionar:', impulsionar, '| saldoPorDia:', saldoPorDia, '| saldoDiarioNumerico:', saldoDiarioNumerico);
     
     return {
@@ -1316,6 +1353,7 @@ function renderTabelaEmpresas(dados) {
             <th>Última Recarga</th>
             <th>Saldo Diário</th>
             <th>Recorrência</th>
+            <th>Salvar</th>
             <th id="thSaldoMeta" class="sortable" style="cursor:pointer; user-select:none;">
               Saldo [META] <i class="fas fa-sort" style="margin-left:8px"></i>
             </th>
@@ -1432,25 +1470,29 @@ function renderTabelaEmpresas(dados) {
                  style="max-width: 150px;"
                  ${mostrarBotoesAcao ? '' : 'disabled'}>
         </td>
+        ${mostrarBotoesAcao ? `
+          <td style="text-align:center;">
+            <button class="btn btn-sm btn-success btn-salvar-campos" 
+                    data-empresa-id="${emp.id}" 
+                    title="Salvar alterações">
+              <i class="fas fa-save"></i>
+            </button>
+          </td>
+        ` : '<td></td>'}
         <td class="valor">
           ${emp.saldo}
           ${iconeStatus}
         </td>
         <td class="valor">SaldoGoogle</td>
         ${mostrarBotoesAcao ? `
-        <td>
-          <button class="btn btn-sm btn-success btn-salvar-campos me-1" 
-                  data-empresa-id="${emp.id}" 
-                  title="Salvar alterações">
-            <i class="fas fa-save"></i>
-          </button>
-          <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}')">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button class="btn btn-sm btn-danger" onclick="excluirEmpresa(${emp.id}, '${emp.empresa}')">
-            <i class="fas fa-trash"></i>
-          </button>
-        </td>
+          <td>
+            <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}')">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" onclick="excluirEmpresa(${emp.id}, '${emp.empresa}')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </td>
         ` : ''}
       </tr>
     `;
