@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS public.controle_saldo_inputs_manuais (
     id_empresa INTEGER NOT NULL REFERENCES public.empresas(id) ON DELETE CASCADE,
     ultima_recarga DATE,
     saldo_diario DECIMAL(10, 2),
-    recorrencia VARCHAR(50),
+    recorrencia INTEGER, -- Alterado para INTEGER (dias)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE(id_empresa)
@@ -21,7 +21,7 @@ COMMENT ON TABLE public.controle_saldo_inputs_manuais IS 'Armazena dados manuais
 COMMENT ON COLUMN public.controle_saldo_inputs_manuais.id_empresa IS 'Referência à empresa';
 COMMENT ON COLUMN public.controle_saldo_inputs_manuais.ultima_recarga IS 'Data da última recarga de saldo';
 COMMENT ON COLUMN public.controle_saldo_inputs_manuais.saldo_diario IS 'Valor do saldo diário';
-COMMENT ON COLUMN public.controle_saldo_inputs_manuais.recorrencia IS 'Periodicidade da recarga (ex: Mensal, Semanal)';
+COMMENT ON COLUMN public.controle_saldo_inputs_manuais.recorrencia IS 'Periodicidade da recarga em dias (ex: 30 para mensal, 7 para semanal)';
 
 -- Habilitar RLS (Row Level Security) para segurança
 ALTER TABLE public.controle_saldo_inputs_manuais ENABLE ROW LEVEL SECURITY;

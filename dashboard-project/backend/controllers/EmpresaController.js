@@ -169,62 +169,106 @@ const Empresa = require('../models/Empresa');
     
     async function salvarCamposManuais(req, res) {
         try {
+            console.log('🔍 [DEBUG] Iniciando salvarCamposManuais');
+            console.log('🔍 [DEBUG] req.body completo:', JSON.stringify(req.body, null, 2));
+            console.log('🔍 [DEBUG] Content-Type:', req.headers['content-type']);
+            
             const { id_empresa, ultima_recarga, saldo_diario, recorrencia } = req.body;
             
             console.log('💾 Salvando campos manuais para empresa:', id_empresa);
-            console.log('📊 Dados:', { ultima_recarga, saldo_diario, recorrencia });
+            console.log('📊 Dados recebidos:', { 
+                id_empresa, 
+                ultima_recarga, 
+                saldo_diario, 
+                recorrencia 
+            });
+            console.log('🔍 Tipos dos dados:', {
+                id_empresa: typeof id_empresa,
+                ultima_recarga: typeof ultima_recarga,
+                saldo_diario: typeof saldo_diario,
+                recorrencia: typeof recorrencia
+            });
 
             if (!id_empresa) {
+                console.log('❌ Erro: ID da empresa não fornecido');
                 return res.status(400).json(responseFormatter.error('ID da empresa é obrigatório'));
             }
 
             // Verificar se já existe registro para esta empresa
+            console.log('🔍 Verificando se já existe registro para empresa:', id_empresa);
             const { data: registroExistente, error: errorBusca } = await supabase
                 .from('controle_saldo_inputs_manuais')
                 .select('id')
                 .eq('id_empresa', id_empresa)
                 .single();
 
+            if (errorBusca && errorBusca.code !== 'PGRST116') {
+                console.error('❌ Erro ao buscar registro existente:', errorBusca);
+                throw errorBusca;
+            }
+
+            console.log('🔍 Registro existente:', registroExistente ? 'SIM' : 'NÃO');
+
             let resultado;
             if (registroExistente) {
                 // Atualizar registro existente
                 console.log('🔄 Atualizando registro existente');
+                
+                const dadosAtualizacao = {
+                    ultima_recarga: ultima_recarga || null,
+                    saldo_diario: saldo_diario || null,
+                    recorrencia: recorrencia || null,
+                    updated_at: new Date().toISOString()
+                };
+                
+                console.log('🔍 Dados para atualização:', dadosAtualizacao);
+                
                 const { data, error } = await supabase
                     .from('controle_saldo_inputs_manuais')
-                    .update({
-                        ultima_recarga: ultima_recarga || null,
-                        saldo_diario: saldo_diario || null,
-                        recorrencia: recorrencia || null,
-                        updated_at: new Date().toISOString()
-                    })
+                    .update(dadosAtualizacao)
                     .eq('id_empresa', id_empresa)
                     .select()
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Erro ao atualizar:', error);
+                    throw error;
+                }
                 resultado = data;
+                console.log('✅ Atualização bem-sucedida:', resultado);
             } else {
                 // Criar novo registro
                 console.log('➕ Criando novo registro');
+                
+                const dadosInsercao = {
+                    id_empresa: id_empresa,
+                    ultima_recarga: ultima_recarga || null,
+                    saldo_diario: saldo_diario || null,
+                    recorrencia: recorrencia || null
+                };
+                
+                console.log('🔍 Dados para inserção:', dadosInsercao);
+                
                 const { data, error } = await supabase
                     .from('controle_saldo_inputs_manuais')
-                    .insert({
-                        id_empresa: id_empresa,
-                        ultima_recarga: ultima_recarga || null,
-                        saldo_diario: saldo_diario || null,
-                        recorrencia: recorrencia || null
-                    })
+                    .insert(dadosInsercao)
                     .select()
                     .single();
 
-                if (error) throw error;
+                if (error) {
+                    console.error('❌ Erro ao inserir:', error);
+                    throw error;
+                }
                 resultado = data;
+                console.log('✅ Inserção bem-sucedida:', resultado);
             }
 
             console.log('✅ Campos manuais salvos com sucesso');
             res.status(200).json(responseFormatter.success(resultado));
         } catch (error) {
             console.error('❌ Erro ao salvar campos manuais:', error);
+            console.error('❌ Stack trace:', error.stack);
+            console.error('❌ Detalhes do erro:', JSON.stringify(error, null, 2));
             res.status(500).json(responseFormatter.error('Erro ao salvar campos manuais', error));
         }
     }

@@ -1,3 +1,22 @@
+/* Linha de impulsionamento (verde) */
+.linha-impulsionar {
+  background-color: #d1fae5 !important;
+}
+
+/* Animação de seta pulsando para cima */
+@keyframes setaPulsando {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.2);
+    opacity: 0.7;
+  }
+}
+.seta-pulsando {
+  animation: setaPulsando 1s infinite;
+}
 #FormCadastroEmpresa,
 #FormCadastroUsuario {
   position: fixed;
@@ -4641,6 +4660,24 @@ tbody tr:last-child td {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   background: linear-gradient(135deg, #10b981, var(--success));
+}
+
+/* Animação de pulso para botão salvar */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+  }
+}
+
+.btn-pulse {
+  animation: pulse 1.5s infinite;
+}
+
+.btn-success-checked {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
 }
 
 /* Botão de Perigo */

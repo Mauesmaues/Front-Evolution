@@ -1173,9 +1173,16 @@ async function carregarEmpresasCadastradas() {
 
 // Função para calcular se o saldo está crítico
 function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario) {
-  // Verificar se todos os campos necessários estão preenchidos
+  // Verificar se todos os campos necessários estão preenchidos e não são zero
   if (!ultimaRecarga || !recorrencia || !saldoAtual || !saldoDiario) {
-    return { critico: false, info: null };
+    return { critico: false, impulsionar: false, info: null };
+  }
+
+  // Se algum campo for zero, não aplicar nenhuma regra
+  if (
+    recorrencia == 0 || saldoAtual == 0 || saldoDiario == 0
+  ) {
+    return { critico: false, impulsionar: false, info: null };
   }
 
   try {
@@ -1185,32 +1192,15 @@ function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario
     
     // Calcular próxima recarga baseado na recorrência
     let proximaRecarga = new Date(dataUltimaRecarga);
-    const recorrenciaLower = recorrencia.toLowerCase().trim();
     
-    if (recorrenciaLower.includes('diario') || recorrenciaLower.includes('diária') || recorrenciaLower.includes('dia')) {
-      proximaRecarga.setDate(proximaRecarga.getDate() + 1);
-    } else if (recorrenciaLower.includes('semanal') || recorrenciaLower.includes('semana')) {
-      proximaRecarga.setDate(proximaRecarga.getDate() + 7);
-    } else if (recorrenciaLower.includes('quinzenal') || recorrenciaLower.includes('15')) {
-      proximaRecarga.setDate(proximaRecarga.getDate() + 15);
-    } else if (recorrenciaLower.includes('mensal') || recorrenciaLower.includes('mes') || recorrenciaLower.includes('mês')) {
-      proximaRecarga.setMonth(proximaRecarga.getMonth() + 1);
-    } else if (recorrenciaLower.includes('bimestral') || recorrenciaLower.includes('2 meses')) {
-      proximaRecarga.setMonth(proximaRecarga.getMonth() + 2);
-    } else if (recorrenciaLower.includes('trimestral') || recorrenciaLower.includes('3 meses')) {
-      proximaRecarga.setMonth(proximaRecarga.getMonth() + 3);
-    } else if (recorrenciaLower.includes('semestral') || recorrenciaLower.includes('6 meses')) {
-      proximaRecarga.setMonth(proximaRecarga.getMonth() + 6);
-    } else if (recorrenciaLower.includes('anual') || recorrenciaLower.includes('ano')) {
-      proximaRecarga.setFullYear(proximaRecarga.getFullYear() + 1);
+    // Se recorrência for número, usar como dias direto
+    const recorrenciaDias = typeof recorrencia === 'number' ? recorrencia : parseInt(recorrencia);
+    
+    if (!isNaN(recorrenciaDias) && recorrenciaDias > 0) {
+      // Recorrência numérica - adicionar dias
+      proximaRecarga.setDate(proximaRecarga.getDate() + recorrenciaDias);
     } else {
-      // Tentar extrair número de dias
-      const numeroDias = parseInt(recorrenciaLower.match(/\d+/));
-      if (numeroDias && numeroDias > 0) {
-        proximaRecarga.setDate(proximaRecarga.getDate() + numeroDias);
-      } else {
-        return { critico: false, info: 'Recorrência não reconhecida' };
-      }
+      return { critico: false, info: 'Recorrência não reconhecida' };
     }
 
     // Calcular dias restantes até a próxima recarga
@@ -1239,18 +1229,23 @@ function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario
     // Calcular saldo por dia até a próxima recarga
     const saldoPorDia = saldoNumerico / diasRestantes;
     
-    // Verificar se está abaixo do saldo diário esperado
-    const critico = saldoPorDia < saldoDiarioNumerico;
+  // Verificar se está abaixo do saldo diário esperado
+  const critico = saldoPorDia < saldoDiarioNumerico;
+  // Impulsionar: saldoPorDia está muito acima do saldo diário esperado
+  // Exemplo: saldoPorDia > saldoDiarioNumerico + (saldoDiarioNumerico / 2)
+  const impulsionar = saldoPorDia > (saldoDiarioNumerico + (saldoDiarioNumerico / 2));
+  console.log('Impulsionar:', impulsionar, '| saldoPorDia:', saldoPorDia, '| saldoDiarioNumerico:', saldoDiarioNumerico);
     
     return {
       critico: critico,
+      impulsionar: impulsionar,
       info: `${diasRestantes} dias até recarga | Saldo/dia: R$ ${saldoPorDia.toFixed(2)} ${critico ? '⚠️' : '✓'}`,
       diasRestantes: diasRestantes,
       proximaRecarga: proximaRecarga,
       saldoPorDia: saldoPorDia,
       saldoDiarioEsperado: saldoDiarioNumerico
     };
-    
+
   } catch (err) {
     console.error('Erro ao calcular alerta de saldo:', err);
     return { critico: false, info: null };
@@ -1342,13 +1337,23 @@ function renderTabelaEmpresas(dados) {
       emp.saldo, 
       emp.saldo_diario
     );
-    
-    // Aplicar classe CSS se estiver crítico
-    const classeCritica = alertaSaldo.critico ? 'table-danger' : '';
+    console.log(`Empresa: ${emp.empresa} | Crítico: ${alertaSaldo.critico} | Impulsionar: ${alertaSaldo.impulsionar}`);
+    // Aplicar classe CSS se estiver crítico ou impulsionar
+    let classeLinha = '';
+    let iconeStatus = '';
+    if (alertaSaldo.critico) {
+      classeLinha = 'table-danger';
+      iconeStatus = `<i class="fas fa-exclamation-triangle text-danger ms-2" title="${alertaSaldo.info}"></i>`;
+      console.log(`Linha vermelha aplicada para empresa: ${emp.empresa}`);
+    } else if (alertaSaldo.impulsionar) {
+      classeLinha = 'table-success linha-impulsionar';
+      iconeStatus = `<i class="fas fa-arrow-up text-success ms-2 seta-pulsando" title="Impulsionar"></i>`;
+      console.log(`Linha verde impulsionar aplicada para empresa: ${emp.empresa}`);
+    }
     const tituloAlerta = alertaSaldo.info ? `title="${alertaSaldo.info}"` : '';
     
     tabela += `
-      <tr data-empresa-id="${emp.id}" class="${classeCritica}" ${tituloAlerta}>
+      <tr data-empresa-id="${emp.id}" class="${classeLinha}" ${tituloAlerta}>
         <td>${emp.empresa}</td>
         <td>
           <input type="date" 
@@ -1371,27 +1376,32 @@ function renderTabelaEmpresas(dados) {
                  ${mostrarBotoesAcao ? '' : 'disabled'}>
         </td>
         <td>
-          <input type="text" 
+          <input type="number" 
                  class="form-control form-control-sm campo-manual" 
                  data-field="recorrencia"
                  data-empresa-id="${emp.id}"
                  value="${emp.recorrencia || ''}"
-                 placeholder="Ex: Mensal"
+                 placeholder="Ex: 30 (dias)"
                  style="max-width: 150px;"
                  ${mostrarBotoesAcao ? '' : 'disabled'}>
         </td>
         <td class="valor">
           ${emp.saldo}
-          ${alertaSaldo.critico ? '<i class="fas fa-exclamation-triangle text-danger ms-2" title="' + alertaSaldo.info + '"></i>' : ''}
+          ${iconeStatus}
         </td>
         <td class="valor">SaldoGoogle</td>
         ${mostrarBotoesAcao ? `
         <td>
+          <button class="btn btn-sm btn-success btn-salvar-campos me-1" 
+                  data-empresa-id="${emp.id}" 
+                  title="Salvar alterações">
+            <i class="fas fa-save"></i>
+          </button>
           <button class="btn btn-sm btn-primary me-1" onclick="editarEmpresa(${emp.id}, '${emp.empresa}')">
-            <i class="fas fa-edit"></i> Editar
+            <i class="fas fa-edit"></i>
           </button>
           <button class="btn btn-sm btn-danger" onclick="excluirEmpresa(${emp.id}, '${emp.empresa}')">
-            <i class="fas fa-trash"></i> Excluir
+            <i class="fas fa-trash"></i>
           </button>
         </td>
         ` : ''}
@@ -1404,32 +1414,62 @@ function renderTabelaEmpresas(dados) {
   container.innerHTML = tabela;
   console.log('✅ HTML inserido no container');
 
-  // Adicionar event listeners para salvar automaticamente quando o campo perde o foco
+  // Adicionar event listeners para os botões de salvar
   if (mostrarBotoesAcao) {
+    const botoesSalvar = container.querySelectorAll('.btn-salvar-campos');
+    
+    botoesSalvar.forEach(botao => {
+      botao.addEventListener('click', async function() {
+        const empresaId = this.dataset.empresaId;
+        const row = this.closest('tr');
+        
+        // Buscar todos os campos da linha
+        const inputUltimaRecarga = row.querySelector('[data-field="ultima_recarga"]');
+        const inputSaldoDiario = row.querySelector('[data-field="saldo_diario"]');
+        const inputRecorrencia = row.querySelector('[data-field="recorrencia"]');
+        
+        // Validar se todos os campos foram preenchidos
+        if (!inputUltimaRecarga.value || !inputSaldoDiario.value || !inputRecorrencia.value) {
+          if (typeof toastUtils !== 'undefined') {
+            toastUtils.showToast('Por favor, preencha todos os campos antes de salvar', 'warning');
+          } else {
+            alert('Por favor, preencha todos os campos antes de salvar');
+          }
+          return;
+        }
+        
+        console.log('💾 Salvando todos os campos para empresa:', empresaId);
+        
+        // Salvar todos os campos de uma vez
+        await salvarCamposManuaisEmpresa(empresaId, {
+          ultima_recarga: inputUltimaRecarga.value,
+          saldo_diario: inputSaldoDiario.value,
+          recorrencia: inputRecorrencia.value
+        }, this);
+      });
+    });
+    
+    // Adicionar validação visual quando os campos são preenchidos
     const camposManuais = container.querySelectorAll('.campo-manual');
     camposManuais.forEach(campo => {
-      // Guardar o valor original
-      campo.dataset.valorOriginal = campo.value;
-      
-      // Salvar quando o campo perde o foco
-      campo.addEventListener('blur', async function() {
-        const empresaId = this.dataset.empresaId;
-        const field = this.dataset.field;
-        const novoValor = this.value;
-        const valorOriginal = this.dataset.valorOriginal;
+      campo.addEventListener('input', function() {
+        const row = this.closest('tr');
+        const btnSalvar = row.querySelector('.btn-salvar-campos');
         
-        // Só salvar se o valor mudou
-        if (novoValor !== valorOriginal) {
-          console.log(`💾 Salvando ${field} para empresa ${empresaId}:`, novoValor);
-          await salvarCampoManualIndividual(empresaId, field, novoValor, this);
-          this.dataset.valorOriginal = novoValor; // Atualizar valor original
-        }
-      });
-      
-      // Salvar ao pressionar Enter
-      campo.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          this.blur(); // Acionar o evento blur que salva
+        // Verificar se todos os 3 campos estão preenchidos
+        const inputUltimaRecarga = row.querySelector('[data-field="ultima_recarga"]');
+        const inputSaldoDiario = row.querySelector('[data-field="saldo_diario"]');
+        const inputRecorrencia = row.querySelector('[data-field="recorrencia"]');
+        
+        const todosCamposPreenchidos = inputUltimaRecarga.value && inputSaldoDiario.value && inputRecorrencia.value;
+        
+        // Destacar botão quando todos os campos estiverem preenchidos
+        if (todosCamposPreenchidos) {
+          btnSalvar.classList.add('btn-pulse');
+          btnSalvar.style.animation = 'pulse 1s infinite';
+        } else {
+          btnSalvar.classList.remove('btn-pulse');
+          btnSalvar.style.animation = '';
         }
       });
     });
@@ -1466,31 +1506,32 @@ function renderTabelaEmpresas(dados) {
   }
 }
 
-// Função para salvar campo manual individual
-async function salvarCampoManualIndividual(empresaId, field, valor, inputElement) {
+// Função para salvar todos os campos manuais de uma empresa
+async function salvarCamposManuaisEmpresa(empresaId, campos, botaoElement) {
   try {
-    // Adicionar indicador visual de salvamento
-    const originalBorder = inputElement.style.border;
-    inputElement.style.border = '2px solid #ffc107'; // Amarelo - salvando
-    inputElement.disabled = true;
+    console.log('🔄 Iniciando salvamento para empresa:', empresaId);
+    console.log('📋 Campos a serem salvos:', campos);
     
-    // Buscar todos os valores atuais da linha para enviar completo
-    const row = inputElement.closest('tr');
-    const inputs = row.querySelectorAll('.campo-manual');
+    // Adicionar indicador visual de salvamento no botão
+    const originalHTML = botaoElement.innerHTML;
+    botaoElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    botaoElement.disabled = true;
     
+    // Preparar dados convertendo recorrência para número
     const dados = {
-      id_empresa: empresaId,
-      ultima_recarga: null,
-      saldo_diario: null,
-      recorrencia: null
+      id_empresa: parseInt(empresaId),
+      ultima_recarga: campos.ultima_recarga,
+      saldo_diario: parseFloat(campos.saldo_diario),
+      recorrencia: parseInt(campos.recorrencia) // Converter para número
     };
     
-    inputs.forEach(input => {
-      const fieldName = input.dataset.field;
-      dados[fieldName] = input.value || null;
+    console.log('📤 Enviando dados convertidos para API:', dados);
+    console.log('🔍 Tipos dos dados:', {
+      id_empresa: typeof dados.id_empresa,
+      ultima_recarga: typeof dados.ultima_recarga,
+      saldo_diario: typeof dados.saldo_diario,
+      recorrencia: typeof dados.recorrencia
     });
-    
-    console.log('📤 Enviando dados para API:', dados);
     
     const response = await fetch('/api/empresa/manuais', {
       method: 'POST',
@@ -1498,8 +1539,144 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
       body: JSON.stringify(dados)
     });
     
-    const data = await response.json();
+    console.log('📡 Resposta recebida - Status:', response.status);
     
+    const data = await response.json();
+    console.log('📦 Dados da resposta:', data);
+    
+    if (data.success) {
+      console.log('✅ Campos salvos com sucesso');
+      
+      // Indicador visual de sucesso
+      botaoElement.innerHTML = '<i class="fas fa-check"></i>';
+      botaoElement.classList.remove('btn-success');
+      botaoElement.classList.remove('btn-pulse');
+      botaoElement.style.animation = '';
+      botaoElement.classList.add('btn-success-checked');
+      
+      setTimeout(() => {
+        botaoElement.innerHTML = originalHTML;
+        botaoElement.classList.remove('btn-success-checked');
+        botaoElement.classList.add('btn-success');
+        botaoElement.style.animation = '';
+      }, 2000);
+      
+      // Recalcular o alerta de saldo para essa linha
+      const row = botaoElement.closest('tr');
+      setTimeout(() => {
+        atualizarAlertaLinhaEmpresa(row, empresaId);
+      }, 100);
+      
+      // Toast de sucesso
+      if (typeof toastUtils !== 'undefined') {
+        toastUtils.showToast('Dados salvos com sucesso!', 'success');
+      }
+    } else {
+      console.error('❌ Erro ao salvar:', data.message);
+      
+      // Indicador visual de erro
+      botaoElement.innerHTML = '<i class="fas fa-times"></i>';
+      botaoElement.classList.remove('btn-success');
+      botaoElement.classList.add('btn-danger');
+      
+      setTimeout(() => {
+        botaoElement.innerHTML = originalHTML;
+        botaoElement.classList.remove('btn-danger');
+        botaoElement.classList.add('btn-success');
+      }, 2000);
+      
+      if (typeof toastUtils !== 'undefined') {
+        toastUtils.showToast(data.message || 'Erro ao salvar campos', 'error');
+      } else {
+        alert('Erro ao salvar: ' + (data.message || 'Erro desconhecido'));
+      }
+    }
+    
+  } catch (err) {
+    console.error('❌ Erro na requisição:', err);
+    console.error('❌ Stack trace:', err.stack);
+    
+    botaoElement.innerHTML = '<i class="fas fa-times"></i>';
+    botaoElement.classList.remove('btn-success');
+    botaoElement.classList.add('btn-danger');
+    
+    setTimeout(() => {
+      botaoElement.innerHTML = '<i class="fas fa-save"></i>';
+      botaoElement.classList.remove('btn-danger');
+      botaoElement.classList.add('btn-success');
+    }, 2000);
+    
+    if (typeof toastUtils !== 'undefined') {
+      toastUtils.showToast('Erro ao salvar campos', 'error');
+    } else {
+      alert('Erro ao salvar campos: ' + err.message);
+    }
+  } finally {
+    botaoElement.disabled = false;
+  }
+}
+
+// Função para salvar campo manual individual
+async function salvarCampoManualIndividual(empresaId, field, valor, inputElement) {
+  try {
+    console.log('🔍 Iniciando salvarCampoManualIndividual');
+    console.log('Empresa ID:', empresaId);
+    console.log('Campo:', field);
+    console.log('Valor:', valor);
+
+    // Adicionar indicador visual de salvamento
+    const originalBorder = inputElement.style.border;
+    inputElement.style.border = '2px solid #ffc107'; // Amarelo - salvando
+    inputElement.disabled = true;
+
+    // Buscar todos os valores atuais da linha para enviar completo
+    const row = inputElement.closest('tr');
+    console.log('Linha da tabela:', row);
+
+    const inputs = row.querySelectorAll('.campo-manual');
+    console.log('Inputs encontrados na linha:', inputs);
+
+    const dados = {
+      id_empresa: empresaId,
+      ultima_recarga: null,
+      saldo_diario: null,
+      recorrencia: null
+    };
+
+    inputs.forEach(input => {
+      const fieldName = input.dataset.field;
+      let valorCampo = input.value || null;
+      
+      // Converter tipos apropriados
+      if (fieldName === 'saldo_diario' && valorCampo) {
+        valorCampo = parseFloat(valorCampo);
+      } else if (fieldName === 'recorrencia' && valorCampo) {
+        valorCampo = parseInt(valorCampo); // Converter recorrência para número
+      }
+      
+      dados[fieldName] = valorCampo;
+      console.log(`Campo ${fieldName}:`, input.value, '-> Convertido para:', valorCampo);
+    });
+
+    console.log('📤 Dados preparados para envio:', dados);
+    console.log('🔍 Tipos dos dados:', {
+      id_empresa: typeof dados.id_empresa,
+      ultima_recarga: typeof dados.ultima_recarga,
+      saldo_diario: typeof dados.saldo_diario,
+      recorrencia: typeof dados.recorrencia
+    });
+
+    const response = await fetch('/api/empresa/manuais', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+
+    console.log('Resposta da API recebida:', response);
+
+    const data = await response.json();
+    console.log('Dados da resposta da API:', data);
+
     if (data.success) {
       console.log('✅ Campo salvo com sucesso');
       // Indicador visual de sucesso
@@ -1507,12 +1684,12 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
       setTimeout(() => {
         inputElement.style.border = originalBorder;
       }, 1000);
-      
+
       // Recalcular o alerta de saldo para essa linha
       setTimeout(() => {
         atualizarAlertaLinhaEmpresa(row, empresaId);
       }, 100);
-      
+
       // Toast de sucesso (opcional)
       if (typeof toastUtils !== 'undefined') {
         toastUtils.showToast(`${field === 'ultima_recarga' ? 'Última Recarga' : field === 'saldo_diario' ? 'Saldo Diário' : 'Recorrência'} salvo!`, 'success');
@@ -1524,14 +1701,14 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
       setTimeout(() => {
         inputElement.style.border = originalBorder;
       }, 2000);
-      
+
       if (typeof toastUtils !== 'undefined') {
         toastUtils.showToast(data.message || 'Erro ao salvar campo', 'error');
       } else {
         alert('Erro ao salvar: ' + (data.message || 'Erro desconhecido'));
       }
     }
-    
+
   } catch (err) {
     console.error('❌ Erro na requisição:', err);
     const originalBorder = inputElement.style.border;
@@ -1539,13 +1716,14 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
     setTimeout(() => {
       inputElement.style.border = originalBorder;
     }, 2000);
-    
+
     if (typeof toastUtils !== 'undefined') {
       toastUtils.showToast('Erro ao salvar campo', 'error');
     } else {
       alert('Erro ao salvar campo');
     }
   } finally {
+    console.log('🔚 Finalizando salvarCampoManualIndividual');
     inputElement.disabled = false;
   }
 }
@@ -1604,7 +1782,7 @@ function atualizarAlertaLinhaEmpresa(row, empresaId) {
       }
     }
     
-    console.log('✅ Alerta atualizado para empresa', empresaId, '- Crítico:', alertaSaldo.critico);
+    console.log('✅ Alerta atualizado para empresa', empresaId, '- Crítico:', alertaSaldo.critico, 'Impulsionar:' , alertaSaldo.impulsionar);
     
   } catch (err) {
     console.error('Erro ao atualizar alerta da linha:', err);
@@ -1861,19 +2039,6 @@ async function salvarEdicaoUsuario(usuarioId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nome, email, permissao })
     });
-
-    console.log('📥 Response status:', response.status);
-    const resultado = await response.json();
-    console.log('📥 Resultado:', resultado);
-
-    if (!response.ok || resultado.error) {
-      alert('Erro ao atualizar usuário: ' + (resultado.error || resultado.mensagem || 'Erro desconhecido'));
-      return;
-    }
-
-    alert('Usuário atualizado com sucesso!');
-    
-    // Fechar modal
     const modalElement = document.getElementById('modalEditarUsuario');
     const modal = bootstrap.Modal.getInstance(modalElement);
     if (modal) {
