@@ -1110,16 +1110,23 @@ async function carregarEmpresasCadastradas() {
       try {
         console.log(`Processando empresa:`, emp);
         
-        const [resMetrica, resSaldo] = await Promise.all([
+        const [resMetrica, resSaldo, resOrcamento] = await Promise.all([
           fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
-          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
+          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`),
+          fetch(`http://localhost:3001/api/v1/campanhas/orcamento-total`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contaDeAnuncio: emp.contaDeAnuncio })
+          })
         ]);
 
         const metricas = await resMetrica.json();
         const saldo = await resSaldo.json();
+        const orcamento = await resOrcamento.json();
         
         console.log(`Métricas para ${emp.nome}:`, metricas);
         console.log(`Saldo para ${emp.nome}:`, saldo);
+        console.log(`Orçamento total para ${emp.nome}:`, orcamento);
 
         if (metricas?.data?.length > 0) {
           const resultado = {
@@ -1134,6 +1141,7 @@ async function carregarEmpresasCadastradas() {
             cpc: metricas.data[0].cpc || 0,
             cpr: metricas.data[0].cpr || 0,
             saldo: saldo?.data?.saldoOriginal || 0,
+            orcamentoTotal: orcamento?.orcamentoTotal || 0,
             // Incluir dados manuais
             ultima_recarga: emp.ultima_recarga || null,
             saldo_diario: emp.saldo_diario || null,
@@ -1156,6 +1164,7 @@ async function carregarEmpresasCadastradas() {
             cpc: 0,
             cpr: 0,
             saldo: 0,
+            orcamentoTotal: orcamento?.orcamentoTotal || 0,
             // Incluir dados manuais
             ultima_recarga: emp.ultima_recarga || null,
             saldo_diario: emp.saldo_diario || null,
@@ -1177,6 +1186,7 @@ async function carregarEmpresasCadastradas() {
           cpc: 0,
           cpr: 0,
           saldo: 0,
+          orcamentoTotal: 0,
           // Incluir dados manuais
           ultima_recarga: emp.ultima_recarga || null,
           saldo_diario: emp.saldo_diario || null,
@@ -1352,6 +1362,7 @@ function renderTabelaEmpresas(dados) {
             <th>Empresa</th>
             <th>Última Recarga</th>
             <th>Saldo Diário</th>
+            <th>Saldo D/Atual</th>
             <th>Recorrência</th>
             <th>Salvar</th>
             <th id="thSaldoMeta" class="sortable" style="cursor:pointer; user-select:none;">
@@ -1459,6 +1470,9 @@ function renderTabelaEmpresas(dados) {
                  placeholder="0.00"
                  style="max-width: 120px;"
                  ${mostrarBotoesAcao ? '' : 'disabled'}>
+        </td>
+        <td class="valor">
+          R$ ${emp.orcamentoTotal ? parseFloat(emp.orcamentoTotal).toFixed(2) : '0.00'}
         </td>
         <td>
           <input type="number" 
