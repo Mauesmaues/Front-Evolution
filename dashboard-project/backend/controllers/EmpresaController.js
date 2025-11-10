@@ -84,7 +84,7 @@ const Empresa = require('../models/Empresa');
                     // Tentar buscar dados manuais - se a tabela não existir, continuar sem erro
                     const { data: manuaisData, error: manuaisError } = await supabase
                         .from('controle_saldo_inputs_manuais')
-                        .select('id_empresa, ultima_recarga, saldo_diario, recorrencia')
+                        .select('id_empresa, ultima_recarga, saldo_diario, recorrencia, orcamento')
                         .in('id_empresa', empresaIdsAll);
                     
                     if (manuaisError) {
@@ -106,7 +106,8 @@ const Empresa = require('../models/Empresa');
                     ...emp,
                     ultima_recarga: manual.ultima_recarga || null,
                     saldo_diario: manual.saldo_diario || null,
-                    recorrencia: manual.recorrencia || null
+                    recorrencia: manual.recorrencia || null,
+                    orcamento: manual.orcamento || null
                 };
             });
             console.log('✅ Dados mesclados com sucesso. Total de empresas:', empresasComManuais.length);
@@ -173,20 +174,22 @@ const Empresa = require('../models/Empresa');
             console.log('🔍 [DEBUG] req.body completo:', JSON.stringify(req.body, null, 2));
             console.log('🔍 [DEBUG] Content-Type:', req.headers['content-type']);
             
-            const { id_empresa, ultima_recarga, saldo_diario, recorrencia } = req.body;
+            const { id_empresa, ultima_recarga, saldo_diario, recorrencia, orcamento } = req.body;
             
             console.log('💾 Salvando campos manuais para empresa:', id_empresa);
             console.log('📊 Dados recebidos:', { 
                 id_empresa, 
                 ultima_recarga, 
                 saldo_diario, 
-                recorrencia 
+                recorrencia,
+                orcamento 
             });
             console.log('🔍 Tipos dos dados:', {
                 id_empresa: typeof id_empresa,
                 ultima_recarga: typeof ultima_recarga,
                 saldo_diario: typeof saldo_diario,
-                recorrencia: typeof recorrencia
+                recorrencia: typeof recorrencia,
+                orcamento: typeof orcamento
             });
 
             if (!id_empresa) {
@@ -218,6 +221,7 @@ const Empresa = require('../models/Empresa');
                     ultima_recarga: ultima_recarga || null,
                     saldo_diario: saldo_diario || null,
                     recorrencia: recorrencia || null,
+                    orcamento: orcamento || null,
                     updated_at: new Date().toISOString()
                 };
                 
@@ -244,7 +248,8 @@ const Empresa = require('../models/Empresa');
                     id_empresa: id_empresa,
                     ultima_recarga: ultima_recarga || null,
                     saldo_diario: saldo_diario || null,
-                    recorrencia: recorrencia || null
+                    recorrencia: recorrencia || null,
+                    orcamento: orcamento || null
                 };
                 
                 console.log('🔍 Dados para inserção:', dadosInsercao);

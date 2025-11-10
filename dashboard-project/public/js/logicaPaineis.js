@@ -1110,23 +1110,16 @@ async function carregarEmpresasCadastradas() {
       try {
         console.log(`Processando empresa:`, emp);
         
-        const [resMetrica, resSaldo, resOrcamento] = await Promise.all([
+        const [resMetrica, resSaldo] = await Promise.all([
           fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/insights`),
-          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`),
-          fetch(`http://localhost:3001/api/v1/campanhas/orcamento-total`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contaDeAnuncio: emp.contaDeAnuncio })
-          })
+          fetch(`http://162.240.157.62:3001/api/v1/metrics/account/${emp.contaDeAnuncio}/saldo`)
         ]);
 
         const metricas = await resMetrica.json();
         const saldo = await resSaldo.json();
-        const orcamento = await resOrcamento.json();
         
         console.log(`Métricas para ${emp.nome}:`, metricas);
         console.log(`Saldo para ${emp.nome}:`, saldo);
-        console.log(`Orçamento total para ${emp.nome}:`, orcamento);
 
         if (metricas?.data?.length > 0) {
           const resultado = {
@@ -1141,11 +1134,11 @@ async function carregarEmpresasCadastradas() {
             cpc: metricas.data[0].cpc || 0,
             cpr: metricas.data[0].cpr || 0,
             saldo: saldo?.data?.saldoOriginal || 0,
-            orcamentoTotal: orcamento?.orcamentoTotal || 0,
             // Incluir dados manuais
             ultima_recarga: emp.ultima_recarga || null,
             saldo_diario: emp.saldo_diario || null,
-            recorrencia: emp.recorrencia || null
+            recorrencia: emp.recorrencia || null,
+            orcamento: emp.orcamento || null
           };
           console.log(`Resultado final para ${emp.nome}:`, resultado);
           return resultado;
@@ -1164,11 +1157,11 @@ async function carregarEmpresasCadastradas() {
             cpc: 0,
             cpr: 0,
             saldo: 0,
-            orcamentoTotal: orcamento?.orcamentoTotal || 0,
             // Incluir dados manuais
             ultima_recarga: emp.ultima_recarga || null,
             saldo_diario: emp.saldo_diario || null,
-            recorrencia: emp.recorrencia || null
+            recorrencia: emp.recorrencia || null,
+            orcamento: emp.orcamento || null
           };
         }
       } catch (err) {
@@ -1186,11 +1179,11 @@ async function carregarEmpresasCadastradas() {
           cpc: 0,
           cpr: 0,
           saldo: 0,
-          orcamentoTotal: 0,
           // Incluir dados manuais
           ultima_recarga: emp.ultima_recarga || null,
           saldo_diario: emp.saldo_diario || null,
-          recorrencia: emp.recorrencia || null
+          recorrencia: emp.recorrencia || null,
+          orcamento: emp.orcamento || null
         };
       }
     });
@@ -1217,15 +1210,15 @@ async function carregarEmpresasCadastradas() {
 }
 
 // Função para calcular se o saldo está crítico
-function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario) {
+function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario, orcamentoTotal) {
   // Verificar se todos os campos necessários estão preenchidos e não são zero
-  if (!ultimaRecarga || (ultimaRecarga == 0) || !recorrencia || (recorrencia == 0) || !saldoAtual || (saldoAtual == 0) || !saldoDiario || (saldoDiario == 0)) {
+  if (!ultimaRecarga || (ultimaRecarga == 0) || !recorrencia || (recorrencia == 0) || !saldoAtual || (saldoAtual == 0) || !saldoDiario || (saldoDiario == 0) || !orcamentoTotal || (orcamentoTotal == 0)) {
     return { critico: false, impulsionar: false, info: null };
   }
 
   // Se algum campo for zero, não aplicar nenhuma regra
   if (
-    recorrencia == 0 || saldoAtual == 0 || saldoDiario == 0
+    recorrencia == 0 || saldoAtual == 0 || saldoDiario == 0 || orcamentoTotal == 0
   ) {
     return { critico: false, impulsionar: false, info: null };
   }
@@ -1266,30 +1259,53 @@ function calcularAlertaSaldo(ultimaRecarga, recorrencia, saldoAtual, saldoDiario
     // Extrair valor numérico do saldo
     const saldoNumerico = extrairValorSaldo(saldoAtual);
     const saldoDiarioNumerico = parseFloat(saldoDiario);
+    const orcamentoTotalNumerico = parseFloat(orcamentoTotal);
     
-    if (isNaN(saldoNumerico) || isNaN(saldoDiarioNumerico)) {
+    if (isNaN(saldoNumerico) || isNaN(saldoDiarioNumerico) || isNaN(orcamentoTotalNumerico)) {
       return { critico: false, info: null };
     }
 
-    // Calcular saldo por dia até a próxima recarga
-    const saldoPorDia = saldoNumerico / diasRestantes;
+    // NOVA LÓGICA: Calcular se irá sobrar 15% do orçamento
+    // 1. Calcular margem de 15% do orçamento
+    const margem15Porcento = orcamentoTotalNumerico * 0.15;
     
-  // Verificar se está abaixo do saldo diário esperado
-  const critico = saldoPorDia < saldoDiarioNumerico;
+    // 2. Calcular gasto esperado até a próxima recarga
+    const gastoEsperado = saldoDiarioNumerico * diasRestantes;
+    
+    // 3. Calcular quanto sobrará do saldo META atual após o gasto
+    const saldoRestante = saldoNumerico - gastoEsperado;
+    
+    // 4. Verificar se o saldo restante será menor que 15% do orçamento
+    const critico = saldoRestante < margem15Porcento;
+    
+    // Calcular percentual de sobra em relação ao orçamento
+    const percentualSobra = (saldoRestante / orcamentoTotalNumerico) * 100;
 
-  // Impulsionar: saldoPorDia está muito acima do saldo diário esperado
-  // Exemplo: saldoPorDia > saldoDiarioNumerico + (saldoDiarioNumerico / 2)
-  const impulsionar = saldoPorDia > (saldoDiarioNumerico + (saldoDiarioNumerico / 2));
+    // Impulsionar: Se sobrar mais de 40% do orçamento, pode impulsionar
+    const impulsionar = percentualSobra > 40;
 
-  console.log('Impulsionar:', impulsionar, '| saldoPorDia:', saldoPorDia, '| saldoDiarioNumerico:', saldoDiarioNumerico);
+    console.log('Cálculo de alerta:', {
+      diasRestantes,
+      saldoMETAAtual: saldoNumerico,
+      saldoDiarioNumerico,
+      gastoEsperado,
+      orcamentoTotal: orcamentoTotalNumerico,
+      margem15Porcento,
+      saldoRestante,
+      percentualSobra: percentualSobra.toFixed(2) + '%',
+      critico,
+      impulsionar
+    });
     
     return {
       critico: critico,
       impulsionar: impulsionar,
-      info: `${diasRestantes} dias até recarga | Saldo/dia: R$ ${saldoPorDia.toFixed(2)} ${critico ? '⚠️' : '✓'}`,
+      info: `${diasRestantes} dias até recarga | Gasto previsto: R$ ${gastoEsperado.toFixed(2)} | Sobra: R$ ${saldoRestante.toFixed(2)} (${percentualSobra.toFixed(1)}%) ${critico ? '⚠️' : '✓'}`,
       diasRestantes: diasRestantes,
       proximaRecarga: proximaRecarga,
-      saldoPorDia: saldoPorDia,
+      gastoPrevisto: gastoEsperado,
+      saldoRestante: saldoRestante,
+      percentualSobra: percentualSobra,
       saldoDiarioEsperado: saldoDiarioNumerico
     };
 
@@ -1362,9 +1378,10 @@ function renderTabelaEmpresas(dados) {
             <th>Empresa</th>
             <th>Última Recarga</th>
             <th>Saldo Diário</th>
-            <th>Saldo D/Atual</th>
             <th>Recorrência</th>
+            <th>Orçamento</th>
             <th>Salvar</th>
+            <th>Saldo D/Atual</th>
             <th id="thSaldoMeta" class="sortable" style="cursor:pointer; user-select:none;">
               Saldo [META] <i class="fas fa-sort" style="margin-left:8px"></i>
             </th>
@@ -1384,7 +1401,8 @@ function renderTabelaEmpresas(dados) {
       emp.ultima_recarga, 
       emp.recorrencia, 
       emp.saldo, 
-      emp.saldo_diario
+      emp.saldo_diario,
+      emp.orcamento
     );
     console.log(`Empresa: ${emp.empresa} | Crítico: ${alertaSaldo.critico} | Impulsionar: ${alertaSaldo.impulsionar}`);
     // Aplicar classe CSS se estiver crítico ou impulsionar
@@ -1433,7 +1451,7 @@ function renderTabelaEmpresas(dados) {
       icon.removeAttribute('title');
       icon.addEventListener('mouseenter', function() {
         const info = icon.closest('tr').getAttribute('title') || '';
-        showPopover(`<b>${info}</b><br>O saldo diário calculado está maior que o orçamento definido para a campanha.<br><span style='color:#d9534f'>Atenção: ajuste o saldo ou recarregue para evitar bloqueio.</span>`, icon);
+        showPopover(`<b>${info}</b><br>O gasto previsto até a próxima recarga não deixará sobrar 15% do orçamento total da conta.<br><span style='color:#d9534f'>⚠️ Atenção: Considere reduzir o orçamento diário ou fazer recarga antecipada.</span>`, icon);
       });
       icon.addEventListener('mouseleave', hidePopover);
     });
@@ -1441,7 +1459,7 @@ function renderTabelaEmpresas(dados) {
       icon.removeAttribute('title');
       icon.addEventListener('mouseenter', function() {
         const info = icon.closest('tr').getAttribute('title') || '';
-        showPopover(`<b>${info}</b><br>O saldo diário calculado está 50% maior que o saldo diário definido.<br>Sua campanha pode receber um <b>boost</b> com aumento de orçamento e ainda assim permanecer dentro do limite da conta.`, icon);
+        showPopover(`<b>${info}</b><br>O gasto previsto deixará sobrar mais de 40% do orçamento total.<br>✨ <b>Oportunidade:</b> Você pode aumentar o orçamento diário para impulsionar suas campanhas mantendo margem de segurança.`, icon);
       });
       icon.addEventListener('mouseleave', hidePopover);
     });
@@ -1471,9 +1489,6 @@ function renderTabelaEmpresas(dados) {
                  style="max-width: 120px;"
                  ${mostrarBotoesAcao ? '' : 'disabled'}>
         </td>
-        <td class="valor">
-          R$ ${emp.orcamentoTotal ? parseFloat(emp.orcamentoTotal).toFixed(2) : '0.00'}
-        </td>
         <td>
           <input type="number" 
                  class="form-control form-control-sm campo-manual" 
@@ -1481,6 +1496,17 @@ function renderTabelaEmpresas(dados) {
                  data-empresa-id="${emp.id}"
                  value="${emp.recorrencia || ''}"
                  placeholder="Ex: 30 (dias)"
+                 style="max-width: 150px;"
+                 ${mostrarBotoesAcao ? '' : 'disabled'}>
+        </td>
+        <td>
+          <input type="number" 
+                 step="0.01"
+                 class="form-control form-control-sm campo-manual" 
+                 data-field="orcamento"
+                 data-empresa-id="${emp.id}"
+                 value="${emp.orcamento != null ? emp.orcamento : ''}"
+                 placeholder="0.00"
                  style="max-width: 150px;"
                  ${mostrarBotoesAcao ? '' : 'disabled'}>
         </td>
@@ -1493,6 +1519,9 @@ function renderTabelaEmpresas(dados) {
             </button>
           </td>
         ` : '<td></td>'}
+        <td class="valor">
+          R$ ${emp.orcamentoTotal ? parseFloat(emp.orcamentoTotal).toFixed(2) : '0.00'}
+        </td>
         <td class="valor">
           ${emp.saldo}
           ${iconeStatus}
@@ -1530,9 +1559,10 @@ function renderTabelaEmpresas(dados) {
         const inputUltimaRecarga = row.querySelector('[data-field="ultima_recarga"]');
         const inputSaldoDiario = row.querySelector('[data-field="saldo_diario"]');
         const inputRecorrencia = row.querySelector('[data-field="recorrencia"]');
+        const inputOrcamento = row.querySelector('[data-field="orcamento"]');
         
         // Validar se todos os campos foram preenchidos
-        if (!inputUltimaRecarga.value || !inputSaldoDiario.value || !inputRecorrencia.value) {
+        if (!inputUltimaRecarga.value || !inputSaldoDiario.value || !inputRecorrencia.value || !inputOrcamento.value) {
           if (typeof toastUtils !== 'undefined') {
             toastUtils.showToast('Por favor, preencha todos os campos antes de salvar', 'warning');
           } else {
@@ -1547,7 +1577,8 @@ function renderTabelaEmpresas(dados) {
         await salvarCamposManuaisEmpresa(empresaId, {
           ultima_recarga: inputUltimaRecarga.value,
           saldo_diario: inputSaldoDiario.value,
-          recorrencia: inputRecorrencia.value
+          recorrencia: inputRecorrencia.value,
+          orcamento: inputOrcamento.value
         }, this);
       });
     });
@@ -1559,12 +1590,13 @@ function renderTabelaEmpresas(dados) {
         const row = this.closest('tr');
         const btnSalvar = row.querySelector('.btn-salvar-campos');
         
-        // Verificar se todos os 3 campos estão preenchidos
+        // Verificar se todos os 4 campos estão preenchidos
         const inputUltimaRecarga = row.querySelector('[data-field="ultima_recarga"]');
         const inputSaldoDiario = row.querySelector('[data-field="saldo_diario"]');
         const inputRecorrencia = row.querySelector('[data-field="recorrencia"]');
+        const inputOrcamento = row.querySelector('[data-field="orcamento"]');
         
-        const todosCamposPreenchidos = inputUltimaRecarga.value && inputSaldoDiario.value && inputRecorrencia.value;
+        const todosCamposPreenchidos = inputUltimaRecarga.value && inputSaldoDiario.value && inputRecorrencia.value && inputOrcamento.value;
         
         // Destacar botão quando todos os campos estiverem preenchidos
         if (todosCamposPreenchidos) {
@@ -1625,7 +1657,8 @@ async function salvarCamposManuaisEmpresa(empresaId, campos, botaoElement) {
       id_empresa: parseInt(empresaId),
       ultima_recarga: campos.ultima_recarga,
       saldo_diario: parseFloat(campos.saldo_diario),
-      recorrencia: parseInt(campos.recorrencia) // Converter para número
+      recorrencia: parseInt(campos.recorrencia),
+      orcamento: parseFloat(campos.orcamento)
     };
     
     console.log('📤 Enviando dados convertidos para API:', dados);
@@ -1633,7 +1666,8 @@ async function salvarCamposManuaisEmpresa(empresaId, campos, botaoElement) {
       id_empresa: typeof dados.id_empresa,
       ultima_recarga: typeof dados.ultima_recarga,
       saldo_diario: typeof dados.saldo_diario,
-      recorrencia: typeof dados.recorrencia
+      recorrencia: typeof dados.recorrencia,
+      orcamento: typeof dados.orcamento
     });
     
     const response = await fetch('/api/empresa/manuais', {
@@ -1743,7 +1777,8 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
       id_empresa: empresaId,
       ultima_recarga: null,
       saldo_diario: null,
-      recorrencia: null
+      recorrencia: null,
+      orcamento: null
     };
 
     inputs.forEach(input => {
@@ -1754,7 +1789,9 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
       if (fieldName === 'saldo_diario' && valorCampo) {
         valorCampo = parseFloat(valorCampo);
       } else if (fieldName === 'recorrencia' && valorCampo) {
-        valorCampo = parseInt(valorCampo); // Converter recorrência para número
+        valorCampo = parseInt(valorCampo);
+      } else if (fieldName === 'orcamento' && valorCampo) {
+        valorCampo = parseFloat(valorCampo);
       }
       
       dados[fieldName] = valorCampo;
@@ -1766,7 +1803,8 @@ async function salvarCampoManualIndividual(empresaId, field, valor, inputElement
       id_empresa: typeof dados.id_empresa,
       ultima_recarga: typeof dados.ultima_recarga,
       saldo_diario: typeof dados.saldo_diario,
-      recorrencia: typeof dados.recorrencia
+      recorrencia: typeof dados.recorrencia,
+      orcamento: typeof dados.orcamento
     });
 
     const response = await fetch('/api/empresa/manuais', {
@@ -1845,17 +1883,20 @@ function atualizarAlertaLinhaEmpresa(row, empresaId) {
     const inputUltimaRecarga = row.querySelector('[data-field="ultima_recarga"]');
     const inputSaldoDiario = row.querySelector('[data-field="saldo_diario"]');
     const inputRecorrencia = row.querySelector('[data-field="recorrencia"]');
+    const inputOrcamento = row.querySelector('[data-field="orcamento"]');
     
     const ultimaRecarga = inputUltimaRecarga?.value;
     const saldoDiario = inputSaldoDiario?.value;
     const recorrencia = inputRecorrencia?.value;
+    const orcamento = inputOrcamento?.value;
     
     // Recalcular alerta
     const alertaSaldo = calcularAlertaSaldo(
       ultimaRecarga, 
       recorrencia, 
       empresa.saldo, 
-      saldoDiario
+      saldoDiario,
+      orcamento
     );
     
     // Atualizar classe da linha e ícone
